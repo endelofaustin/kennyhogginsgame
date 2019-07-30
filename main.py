@@ -2,13 +2,16 @@
 import sys, pygame
 pygame.init()
 
-size = width, height = 320, 240
+size = width, height = 800, 600
 speed = [2, 2]
 black = 0, 0, 0
+scale_factor = 16
 
 screen = pygame.display.set_mode(size)
 
-ball = pygame.image.load("kennyface1.png")
+ball = pygame.image.load("kennyface1.png").convert()
+ballrect = ball.get_rect()
+ball = pygame.transform.scale(ball, ((ballrect.right - ballrect.left) * scale_factor, (ballrect.bottom - ballrect.top) * scale_factor))
 ballrect = ball.get_rect()
 
 while 1:

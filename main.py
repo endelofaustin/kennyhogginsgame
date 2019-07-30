@@ -11,6 +11,7 @@ screen = pygame.display.set_mode(size)
 
 ball = pygame.image.load("kennyface1.png").convert()
 ballrect = ball.get_rect()
+# scale the image by multiplying its width (right - left) by scale_factor and heigh (bottom - top) by scale_factor
 ball = pygame.transform.scale(ball, ((ballrect.right - ballrect.left) * scale_factor, (ballrect.bottom - ballrect.top) * scale_factor))
 ballrect = ball.get_rect()
 

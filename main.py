@@ -5,7 +5,7 @@ pygame.init()
 size = width, height = 800, 600
 speed = [2, 2]
 black = 0, 0, 0
-scale_factor = 16
+scale_factor = 4
 
 screen = pygame.display.set_mode(size)
 
@@ -19,22 +19,22 @@ ballrect = ball.get_rect()
 # This is setting the lucinda object in a different starting position than kenny
 
 lucindarect = lucinda.get_rect()
-lucindarect.left += 101
-lucindarect.right += 101
-lucindarect.top += 101
-lucindarect.bottom += 101
+lucindarect.left += 201
+lucindarect.right += 201
+lucindarect.top += 201
+lucindarect.bottom += 201
 
 while 1:
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
 
-    ballrect = ballrect.move(speed)
+    #ballrect = ballrect.move(speed)
     if ballrect.left < 0 or ballrect.right > width:
         speed[0] = -speed[0]
     if ballrect.top < 0 or ballrect.bottom > height:
         speed[1] = -speed[1]
     
-    lucindarect = lucindarect.move(speed)
+    #lucindarect = lucindarect.move(speed)
     if lucindarect.left < 0 or lucindarect.right > width:
         speed[0] = -speed[0]
     if lucindarect.top < 0 or lucindarect.bottom > height:

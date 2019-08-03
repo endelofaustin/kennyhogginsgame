@@ -2,14 +2,14 @@
 import sys, pygame
 pygame.init()
 
-size = width, height = 800, 600
+width, height = 800, 600
 speed = [2, 2]
-black = 0, 0, 0
+gray = 40, 40, 40
 scale_factor = 4
 
-screen = pygame.display.set_mode(size)
+screen = pygame.display.set_mode((width, height))
 
-ball = pygame.image.load("./artwork/kennyface1.png").convert()
+ball = pygame.image.load("./artwork/kennyface1.png").convert_alpha()
 ballrect = ball.get_rect()
 # scale the image by multiplying its width (right - left) by scale_factor and heigh (bottom - top) by scale_factor
 ball = pygame.transform.scale(ball, ((ballrect.right - ballrect.left) * scale_factor, (ballrect.bottom - ballrect.top) * scale_factor))
@@ -40,7 +40,7 @@ while 1:
     if lucindarect.top < 0 or lucindarect.bottom > height:
         speed[1] = -speed[1]
 
-    screen.fill(black)
+    screen.fill(gray)
     screen.blit(ball, ballrect)
     screen.blit(lucinda, lucindarect)
     pygame.display.flip()

@@ -14,26 +14,32 @@ screen = pygame.display.set_mode((width, height))
 myfont = pygame.font.SysFont('Comic Sans MS', 20)
 textsurface = myfont.render('Use the arrow keys to move the pigster', False, (255, 255, 255)).convert_alpha()
 
+# load kenny's face
 ball = pygame.image.load("./artwork/kennyface1.png").convert_alpha()
 ballrect = ball.get_rect()
 # scale the image by multiplying its width (right - left) by scale_factor and heigh (bottom - top) by scale_factor
 ball = pygame.transform.scale(ball, ((ballrect.right - ballrect.left) * scale_factor, (ballrect.bottom - ballrect.top) * scale_factor))
+
+#load lucinda and set her to a different starting position than the default 0,0
 lucinda  = pygame.image.load("./artwork/lucinda.png")
 ballrect = ball.get_rect()
-
-# This is setting the lucinda object in a different starting position than kenny
-
+# move the entire rectangle encompassing Lucinda by 201 pixels horizontally and 201 pixels vertically
 lucindarect = lucinda.get_rect()
 lucindarect.left += 201
 lucindarect.right += 201
 lucindarect.top += 201
 lucindarect.bottom += 201
 
+# this is the main game loop!
 while 1:
+    # if the window gets closed, end the program
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
     
+    # get a list of all keys that are currently pressed
     pressed_keys = pygame.key.get_pressed()
+
+    # interpret arrow keys into velocity
     speed = [0, 0]
     if pressed_keys[pygame.K_LEFT]:
         speed[0] -= 2
@@ -44,12 +50,15 @@ while 1:
     if pressed_keys[pygame.K_DOWN]:
         speed[1] += 2
 
+    # move the rectangle by whatever velocity was determined;
+    # but if it moves outside the window, move it back to where it was
     ballrect = ballrect.move(speed)
     if ballrect.left < 0 or ballrect.right > width:
         ballrect = ballrect.move([-speed[0], 0])
     if ballrect.top < 0 or ballrect.bottom > height:
         ballrect = ballrect.move([0, -speed[1]])
-    
+
+    # this is commented out so that we can test only kenny's movement for now
     #lucindarect = lucindarect.move(speed)
     #if lucindarect.left < 0 or lucindarect.right > width:
     #    speed[0] = -speed[0]
@@ -58,6 +67,6 @@ while 1:
 
     screen.fill(gray)
     screen.blit(ball, ballrect)
-    #screen.blit(lucinda, lucindarect)
+    screen.blit(lucinda, lucindarect)
     screen.blit(textsurface, (0,0))
     pygame.display.flip()

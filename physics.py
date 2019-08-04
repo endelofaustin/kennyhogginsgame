@@ -14,23 +14,27 @@ class PhysicsSprite(pygame.sprite.Sprite):
                                             (self.rect.width * EngineGlobals.scale_factor,
                                             self.rect.height * EngineGlobals.scale_factor))
         self.rect = self.image.get_rect()
+        self.dpos = [Decimal(self.rect.left), Decimal(self.rect.top)]
 
     def update(self):
         if self.has_gravity:
-            self.speed[1] += Decimal('.005')
+            self.speed[1] += Decimal('.02')
             # terminal velocity is 2 for now
             if self.speed[1] > 2:
                 self.speed[1] = 2
-        self.rect.move_ip((int(self.speed[0]), int(self.speed[1])))
-        if self.rect.left < 0:
-            self.rect.left = 0
+        # move position according to speed
+        self.dpos[0] += self.speed[0]
+        self.dpos[1] += self.speed[1]
+        if self.dpos[0] < 0:
+            self.dpos[0] = 0
             self.speed[0] = 0
-        elif self.rect.right > EngineGlobals.width:
-            self.rect.right = EngineGlobals.width
+        elif (self.dpos[0] + self.rect.width) > EngineGlobals.width:
+            self.dpos[0] = EngineGlobals.width - self.rect.width
             self.speed[0] = 0
-        if self.rect.top < 0:
-            self.rect.top = 0
+        if self.dpos[1] < 0:
+            self.dpos[1] = 0
             self.speed[1] = 0
-        elif self.rect.bottom > EngineGlobals.height:
-            self.rect.bottom = EngineGlobals.height
+        elif (self.dpos[1] + self.rect.height) > EngineGlobals.height:
+            self.dpos[1] = EngineGlobals.height - self.rect.height
             self.speed[1] = 0
+        self.rect.topleft = (self.dpos[0], self.dpos[1])

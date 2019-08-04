@@ -5,13 +5,15 @@ from engineglobals import EngineGlobals
 from decimal import Decimal
 
 pygame.init()
-# create a display window with the above width and height
+# create a display window
 EngineGlobals.screen = pygame.display.set_mode((EngineGlobals.width, EngineGlobals.height))
 
 # load a font to use for displaying text
 myfont = pygame.font.SysFont('Comic Sans MS', 20)
 textsurface = myfont.render("Arrow keys move and Ctrl or Up to jump", False, (255, 0, 255)).convert_alpha()
 
+# for now we will simply create a sprite group called all_sprites for the convenience of
+# using it to update and draw any sprites we add to this global group
 all_sprites = pygame.sprite.Group()
 # load kenny's face
 kenny = physics.PhysicsSprite()
@@ -46,7 +48,7 @@ while 1:
         kenny.speed[0] -= Decimal('1.5')
     if pressed_keys[pygame.K_RIGHT]:
         kenny.speed[0] += Decimal('1.5')
-    
+
     all_sprites.update()
 
     # Creation of a basic platform that Kenny can jump onto 

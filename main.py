@@ -8,7 +8,7 @@ pygame.init()
 import physics
 
 # create a display window with the above width and height
-screen = pygame.display.set_mode((EngineGlobals.width, EngineGlobals.height))
+EngineGlobals.screen = pygame.display.set_mode((EngineGlobals.width, EngineGlobals.height))
 
 # load a font to use for displaying text
 myfont = pygame.font.SysFont('Comic Sans MS', 20)
@@ -63,11 +63,9 @@ while 1:
            [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0], ]
 
     # iterate through the nested list and render a rectangle if a 1 is in that position
-    
-    DISPLAY = pygame.display.set_mode((800,600), 0,32)
     WHITE = (255, 255, 255,)
     GREEN = (0, 255, 0,)
-    DISPLAY.fill(WHITE)
+    EngineGlobals.screen.fill(WHITE)
 
     for row in platform:
         for item in row:
@@ -75,12 +73,12 @@ while 1:
                 pass
             elif item == 1:
                 # arguments for rect placements are (x axis, y axis, height width
-                pygame.draw.rect(DISPLAY, GREEN, (120,500,350,100))
+                pygame.draw.rect(EngineGlobals.screen, GREEN, (120,500,350,100))
 
             
-    all_sprites.draw(screen)
+    all_sprites.draw(EngineGlobals.screen)
 
     textsurface = myfont.render("down is %s" % kenny.speed[1], False, (255, 0, 255)).convert_alpha()
-    screen.blit(textsurface, (0,0))
+    EngineGlobals.screen.blit(textsurface, (0,0))
 
     pygame.display.flip()

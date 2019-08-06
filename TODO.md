@@ -16,4 +16,4 @@ TODO LIST
 
 VILLAIN ROSTER:
 * Pippi Longstocking, vegan animal hater
-* Levod Burtim, rainbow farting science officer
+* Levod Burtim, rainbow farting engineer

@@ -13,3 +13,7 @@ TODO LIST
 * Crawling text intro
 * Menus & configuration
 * Serialization / save games
+
+VILLAIN ROSTER:
+* Pippi Longstocking, vegan animal hater
+* Levod Burtim, rainbow farting science officer

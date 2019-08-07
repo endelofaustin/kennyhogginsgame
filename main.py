@@ -1,23 +1,26 @@
 #!/usr/bin/python3
 
-import sys, pygame, physics
+import sys, pyglet, physics, player
 from engineglobals import EngineGlobals
-from decimal import Decimal
+from decimal import getcontext, Decimal
+# set Decimal precision to 7 places, much more efficient than the default 28
+# 6 places is enough for 1 million pixels of accuracy, which is enough to
+# precisely locate any position in an area that is 900 screens high and 1300
+# screens wide, for a screen size up to 1024x768
+getcontext().prec = 7
 
-pygame.init()
-# create a display window
-EngineGlobals.screen = pygame.display.set_mode((EngineGlobals.width, EngineGlobals.height))
+# run the init function to set up the game engine
+EngineGlobals.init()
 
-# load a font to use for displaying text
-myfont = pygame.font.SysFont('Comic Sans MS', 20)
-textsurface = myfont.render("Arrow keys move and Ctrl or Up to jump", False, (255, 0, 255)).convert_alpha()
+# create some debug text to be rendered
+textsurface = pyglet.text.Label(text='Arrow keys move and Ctrl or Up to jump', color=(255, 0, 255, 255),
+                                batch=EngineGlobals.main_batch, y=EngineGlobals.height, anchor_y='top')
 
-# for now we will simply create a sprite group called all_sprites for the convenience of
-# using it to update and draw any sprites we add to this global group
-all_sprites = pygame.sprite.Group()
 # load kenny's face
-kenny = physics.PhysicsSprite()
-all_sprites.add(kenny)
+kenny = player.Player()
+EngineGlobals.window.push_handlers(kenny.keys)
+EngineGlobals.window.push_handlers(kenny)
+game_objects = [kenny]
 
 #load lucinda and set her to a different starting position than the default 0,0
 #lucinda  = pygame.image.load("./artwork/lucinda.png")
@@ -28,59 +31,49 @@ all_sprites.add(kenny)
 #lucindarect.top += 201
 #lucindarect.bottom += 201
 
+def main_update_callback(dt):
+    # update all game objects
+    for obj in game_objects:
+        obj.updateloop(dt)
+# ask pyglet to call our main_update_callback 120 times per second
+pyglet.clock.schedule_interval(main_update_callback, 1/120.0)
 
-# this is the main game loop!
-while 1:
-    # if the window gets closed, end the program
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT: sys.exit()
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LCTRL or event.key == pygame.K_RCTRL or event.key == pygame.K_UP:
-                if kenny.speed[1] >= 0:
-                    kenny.speed[1] = -3
+# set up some color values and create a white rectangle to white out the screen
+WHITE = (255, 255, 255, 0)
+GREEN = (0, 255, 0,)
+white_bg = pyglet.image.SolidColorImagePattern(WHITE).create_image(EngineGlobals.width, EngineGlobals.height)
 
-    # get a list of all keys that are currently pressed
-    pressed_keys = pygame.key.get_pressed()
+# Creation of a basic platform that Kenny can jump onto 
+# A nested list
+platform = [ 
+        #  0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
+        [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0], ]
 
-    # interpret arrow keys into velocity
-    kenny.speed[0] = 0
-    if pressed_keys[pygame.K_LEFT]:
-        kenny.speed[0] -= Decimal('1.5')
-    if pressed_keys[pygame.K_RIGHT]:
-        kenny.speed[0] += Decimal('1.5')
-
-    all_sprites.update()
-
-    # Creation of a basic platform that Kenny can jump onto 
-    # A nested list 
-
-    platform = [ 
-         #  0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8
-           [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-           [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-           [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-           [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-           [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-           [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-           [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-           [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0], ]
+# this function renders all elements to the screen whenever requested by the pyglet engine
+# (typically every vsync event, 60 times per second)
+@EngineGlobals.window.event
+def on_draw():
+    white_bg.blit(0, 0)
 
     # iterate through the nested list and render a rectangle if a 1 is in that position
-    WHITE = (255, 255, 255,)
-    GREEN = (0, 255, 0,)
-    EngineGlobals.screen.fill(WHITE)
-
     for row in platform:
         for item in row:
             if item == 0:
                 pass
             elif item == 1:
+                pass
                 # arguments for rect placements are (x axis, y axis, height width
-                pygame.draw.rect(EngineGlobals.screen, GREEN, (120,500,350,100))
+                #pygame.draw.rect(EngineGlobals.screen, GREEN, (120,500,350,100))
 
-    all_sprites.draw(EngineGlobals.screen)
+    EngineGlobals.main_batch.draw()
 
-    # debug text
-    EngineGlobals.screen.blit(textsurface, (0,0))
-
-    pygame.display.flip()
+# this is the main game loop!
+if __name__ == '__main__':
+    pyglet.app.run()

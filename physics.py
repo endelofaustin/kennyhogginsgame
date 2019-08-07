@@ -44,9 +44,22 @@ class PhysicsSprite(pyglet.sprite.Sprite):
             if self.speed[1] < -20:
                 self.speed[1] = -20
 
+        # dpos[0] is x, dpos[1] is y
+        # position plus speed is equal to new potential location
+        new_x = self.dpos[0] + self.speed[0]
+        new_y = self.dpos[1] + self.speed[1]
+       
+        # x_coord and y_coord will represent an element in the environment matrix
+        x_coord = new_x/32
+        y_coord = new_y/32
+
         # now, update the sprite's position according to speed
-        self.dpos[0] += self.speed[0]
-        self.dpos[1] += self.speed[1]
+        if EngineGlobals.platform[int(y_coord)][int(x_coord)] == 0:
+            self.dpos[0] += self.speed[0]
+            self.dpos[1] += self.speed[1]
+        else:
+            self.speed[0] = 0
+            self.speed[1] = 0
 
         # but don't let it go off screen to the left, right, top or bottom
         # and if it tries, bring it back and set its speed to 0

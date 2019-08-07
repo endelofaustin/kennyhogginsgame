@@ -29,6 +29,32 @@ all_sprites.add(kenny)
 #lucindarect.bottom += 201
 
 
+# A nested list 
+
+platform = [ 
+          #  0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ]
+
+EngineGlobals.platform = platform
+
 # this is the main game loop!
 while 1:
     # if the window gets closed, end the program
@@ -54,29 +80,29 @@ while 1:
     # Creation of a basic platform that Kenny can jump onto 
     # A nested list 
 
-    platform = [ 
-         #  0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8
-           [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-           [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-           [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-           [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-           [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-           [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-           [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-           [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0], ]
 
     # iterate through the nested list and render a rectangle if a 1 is in that position
     WHITE = (255, 255, 255,)
     GREEN = (0, 255, 0,)
     EngineGlobals.screen.fill(WHITE)
 
+# in order to draw rectangles in the platform object we need to iterate through the matrix and increment counters by a count of 16 for the purpose 
+# of keeping track of the drawings location and then 
+    xcounter = 0
+    ycounter = 0 
+
     for row in platform:
+        textsurface = myfont.render(f'{xcounter}', False, (255, 0, 255)).convert_alpha()
+        xcounter = 0
+        ycounter += 32
+        
         for item in row:
+            xcounter += 32
             if item == 0:
                 pass
             elif item == 1:
-                # arguments for rect placements are (x axis, y axis, height width
-                pygame.draw.rect(EngineGlobals.screen, GREEN, (120,500,350,100))
+                # arguments for rect placements are (x axis, y axis, height width)
+                pygame.draw.rect(EngineGlobals.screen, GREEN, (xcounter,ycounter,32, 32))
 
     all_sprites.draw(EngineGlobals.screen)
 

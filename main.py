@@ -59,14 +59,14 @@ platform = [
             [0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
             [0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
             [0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0], 
             [0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
-            [0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
-            [0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
-            [0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
-            [0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
-            [0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
-            [0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
-            [0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] ]
+            [0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0], 
+            [0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0] ]
 EngineGlobals.platform = platform
 
 # this function renders all elements to the screen whenever requested by the pyglet engine
@@ -79,17 +79,17 @@ def on_draw():
     # in order to draw rectangles in the platform object we need to iterate through the matrix and increment counters by a count of 16 for the purpose 
     # of keeping track of the drawings location and then 
     xcounter = 0
-    ycounter = 0 
+    ycounter = EngineGlobals.height - 32
     for row in platform:
         #textsurface = myfont.render(f'{xcounter}', False, (255, 0, 255)).convert_alpha()
         xcounter = 0
-        ycounter += 32
         for item in row:
-            xcounter += 32
             if item == 0:
                 pass
             elif item == 1:
                 green_block.blit(xcounter, ycounter)
+            xcounter += 32
+        ycounter -= 32
 
     # then draw all sprites
     EngineGlobals.main_batch.draw()

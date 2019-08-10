@@ -1,6 +1,7 @@
-TODO LIST
-
-* Switch from Pygame to Pyglet
+TODO LIST:
+* Editor
+* Saving/serializing the map to and from a file - pickle?
+   * We may want to keep track of different versions of the map class over time
 * Physics
 * Characters / sprites
 * Maps
@@ -12,7 +13,7 @@ TODO LIST
 
 VILLAIN ROSTER:
 * Pippi Longstocking, vegan animal hater
-* Levod Burtim, rainbow farting engineer
+* Levod Burtim, rainbow farting space engineer
 
 OTHER PEEPS:
 * Ronald McSwanson, life coach and dispenser of wisdom

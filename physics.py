@@ -48,38 +48,53 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         # position plus speed is equal to new potential location
         new_x = self.dpos[0] + self.speed[0]
         new_y = self.dpos[1] + self.speed[1]
-       
-        # x_coord and y_coord will represent an element in the environment matrix
-        x_coord = new_x/32
-        y_coord = new_y/32
 
-        # now, update the sprite's position according to speed
-        if EngineGlobals.platform[int(y_coord)][int(x_coord)] == 0:
-            self.dpos[0] += self.speed[0]
-            self.dpos[1] += self.speed[1]
-        else:
-            self.speed[0] = 0
-            self.speed[1] = 0
+        # upward or downward collisions
+        if self.speed[1] != 0:
+            # first, check if trying to move off the bottom or top of the screen
+            if new_y < 0 or new_y + self.height >= EngineGlobals.height:
+                # if so, check if we should trigger landing event (moving downward and not already grounded)
+                if self.speed[1] < 0 and not self.landed:
+                    self.landed = True
+                    self.on_PhysicsSprite_landed()
+                # regardless, stop all downward or upward motion
+                self.speed[1] = 0
+            # otherwise, we are safe to see where we are in the environment and whether we are about to collide
+            # with a solid block
+            else:
+                # from the environment, retrieve the tiles at Kenny's lower left foot, lower right foot, upper left,
+                # and upper right
+                # since this is only checking for up/down collisions, it's important that we use the new y coordinates
+                # (new_y) but the original x coordinates (self.dpos[0])
+                left_foot_tile = EngineGlobals.platform[int((EngineGlobals.height - new_y)/32)][int(self.dpos[0]/32)]
+                right_foot_tile = EngineGlobals.platform[int((EngineGlobals.height - new_y)/32)][int((self.dpos[0] + self.width - 1)/32)]
+                left_head_tile = EngineGlobals.platform[int((EngineGlobals.height - new_y - self.height + 1)/32)][int(self.dpos[0]/32)]
+                right_head_tile = EngineGlobals.platform[int((EngineGlobals.height - new_y - self.height + 1)/32)][int((self.dpos[0] + self.width - 1)/32)]
+                # if one of those tiles is solid, time to cease all vertical movement!
+                if ( left_foot_tile == 1 or right_foot_tile == 1
+                        or left_head_tile == 1 or right_head_tile == 1 ):
+                    if self.speed[1] < 0 and not self.landed:
+                        self.landed = True
+                        self.on_PhysicsSprite_landed()
+                    self.speed[1] = 0
+                else:
+                    self.landed = False
 
-        # but don't let it go off screen to the left, right, top or bottom
-        # and if it tries, bring it back and set its speed to 0
-        if self.dpos[0] < 0:
-            self.dpos[0] = 0
-            self.speed[0] = 0
-        elif (self.dpos[0] + self.width) > EngineGlobals.width:
-            self.dpos[0] = EngineGlobals.width - self.width
-            self.speed[0] = 0
-        if self.dpos[1] <= 0:
-            self.dpos[1] = 0
-            self.speed[1] = 0
-            if not self.landed:
-                self.on_PhysicsSprite_landed()
-                self.landed = True
-        elif self.dpos[1] + self.height >= EngineGlobals.height:
-            self.dpos[1] = EngineGlobals.height - self.height
-            self.speed[1] = 0
-        else:
-            self.landed = False
+        # left or right collisions
+        if self.speed[0] != 0:
+            if new_x < 0 or new_x + self.width >= EngineGlobals.width:
+                self.speed[0] = 0
+            else:
+                left_foot_tile = EngineGlobals.platform[int((EngineGlobals.height - self.dpos[1])/32)][int(new_x/32)]
+                right_foot_tile = EngineGlobals.platform[int((EngineGlobals.height - self.dpos[1])/32)][int((new_x + self.width - 1)/32)]
+                left_head_tile = EngineGlobals.platform[int((EngineGlobals.height - self.dpos[1] - self.height + 1)/32)][int(new_x/32)]
+                right_head_tile = EngineGlobals.platform[int((EngineGlobals.height - self.dpos[1] - self.height + 1)/32)][int((new_x + self.width - 1)/32)]
+                if ( left_foot_tile == 1 or right_foot_tile == 1
+                        or left_head_tile == 1 or right_head_tile == 1 ):
+                    self.speed[0] = 0
+
+        self.dpos[0] += self.speed[0]
+        self.dpos[1] += self.speed[1]
 
         # finally, update the x and y coords so that pyglet will know where to draw the sprite
         self.x, self.y = int(self.dpos[0]), int(self.dpos[1])

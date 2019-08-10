@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import sys, pyglet, physics, player
+import sys, pyglet, physics, player, editor
 from engineglobals import EngineGlobals
 from decimal import getcontext, Decimal
 # set Decimal precision to 7 places, much more efficient than the default 28
@@ -18,9 +18,12 @@ textsurface = pyglet.text.Label(text='Arrow keys move and Ctrl or Up to jump', c
 
 # load kenny's face
 kenny = player.Player()
+mouse_events = editor.Editor()
 EngineGlobals.window.push_handlers(kenny.keys)
 EngineGlobals.window.push_handlers(kenny)
+EngineGlobals.window.push_handlers(mouse_events)
 game_objects = [kenny]
+
 
 #load lucinda and set her to a different starting position than the default 0,0
 #lucinda  = pygame.image.load("./artwork/lucinda.png")
@@ -80,6 +83,9 @@ def on_draw():
     # of keeping track of the drawings location and then 
     xcounter = 0
     ycounter = EngineGlobals.height - 32
+    
+    # This will iterate through the above platform and render squares
+    # For the y coord we have to start from the other direction so we set a decrement counter from the max of the y coordinates
     for row in platform:
         #textsurface = myfont.render(f'{xcounter}', False, (255, 0, 255)).convert_alpha()
         xcounter = 0

@@ -11,6 +11,7 @@ getcontext().prec = 7
 
 # run the init function to set up the game engine
 EngineGlobals.init()
+screen = physics.Screen()
 
 # create some debug text to be rendered
 textsurface = pyglet.text.Label(text='Arrow keys move and Ctrl or Up to jump', color=(255, 0, 255, 255),
@@ -22,7 +23,10 @@ mouse_events = editor.Editor()
 EngineGlobals.window.push_handlers(kenny.keys)
 EngineGlobals.window.push_handlers(kenny)
 EngineGlobals.window.push_handlers(mouse_events)
-game_objects = [kenny]
+
+# When adding to this list we are beginning to setup changable objects
+# any object in this list will have its update function called
+game_objects = [kenny, screen]
 
 
 #load lucinda and set her to a different starting position than the default 0,0
@@ -40,7 +44,6 @@ def main_update_callback(dt):
         obj.updateloop(dt)
 # ask pyglet to call our main_update_callback 120 times per second
 pyglet.clock.schedule_interval(main_update_callback, 1/120.0)
-
 # set up some color values and create a white rectangle to white out the screen
 WHITE = (255, 255, 255, 0)
 GREEN = (0, 255, 0, 0)
@@ -71,7 +74,7 @@ platform = [
             [0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0], 
             [0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0] ]
 EngineGlobals.platform = platform
-
+EngineGlobals.kenny = kenny
 # this function renders all elements to the screen whenever requested by the pyglet engine
 # (typically every vsync event, 60 times per second)
 @EngineGlobals.window.event

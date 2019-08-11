@@ -101,3 +101,22 @@ class PhysicsSprite(pyglet.sprite.Sprite):
 
     def on_PhysicsSprite_landed(self):
         pass
+
+class Screen():
+
+    def __init__(self ):
+
+        self.x = 0
+        self.y = 0
+
+    
+    def updateloop(self, dt):
+        if (EngineGlobals.kenny.dpos[0] - self.x) < 64:
+            self.x = (EngineGlobals.kenny.dpos[0]) - 64
+            
+        if (EngineGlobals.kenny.dpos[1]) - self.y < 64:
+            self.y = (EngineGlobals.kenny.dpos[1]) - 64
+
+#        i (Engine.Globals.kenny.dpos[0] + self.x) > 64:0
+            
+        

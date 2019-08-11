@@ -24,5 +24,9 @@ class EngineGlobals:
         EngineGlobals.window = pyglet.window.Window(width=EngineGlobals.width, height=EngineGlobals.height,
                                                     caption='The Ballad of Kenny Hoggins')
 
+        # set up a key state handler
+        EngineGlobals.keys = pyglet.window.key.KeyStateHandler()
+        EngineGlobals.window.push_handlers(EngineGlobals.keys)
+
         # for now, we will use one big graphics batch that every display element gets added to for efficiency
         EngineGlobals.main_batch = pyglet.graphics.Batch()

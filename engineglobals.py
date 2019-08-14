@@ -22,7 +22,7 @@ class EngineGlobals:
         # create a display window
         #EngineGlobals.screen = pygame.display.set_mode((EngineGlobals.width, EngineGlobals.height))
         EngineGlobals.window = pyglet.window.Window(width=EngineGlobals.width, height=EngineGlobals.height,
-                                                    caption='The Ballad of Kenny Hoggins')
+                                                    caption='ByWay To the Bacon Zone')
 
         # set up a key state handler
         EngineGlobals.keys = pyglet.window.key.KeyStateHandler()

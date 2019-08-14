@@ -52,7 +52,7 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         # upward or downward collisions
         if self.speed[1] != 0:
             # first, check if trying to move off the bottom or top of the screen
-            if new_y < 0 or new_y + self.height >= EngineGlobals.height:
+            if new_y < 0 or new_y + self.height >= len(EngineGlobals.platform) * 32:
                 # if so, check if we should trigger landing event (moving downward and not already grounded)
                 if self.speed[1] < 0 and not self.landed:
                     self.landed = True
@@ -82,7 +82,7 @@ class PhysicsSprite(pyglet.sprite.Sprite):
 
         # left or right collisions
         if self.speed[0] != 0:
-            if new_x < 0 or new_x + self.width >= EngineGlobals.width:
+            if new_x < 0 or new_x + self.width >= len(EngineGlobals.platform[0]) * 32:
                 self.speed[0] = 0
             else:
                 left_foot_tile = EngineGlobals.platform[int((EngineGlobals.height - self.dpos[1])/32)][int(new_x/32)]
@@ -97,7 +97,7 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         self.dpos[1] += self.speed[1]
 
         # finally, update the x and y coords so that pyglet will know where to draw the sprite
-        self.x, self.y = int(self.dpos[0]), int(self.dpos[1])
+        self.x, self.y = int(self.dpos[0] - EngineGlobals.our_screen.x), int(self.dpos[1] - EngineGlobals.our_screen.y)
 
     def on_PhysicsSprite_landed(self):
         pass
@@ -109,14 +109,25 @@ class Screen():
         self.x = 0
         self.y = 0
 
-    
+
+# self.x is screen position
+# kenny.dpos[0] is x 1 is y
+
     def updateloop(self, dt):
         if (EngineGlobals.kenny.dpos[0] - self.x) < 64:
             self.x = (EngineGlobals.kenny.dpos[0]) - 64
-            
+        
+        kennys_belly = EngineGlobals.kenny.dpos[0] + EngineGlobals.kenny.width
+        screen_redge = self.x + EngineGlobals.width
+
+        if kennys_belly >= screen_redge - 64:
+            self.x = kennys_belly - EngineGlobals.width + 64
+
         if (EngineGlobals.kenny.dpos[1]) - self.y < 64:
             self.y = (EngineGlobals.kenny.dpos[1]) - 64
-
-#        i (Engine.Globals.kenny.dpos[0] + self.x) > 64:0
-            
+        
+        kennys_head = EngineGlobals.kenny.dpos[1] + EngineGlobals.kenny.height
+        screen_top = self.y + EngineGlobals.height
+        if kennys_head >= screen_top - 64:
+            self.y = kennys_head - (EngineGlobals.height + 64)
         

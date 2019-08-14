@@ -13,6 +13,7 @@ getcontext().prec = 7
 EngineGlobals.init()
 screen = physics.Screen()
 
+
 # create some debug text to be rendered
 textsurface = pyglet.text.Label(text='Arrow keys move and Ctrl or Up to jump', color=(255, 0, 255, 255),
                                 batch=EngineGlobals.main_batch, y=EngineGlobals.height, anchor_y='top')
@@ -20,7 +21,6 @@ textsurface = pyglet.text.Label(text='Arrow keys move and Ctrl or Up to jump', c
 # load kenny's face
 kenny = player.Player()
 mouse_events = editor.Editor()
-EngineGlobals.window.push_handlers(kenny.keys)
 EngineGlobals.window.push_handlers(kenny)
 EngineGlobals.window.push_handlers(mouse_events)
 
@@ -73,8 +73,17 @@ platform = [
             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
             [0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0], 
             [0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0] ]
-EngineGlobals.platform = platform
+
+environment = platform * 16
+
+environment = [lists * 16 for lists in environment]
+print(environment)
+# This is where we store instance objects as static members of EngineGlobals
+platform = environment
+EngineGlobals.platform = environment
 EngineGlobals.kenny = kenny
+EngineGlobals.our_screen = screen
+
 # this function renders all elements to the screen whenever requested by the pyglet engine
 # (typically every vsync event, 60 times per second)
 @EngineGlobals.window.event
@@ -96,7 +105,7 @@ def on_draw():
             if item == 0:
                 pass
             elif item == 1:
-                green_block.blit(xcounter, ycounter)
+                green_block.blit(xcounter - screen.x, ycounter - screen.y)
             xcounter += 32
         ycounter -= 32
 

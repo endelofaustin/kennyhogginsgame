@@ -66,10 +66,10 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                 # and upper right
                 # since this is only checking for up/down collisions, it's important that we use the new y coordinates
                 # (new_y) but the original x coordinates (self.dpos[0])
-                left_foot_tile = EngineGlobals.platform[int((EngineGlobals.height - new_y)/32)][int(self.dpos[0]/32)]
-                right_foot_tile = EngineGlobals.platform[int((EngineGlobals.height - new_y)/32)][int((self.dpos[0] + self.width - 1)/32)]
-                left_head_tile = EngineGlobals.platform[int((EngineGlobals.height - new_y - self.height + 1)/32)][int(self.dpos[0]/32)]
-                right_head_tile = EngineGlobals.platform[int((EngineGlobals.height - new_y - self.height + 1)/32)][int((self.dpos[0] + self.width - 1)/32)]
+                left_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int(new_y / 32) - 1][int(self.dpos[0]/32)]
+                right_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int(new_y / 32) - 1][int((self.dpos[0] + self.width - 1)/32)]
+                left_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int((new_y + self.height - 1) / 32) - 1][int(self.dpos[0]/32)]
+                right_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int((new_y + self.height - 1) / 32) - 1][int((self.dpos[0] + self.width - 1)/32)]
                 # if one of those tiles is solid, time to cease all vertical movement!
                 if ( left_foot_tile == 1 or right_foot_tile == 1
                         or left_head_tile == 1 or right_head_tile == 1 ):
@@ -85,10 +85,10 @@ class PhysicsSprite(pyglet.sprite.Sprite):
             if new_x < 0 or new_x + self.width >= len(EngineGlobals.platform[0]) * 32:
                 self.speed[0] = 0
             else:
-                left_foot_tile = EngineGlobals.platform[int((EngineGlobals.height - self.dpos[1])/32)][int(new_x/32)]
-                right_foot_tile = EngineGlobals.platform[int((EngineGlobals.height - self.dpos[1])/32)][int((new_x + self.width - 1)/32)]
-                left_head_tile = EngineGlobals.platform[int((EngineGlobals.height - self.dpos[1] - self.height + 1)/32)][int(new_x/32)]
-                right_head_tile = EngineGlobals.platform[int((EngineGlobals.height - self.dpos[1] - self.height + 1)/32)][int((new_x + self.width - 1)/32)]
+                left_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int(self.dpos[1] / 32) - 1][int(new_x/32)]
+                right_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int(self.dpos[1] / 32) - 1][int((new_x + self.width - 1)/32)]
+                left_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int((self.dpos[1] + self.height - 1) / 32) - 1][int(new_x/32)]
+                right_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int((self.dpos[1] + self.height - 1) / 32) - 1][int((new_x + self.width - 1)/32)]
                 if ( left_foot_tile == 1 or right_foot_tile == 1
                         or left_head_tile == 1 or right_head_tile == 1 ):
                     self.speed[0] = 0
@@ -116,7 +116,7 @@ class Screen():
     def updateloop(self, dt):
         if (EngineGlobals.kenny.dpos[0] - self.x) < 64:
             self.x = (EngineGlobals.kenny.dpos[0]) - 64
-        
+
         kennys_belly = EngineGlobals.kenny.dpos[0] + EngineGlobals.kenny.width
         screen_redge = self.x + EngineGlobals.width
 
@@ -125,9 +125,8 @@ class Screen():
 
         if (EngineGlobals.kenny.dpos[1]) - self.y < 64:
             self.y = (EngineGlobals.kenny.dpos[1]) - 64
-        
+
         kennys_head = EngineGlobals.kenny.dpos[1] + EngineGlobals.kenny.height
         screen_top = self.y + EngineGlobals.height
         if kennys_head >= screen_top - 64:
-            self.y = kennys_head - (EngineGlobals.height + 64)
-        
+            self.y = kennys_head - EngineGlobals.height + 64

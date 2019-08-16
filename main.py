@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 
-import sys, pyglet, physics, player, editor
+import sys, pyglet, physics, player, editor, pickle
 from engineglobals import EngineGlobals
 from decimal import getcontext, Decimal
+
 # set Decimal precision to 7 places, much more efficient than the default 28
 # 6 places is enough for 1 million pixels of accuracy, which is enough to
 # precisely locate any position in an area that is 900 screens high and 1300
@@ -15,10 +16,10 @@ screen = physics.Screen()
 
 
 # create some debug text to be rendered
-textsurface = pyglet.text.Label(text='Arrow keys move and Ctrl or Up to jump', color=(255, 0, 255, 255),
+EngineGlobals.textsurface = pyglet.text.Label(text='Arrow keys move and Ctrl or Up to jump', color=(255, 0, 255, 255),
                                 batch=EngineGlobals.main_batch, y=EngineGlobals.height, anchor_y='top')
 
-# load kenny's face
+# load kenny sprite
 kenny = player.Player()
 mouse_events = editor.Editor()
 EngineGlobals.window.push_handlers(kenny)
@@ -28,18 +29,9 @@ EngineGlobals.window.push_handlers(mouse_events)
 # any object in this list will have its update function called
 game_objects = [kenny, screen]
 
-
-#load lucinda and set her to a different starting position than the default 0,0
-#lucinda  = pygame.image.load("./artwork/lucinda.png")
-# move the entire rectangle encompassing Lucinda by 201 pixels horizontally and 201 pixels vertically
-##lucindarect = lucinda.get_rect()
-#lucindarect.left += 201
-#lucindarect.right += 201
-#lucindarect.top += 201
-#lucindarect.bottom += 201
-
+# this function will be set up for pyglet to call it every update cycle, 120 times per second
+# it simply calls the updated function for every object in game_objects
 def main_update_callback(dt):
-    # update all game objects
     for obj in game_objects:
         obj.updateloop(dt)
 # ask pyglet to call our main_update_callback 120 times per second
@@ -52,7 +44,7 @@ green_block = pyglet.image.SolidColorImagePattern(GREEN).create_image(32, 32)
 
 # Creation of a basic platform that Kenny can jump onto 
 # A nested list 
-platform = [ 
+platform = [
           #  0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,
             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
             [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -77,7 +69,9 @@ platform = [
 environment = platform * 16
 
 environment = [lists * 16 for lists in environment]
-print(environment)
+# commenting out the below print statement until we need it again
+# print(environment)
+
 # This is where we store instance objects as static members of EngineGlobals
 platform = environment
 EngineGlobals.platform = environment
@@ -90,27 +84,39 @@ EngineGlobals.our_screen = screen
 def on_draw():
     white_bg.blit(0, 0)
 
-    # iterate through the nested list and render a rectangle if a 1 is in that position
-    # in order to draw rectangles in the platform object we need to iterate through the matrix and increment counters by a count of 16 for the purpose 
-    # of keeping track of the drawings location and then 
+    # xcounter and ycounter will count which block we are looking to render
     xcounter = 0
-    ycounter = EngineGlobals.height - 32
-    
+    ycounter = 0
+    # x_data_start and y_data_start will mark the lower-left origin of where we start grabbing blocks in the data structure
+    x_data_start = int(screen.x / 32)
+    y_data_start = len(platform) - int(screen.y / 32) - 1
+    # x_render_start and y_render_start will mark where to start rendering blocks on screen
+    x_render_start = 0 - screen.x % 32
+    y_render_start = 0 - screen.y % 32
+
     # This will iterate through the above platform and render squares
-    # For the y coord we have to start from the other direction so we set a decrement counter from the max of the y coordinates
-    for row in platform:
-        #textsurface = myfont.render(f'{xcounter}', False, (255, 0, 255)).convert_alpha()
-        xcounter = 0
-        for item in row:
-            if item == 0:
-                pass
-            elif item == 1:
-                green_block.blit(xcounter - screen.x, ycounter - screen.y)
-            xcounter += 32
-        ycounter -= 32
+    while True:
+        if y_data_start - ycounter >= 0 and y_data_start - ycounter < len(platform):
+            xcounter = 0
+            while True:
+                if x_data_start + xcounter >= 0 and x_data_start + xcounter < len(platform[0]):
+                    item = platform[y_data_start - ycounter][x_data_start + xcounter]
+                    if item == 1:
+                        green_block.blit(x_render_start + xcounter * 32, y_render_start + ycounter * 32)
+                xcounter += 1
+                if xcounter > (EngineGlobals.width / 32):
+                    break
+        ycounter += 1
+        if ycounter > (EngineGlobals.height / 32):
+            break
+
+    # debug text
+    #EngineGlobals.textsurface.text = "%d,%d\n" % (EngineGlobals.kenny.width, EngineGlobals.kenny.height)
 
     # then draw all sprites
     EngineGlobals.main_batch.draw()
+
+    #textsurface.draw()
 
 # this is the main game loop!
 if __name__ == '__main__':

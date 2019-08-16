@@ -129,5 +129,5 @@ class Screen():
         kennys_head = EngineGlobals.kenny.dpos[1] + EngineGlobals.kenny.height
         screen_top = self.y + EngineGlobals.height
         if kennys_head >= screen_top - 64:
-            self.y = kennys_head - (EngineGlobals.height + 64)
+            self.y = kennys_head - EngineGlobals.height + 64
         

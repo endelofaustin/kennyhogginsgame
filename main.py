@@ -98,17 +98,37 @@ def on_draw():
     
     # This will iterate through the above platform and render squares
     # For the y coord we have to start from the other direction so we set a decrement counter from the max of the y coordinates
-    for row in platform:
-        #textsurface = myfont.render(f'{xcounter}', False, (255, 0, 255)).convert_alpha()
-        xcounter = 0
-        for item in row:
-            if item == 0:
-                pass
-            elif item == 1:
-                green_block.blit(xcounter - screen.x, ycounter - screen.y)
-            xcounter += 32
-        ycounter -= 32
+    
+    # Track the screen through the platform iteration style
 
+    # movement happens not within this code below
+    xstart = int(screen.x / 32)
+    xend = int((screen.x + EngineGlobals.width) / 32) + 1
+
+
+    ystart = len(environment) - int(screen.y / 32) - 1
+    screen_top = screen.y + EngineGlobals.height
+    yend = len(environment) - int((screen_top) / 32)
+
+    xrender_start = 0 - screen.x % 32
+    yrender_start = 0 - screen.y % 32
+    
+    print(ystart, yend)
+    
+    for xcounter in range(xstart, xend,):
+        for ycounter in range(ystart, yend, -1):
+            if xcounter >= 0 and xcounter < len(environment[0]) and ycounter >= 0 and ycounter < len(environment):
+                this_block = environment[ycounter][xcounter]
+                if this_block == 0:
+                        pass
+                elif this_block == 1:
+                        green_block.blit(xrender_start, yrender_start)
+ 
+            yrender_start += 32
+            
+        
+        xrender_start += 32
+        yrender_start = screen.y % 32
     # then draw all sprites
     EngineGlobals.main_batch.draw()
 

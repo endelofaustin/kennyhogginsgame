@@ -84,53 +84,42 @@ EngineGlobals.our_screen = screen
 def on_draw():
     white_bg.blit(0, 0)
 
-    # xcounter and ycounter will count which block we are looking to render
-    xcounter = 0
-    ycounter = 0
-    # x_data_start and y_data_start will mark the lower-left origin of where we start grabbing blocks in the data structure
-    x_data_start = int(screen.x / 32)
-    y_data_start = len(platform) - int(screen.y / 32) - 1
-    # x_render_start and y_render_start will mark where to start rendering blocks on screen
-    x_render_start = 0 - screen.x % 32
-    y_render_start = 0 - screen.y % 32
-
-    # This will iterate through the above platform and render squares
-    # For the y coord we have to start from the other direction so we set a decrement counter from the max of the y coordinates
-    
     # Track the screen through the platform iteration style
-
     # movement happens not within this code below
     xstart = int(screen.x / 32)
     xend = int((screen.x + EngineGlobals.width) / 32) + 1
 
-
     ystart = len(environment) - int(screen.y / 32) - 1
     screen_top = screen.y + EngineGlobals.height
-    yend = len(environment) - int((screen_top) / 32)
+    yend = len(environment) - int((screen_top) / 32) - 2
 
+    # xrender_start and yrender_start represent the offset of where to start drawing a given block on the screen - this origin
+    # could be offscreen for blocks that are only partially onscreen at a given time
     xrender_start = 0 - screen.x % 32
     yrender_start = 0 - screen.y % 32
-    
-    #print(ystart, yend)
-    
+
+    # iterate through the environment horizontally from blocks on the left side of the screen to blocks on the right
     for xcounter in range(xstart, xend,):
+
+        # iterate through the environment vertically from blocks on the bottom of the screen to blocks on the top
+        # since ystart is a larger index than yend, we have to step by -1 to get from ystart to yend
         for ycounter in range(ystart, yend, -1):
+
+            # grab the block from the environment and see if we should render it or not
             if xcounter >= 0 and xcounter < len(environment[0]) and ycounter >= 0 and ycounter < len(environment):
                 this_block = environment[ycounter][xcounter]
-                if this_block == 0:
-                        pass
-                elif this_block == 1:
-                        green_block.blit(xrender_start, yrender_start)
- 
+                if this_block == 1:
+                    green_block.blit(xrender_start, yrender_start)
+
+            # after each time through the y loop, update the y rendering location
             yrender_start += 32
-            
-        
+
+        # after each time through the x loop, update the x rendering location and reset y to the bottom of the column
         xrender_start += 32
         yrender_start = 0 - screen.y % 32
-    # then draw all sprites
-    EngineGlobals.main_batch.draw()
 
-    #textsurface.draw()
+    # now that we've drawn the environment, draw all sprites
+    EngineGlobals.main_batch.draw()
 
 # this is the main game loop!
 if __name__ == '__main__':

@@ -122,6 +122,18 @@ def on_draw():
     # now that we've drawn the environment, draw all sprites
     EngineGlobals.main_batch.draw()
 
+#### Audio playback testing
+#
+# 
+introwav = pyglet.media.load('audio/intro.wav', streaming=False)
+introwav.play()
+
+
+
+
+
+
+
 # this is the main game loop!
 if __name__ == '__main__':
     pyglet.app.run()

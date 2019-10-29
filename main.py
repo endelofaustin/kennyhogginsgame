@@ -36,6 +36,7 @@ def main_update_callback(dt):
         obj.updateloop(dt)
 # ask pyglet to call our main_update_callback 120 times per second
 pyglet.clock.schedule_interval(main_update_callback, 1/120.0)
+
 # set up some color values and create a white rectangle to white out the screen
 WHITE = (255, 255, 255, 0)
 GREEN = (0, 255, 0, 0)

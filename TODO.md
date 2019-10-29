@@ -1,14 +1,14 @@
 TODO LIST:
 * Projectiles
    * Create a projectile class that subclasses a Pyglet Sprite, but with different mechanics than the PhysicsSprite
+* Maps
+   * Be able to use different 32-pixel-square tiles in the maps
 * Placement of sprites & solid objects in the environment
 * Editor
 * Saving/serializing the map to and from a file - pickle?
    * We may want to keep track of different versions of the map class over time
 * Physics
 * Characters / sprites
-* Maps
-   * Changing the size of the map/environment
 * Pixel art plugin
 * Storyline
 * Crawling text intro

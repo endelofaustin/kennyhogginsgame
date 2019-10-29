@@ -125,7 +125,8 @@ def on_draw():
 #### Audio playback testing
 #
 # 
-introwav = pyglet.media.load('intro.wav', streaming=False)
+introwav = pyglet.media.load('audio/intro.wav', streaming=False)
+introwav.play()
 
 
 

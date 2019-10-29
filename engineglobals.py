@@ -16,7 +16,7 @@ class EngineGlobals:
         pyglet.image.Texture.default_mag_filter = pyglet.image.GL_NEAREST
 
         # add some folders to the resource module so that it knows where files live
-        pyglet.resource.path = ['./artwork']
+        pyglet.resource.path = ['./artwork', './audio']
         pyglet.resource.reindex()
 
         # create a display window

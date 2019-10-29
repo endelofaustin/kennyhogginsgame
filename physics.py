@@ -14,7 +14,6 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         self.landed = False
 
         # call the parent Sprite constructor
-        # for now, all sprites will bear the face of Kenny Hoggins
         pyglet.sprite.Sprite.__init__(self, img=resource_image, batch=EngineGlobals.main_batch)
 
         # the 'speed' member is a Decimal representation of the sprite's speed at this
@@ -102,17 +101,14 @@ class PhysicsSprite(pyglet.sprite.Sprite):
     def on_PhysicsSprite_landed(self):
         pass
 
+# the Screen class tracks the positioning of the screen within the entire environment
 class Screen():
-
-    def __init__(self ):
-
+    def __init__(self):
         self.x = 0
         self.y = 0
 
-
-# self.x is screen position
-# kenny.dpos[0] is x 1 is y
-
+    # self.x is screen position
+    # kenny.dpos[0] is x 1 is y
     def updateloop(self, dt):
         if (EngineGlobals.kenny.dpos[0] - self.x) < 64:
             self.x = (EngineGlobals.kenny.dpos[0]) - 64

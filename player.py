@@ -46,13 +46,4 @@ class Player(PhysicsSprite):
     # Lets do some shooting
 
     def shoot_it(self,):
-
-        PhysicsSprite.__init__(self, has_gravity=True, resource_image=pyglet.resource.image("bullet_1.png"))
-
-
-
-        
-
-
-
-
+        bullet = PhysicsSprite(has_gravity=True, resource_image=pyglet.resource.image("bullet_1.png"))

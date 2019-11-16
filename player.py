@@ -30,7 +30,7 @@ class Player(PhysicsSprite):
             # if on a solid object, normal jump
             if self.landed and self.jumpct == 0:
                 self.speed[1] = Decimal(max(self.speed[1], 0) + 13)
-            # if already in the area, allow one more smaller jump
+            # if already in the air, allow one more smaller jump
             elif self.jumpct < 2:
                 self.speed[1] = 10
             self.jumpct += 1

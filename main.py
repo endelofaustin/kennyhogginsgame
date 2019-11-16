@@ -27,12 +27,12 @@ EngineGlobals.window.push_handlers(mouse_events)
 
 # When adding to this list we are beginning to setup changable objects
 # any object in this list will have its update function called
-game_objects = [kenny, screen]
+EngineGlobals.game_objects.extend([screen])
 
 # this function will be set up for pyglet to call it every update cycle, 120 times per second
 # it simply calls the updated function for every object in game_objects
 def main_update_callback(dt):
-    for obj in game_objects:
+    for obj in EngineGlobals.game_objects:
         obj.updateloop(dt)
 # ask pyglet to call our main_update_callback 120 times per second
 pyglet.clock.schedule_interval(main_update_callback, 1/120.0)
@@ -59,7 +59,7 @@ platform = [
             [0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
             [0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 
             [0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0], 
-            [0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0], 
+            [0,0,1,1,0,1,1,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0], 
             [0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
             [0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 
             [0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0], 

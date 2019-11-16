@@ -22,7 +22,7 @@ class EngineGlobals:
         # create a display window
         #EngineGlobals.screen = pygame.display.set_mode((EngineGlobals.width, EngineGlobals.height))
         EngineGlobals.window = pyglet.window.Window(width=EngineGlobals.width, height=EngineGlobals.height,
-                                                    caption='ByWay To the Bacon Zone')
+                                                    caption='All The Way To the Bacon Zone')
 
         # set up a key state handler
         EngineGlobals.keys = pyglet.window.key.KeyStateHandler()
@@ -30,3 +30,8 @@ class EngineGlobals:
 
         # for now, we will use one big graphics batch that every display element gets added to for efficiency
         EngineGlobals.main_batch = pyglet.graphics.Batch()
+
+        # this is a game object list that will auto populate when sprites are generated
+        EngineGlobals.game_objects = []
+
+

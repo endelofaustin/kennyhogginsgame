@@ -34,6 +34,10 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         # self.dpos[1] is the 'y' or bottom-to-top coordinate
         self.dpos = [Decimal(), Decimal()]
 
+        # When a physics sprite is generated it needs to be added to engineglobals.game_objects
+        # so that it will be put into the update loop and not mess everything up like an idiot
+        EngineGlobals.game_objects.append(self,)
+
     # this function is called for each sprite during the main update loop
     def updateloop(self, dt):
         if self.has_gravity:

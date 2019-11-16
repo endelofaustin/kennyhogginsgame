@@ -34,8 +34,25 @@ class Player(PhysicsSprite):
             elif self.jumpct < 2:
                 self.speed[1] = 10
             self.jumpct += 1
+        # Button press handeling for space bar to shoot
+        if symbol == pyglet.window.key.SPACE:
+            self.shoot_it()
 
     # this function is called by the physics simulator when it detects landing on a solid object
     def on_PhysicsSprite_landed(self):
         # set our jumpct back to zero to allow future jumps
         self.jumpct = 0
+    
+    # Lets do some shooting
+
+    def shoot_it(self,):
+
+        PhysicsSprite.__init__(self, has_gravity=True, resource_image=pyglet.resource.image("bullet_1.png"))
+
+
+
+        
+
+
+
+

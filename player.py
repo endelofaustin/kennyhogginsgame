@@ -3,6 +3,7 @@ from physics import PhysicsSprite
 import pyglet
 from decimal import Decimal
 from engineglobals import EngineGlobals
+from bullet import Bullet
 
 # the player object represents Kenny and responds to keyboard input
 class Player(PhysicsSprite):
@@ -46,6 +47,6 @@ class Player(PhysicsSprite):
     # Lets do some shooting
 
     def shoot_it(self,):
-        bullet = PhysicsSprite(has_gravity=False, resource_image=pyglet.resource.image("bullet1-1.png.png"))
+        bullet = Bullet()
         bullet.speed[0] += Decimal('15.0')
         bullet.dpos[0],bullet.dpos[1] = self.dpos[0] + 5, self.dpos[1] + 40

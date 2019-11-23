@@ -62,6 +62,7 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                     self.on_PhysicsSprite_landed()
                 # regardless, stop all downward or upward motion
                 self.speed[1] = 0
+                self.on_PhysicsSprite_collided()
             # otherwise, we are safe to see where we are in the environment and whether we are about to collide
             # with a solid block
             else:
@@ -80,6 +81,7 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                         self.landed = True
                         self.on_PhysicsSprite_landed()
                     self.speed[1] = 0
+                    self.on_PhysicsSprite_collided()
                 else:
                     self.landed = False
 
@@ -87,6 +89,7 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         if self.speed[0] != 0:
             if new_x < 0 or new_x + self.width >= len(EngineGlobals.platform[0]) * 32:
                 self.speed[0] = 0
+                self.on_PhysicsSprite_collided()
             else:
                 left_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int(self.dpos[1] / 32) - 1][int(new_x/32)]
                 right_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int(self.dpos[1] / 32) - 1][int((new_x + self.width - 1)/32)]
@@ -95,6 +98,8 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                 if ( left_foot_tile == 1 or right_foot_tile == 1
                         or left_head_tile == 1 or right_head_tile == 1 ):
                     self.speed[0] = 0
+                    self.on_PhysicsSprite_collided()
+
 
         self.dpos[0] += self.speed[0]
         self.dpos[1] += self.speed[1]
@@ -103,6 +108,9 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         self.x, self.y = int(self.dpos[0] - EngineGlobals.our_screen.x), int(self.dpos[1] - EngineGlobals.our_screen.y)
 
     def on_PhysicsSprite_landed(self):
+        pass
+
+    def on_PhysicsSprite_collided(self,):
         pass
 
 # the Screen class tracks the positioning of the screen within the entire environment
@@ -130,3 +138,5 @@ class Screen():
         screen_top = self.y + EngineGlobals.height
         if kennys_head >= screen_top - 64:
             self.y = kennys_head - EngineGlobals.height + 64
+
+

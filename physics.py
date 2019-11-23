@@ -36,7 +36,7 @@ class PhysicsSprite(pyglet.sprite.Sprite):
 
         # When a physics sprite is generated it needs to be added to engineglobals.game_objects
         # so that it will be put into the update loop and not mess everything up like an idiot
-        EngineGlobals.game_objects.append(self,)
+        EngineGlobals.game_objects.add(self)
 
     # this function is called for each sprite during the main update loop
     def updateloop(self, dt):

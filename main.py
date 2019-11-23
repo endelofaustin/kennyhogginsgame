@@ -27,7 +27,7 @@ EngineGlobals.window.push_handlers(mouse_events)
 
 # When adding to this list we are beginning to setup changable objects
 # any object in this list will have its update function called
-EngineGlobals.game_objects.extend([screen])
+EngineGlobals.game_objects.add(screen)
 
 # this function will be set up for pyglet to call it every update cycle, 120 times per second
 # it simply calls the updated function for every object in game_objects

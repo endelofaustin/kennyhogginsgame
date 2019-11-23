@@ -48,4 +48,4 @@ class Player(PhysicsSprite):
     def shoot_it(self,):
         bullet = PhysicsSprite(has_gravity=False, resource_image=pyglet.resource.image("bullet1-1.png.png"))
         bullet.speed[0] += Decimal('15.0')
-        bullet.dpos[0],bullet.dpos[1] = self.dpos[0], self.dpos[1]  
+        bullet.dpos[0],bullet.dpos[1] = self.dpos[0] + 5, self.dpos[1] + 40

@@ -32,6 +32,4 @@ class EngineGlobals:
         EngineGlobals.main_batch = pyglet.graphics.Batch()
 
         # this is a game object list that will auto populate when sprites are generated
-        EngineGlobals.game_objects = []
-
-
+        EngineGlobals.game_objects = set()

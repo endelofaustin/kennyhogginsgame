@@ -42,8 +42,8 @@ class Player(PhysicsSprite):
     def on_PhysicsSprite_landed(self):
         # set our jumpct back to zero to allow future jumps
         self.jumpct = 0
-    
+
     # Lets do some shooting
 
     def shoot_it(self,):
-        bullet = PhysicsSprite(has_gravity=True, resource_image=pyglet.resource.image("bullet_1.png"))
+        bullet = PhysicsSprite(has_gravity=True, resource_image=pyglet.resource.image("bullet1-1.png.png"))

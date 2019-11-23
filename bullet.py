@@ -8,10 +8,6 @@ class Bullet(PhysicsSprite):
         PhysicsSprite.__init__(self, has_gravity = False, resource_image=pyglet.resource.image("bullet1-1.png.png"))
         
     def on_PhysicsSprite_collided(self,):
-
-        EngineGlobals.game_objects.remove(self, )
-        #self.delete()
-
-
-
-    
+        # we want to destroy this game object after we are done iterating through the members of the set
+        # so, we put it in a list that we will refer to later
+        EngineGlobals.delete_us.append(self)

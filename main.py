@@ -34,6 +34,11 @@ EngineGlobals.game_objects.add(screen)
 def main_update_callback(dt):
     for obj in EngineGlobals.game_objects:
         obj.updateloop(dt)
+    for delete_me in EngineGlobals.delete_us:
+        EngineGlobals.game_objects.remove(delete_me)
+        delete_me.delete()
+    EngineGlobals.delete_us = []
+
 # ask pyglet to call our main_update_callback 120 times per second
 pyglet.clock.schedule_interval(main_update_callback, 1/120.0)
 

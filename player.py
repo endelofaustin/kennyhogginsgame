@@ -12,8 +12,8 @@ class Player(PhysicsSprite):
         
         # jumpct counts the number of jumps to allow for double-jumping
         self.jumpct = 0
-        self.spit_bullet = pyglet.media.load("audio/spitbullets.mp3", streaming=False)
-        
+        self.spit_bullet = pyglet.media.load("audio/spitbullets.wav", streaming=False)
+
     def updateloop(self, dt):
         # interpret arrow keys into velocity
         self.speed[0] = Decimal(0)

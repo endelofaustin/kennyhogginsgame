@@ -1,6 +1,6 @@
 TODO LIST:
-* ~~Projectiles
-   * ~~Create a projectile class that subclasses a Pyglet Sprite, but with different mechanics than the PhysicsSprite
+* ~~Projectiles~~
+   * ~~Create a projectile class that subclasses a Pyglet Sprite, but with different mechanics than the PhysicsSprite~~
 * Maps
    * Be able to use different 32-pixel-square tiles in the maps
 * Placement of sprites & solid objects in the environment

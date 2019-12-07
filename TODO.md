@@ -1,6 +1,7 @@
 TODO LIST:
-* ~~Projectiles
-   * ~~Create a projectile class that subclasses a Pyglet Sprite, but with different mechanics than the PhysicsSprite
+* ~~Projectiles~~
+   * ~~Create a projectile class that subclasses a Pyglet Sprite, but with different mechanics than the PhysicsSprite~~
+* Kenny should be able to face left as well
 * Maps
    * Be able to use different 32-pixel-square tiles in the maps
 * Placement of sprites & solid objects in the environment
@@ -23,3 +24,4 @@ OTHER PEEPS:
 COOL IDEAS:
 * What if part of the game was having to fix a bad level design so that you could complete it
 * One huge map but parts of it change when you're not looking
+* Random text in the background like a poem or Kenny's thoughts

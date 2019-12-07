@@ -9,10 +9,11 @@ from bullet import Bullet
 class Player(PhysicsSprite):
     def __init__(self):
         PhysicsSprite.__init__(self, has_gravity=True, resource_image=pyglet.resource.image("kennystance1-2.png.png"))
-
+        
         # jumpct counts the number of jumps to allow for double-jumping
         self.jumpct = 0
-
+        self.spit_bullet = pyglet.media.load("audio/spitbullets.mp3", streaming=False)
+        
     def updateloop(self, dt):
         # interpret arrow keys into velocity
         self.speed[0] = Decimal(0)
@@ -50,3 +51,4 @@ class Player(PhysicsSprite):
         bullet = Bullet()
         bullet.speed[0] += Decimal('15.0')
         bullet.dpos[0],bullet.dpos[1] = self.dpos[0] + 5, self.dpos[1] + 40
+        self.spit_bullet.play()

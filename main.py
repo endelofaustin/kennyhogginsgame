@@ -3,6 +3,7 @@
 import sys, pyglet, physics, player, editor, pickle
 from engineglobals import EngineGlobals
 from decimal import getcontext, Decimal
+from text import Text_Crawl
 
 # set Decimal precision to 7 places, much more efficient than the default 28
 # 6 places is enough for 1 million pixels of accuracy, which is enough to
@@ -84,6 +85,10 @@ EngineGlobals.platform = environment
 EngineGlobals.kenny = kenny
 EngineGlobals.our_screen = screen
 
+# Instaniate the text crawl object
+text_crawl = Text_Crawl()
+EngineGlobals.game_objects.add(text_crawl)
+
 # this function renders all elements to the screen whenever requested by the pyglet engine
 # (typically every vsync event, 60 times per second)
 @EngineGlobals.window.event
@@ -95,9 +100,9 @@ def on_draw():
     xstart = int(screen.x / 32)
     xend = int((screen.x + EngineGlobals.width) / 32) + 1
 
-    ystart = len(environment) - int(screen.y / 32) - 1
+    ystart = len(EngineGlobals.platform) - int(screen.y / 32) - 1
     screen_top = screen.y + EngineGlobals.height
-    yend = len(environment) - int((screen_top) / 32) - 2
+    yend = len(EngineGlobals.platform) - int((screen_top) / 32) - 2
 
     # xrender_start and yrender_start represent the offset of where to start drawing a given block on the screen - this origin
     # could be offscreen for blocks that are only partially onscreen at a given time
@@ -112,8 +117,8 @@ def on_draw():
         for ycounter in range(ystart, yend, -1):
 
             # grab the block from the environment and see if we should render it or not
-            if xcounter >= 0 and xcounter < len(environment[0]) and ycounter >= 0 and ycounter < len(environment):
-                this_block = environment[ycounter][xcounter]
+            if xcounter >= 0 and xcounter < len(EngineGlobals.platform[0]) and ycounter >= 0 and ycounter < len(EngineGlobals.platform):
+                this_block = EngineGlobals.platform[ycounter][xcounter]
                 if this_block == 1:
                     green_block.blit(xrender_start, yrender_start)
 
@@ -123,21 +128,17 @@ def on_draw():
         # after each time through the x loop, update the x rendering location and reset y to the bottom of the column
         xrender_start += 32
         yrender_start = 0 - screen.y % 32
+    
+    # Drawing the Text Crawl object now:::: Right here! 
+    text_crawl.on_draw()
 
     # now that we've drawn the environment, draw all sprites
     EngineGlobals.main_batch.draw()
 
+
 #### Audio playback testing
-#
-# 
 introwav = pyglet.media.load('audio/intro.wav', streaming=False)
 introwav.play()
-
-
-
-
-
-
 
 # this is the main game loop!
 if __name__ == '__main__':

@@ -16,8 +16,13 @@ screen = physics.Screen()
 
 
 # create some debug text to be rendered
-EngineGlobals.textsurface = pyglet.text.Label(text='Arrow keys move and Ctrl or Up to jump', color=(255, 0, 255, 255),
-                                batch=EngineGlobals.main_batch, y=EngineGlobals.height, anchor_y='top')
+EngineGlobals.textsurface = pyglet.text.Label(
+    text='Arrow keys move and Ctrl or Up to jump',
+    color=(255, 0, 255, 255),
+    batch=EngineGlobals.main_batch,
+    y=EngineGlobals.height,
+    anchor_y='top'
+)
 
 # load kenny sprite
 kenny = player.Player()
@@ -25,8 +30,8 @@ mouse_events = editor.Editor()
 EngineGlobals.window.push_handlers(kenny)
 EngineGlobals.window.push_handlers(mouse_events)
 
-# When adding to this list we are beginning to setup changable objects
-# any object in this list will have its update function called
+# When adding to this set we are beginning to setup changable objects
+# any object in this set will have its update function called
 EngineGlobals.game_objects.add(screen)
 
 # this function will be set up for pyglet to call it every update cycle, 120 times per second

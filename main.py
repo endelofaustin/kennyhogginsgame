@@ -133,7 +133,7 @@ def on_draw():
         # after each time through the x loop, update the x rendering location and reset y to the bottom of the column
         xrender_start += 32
         yrender_start = 0 - screen.y % 32
-    
+
     # Drawing the Text Crawl object now:::: Right here! 
     text_crawl.on_draw()
 

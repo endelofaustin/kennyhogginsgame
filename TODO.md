@@ -1,9 +1,10 @@
 TODO LIST:
+* Maps
+   * ~~Be able to use different 32-pixel-square tiles in the maps~~
+   * When we save the map we get a ValueError because pickle cannot pickle pointers
 * ~~Projectiles~~
    * ~~Create a projectile class that subclasses a Pyglet Sprite, but with different mechanics than the PhysicsSprite~~
 * Kenny should be able to face left as well
-* Maps
-   * Be able to use different 32-pixel-square tiles in the maps
 * Placement of sprites & solid objects in the environment
 * Saving/serializing the map to and from a file - pickle?
    * We may want to keep track of different versions of the map class over time

@@ -102,6 +102,8 @@ def on_draw():
                 this_block = EngineGlobals.platform[ycounter][xcounter]
                 if this_block == 1:
                     green_block.blit(xrender_start, yrender_start)
+                elif hasattr(this_block, 'image'):
+                    this_block.image.blit(xrender_start, yrender_start)
 
             # after each time through the y loop, update the y rendering location
             yrender_start += 32

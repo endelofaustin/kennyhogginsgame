@@ -75,8 +75,8 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                 left_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int((new_y + self.height - 1) / 32) - 1][int(self.dpos[0]/32)]
                 right_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int((new_y + self.height - 1) / 32) - 1][int((self.dpos[0] + self.width - 1)/32)]
                 # if one of those tiles is solid, time to cease all vertical movement!
-                if ( left_foot_tile == 1 or right_foot_tile == 1
-                        or left_head_tile == 1 or right_head_tile == 1 ):
+                if (self.if_solid(left_foot_tile) == True or self.if_solid(right_foot_tile) == True
+                        or self.if_solid(left_head_tile) == True or self.if_solid(right_head_tile) == True):
                     if self.speed[1] < 0 and not self.landed:
                         self.landed = True
                         self.on_PhysicsSprite_landed()
@@ -95,8 +95,8 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                 right_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int(self.dpos[1] / 32) - 1][int((new_x + self.width - 1)/32)]
                 left_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int((self.dpos[1] + self.height - 1) / 32) - 1][int(new_x/32)]
                 right_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int((self.dpos[1] + self.height - 1) / 32) - 1][int((new_x + self.width - 1)/32)]
-                if ( left_foot_tile == 1 or right_foot_tile == 1
-                        or left_head_tile == 1 or right_head_tile == 1 ):
+                if (self.if_solid(left_foot_tile) == True or self.if_solid(right_foot_tile) == True
+                        or self.if_solid(left_head_tile) == True or self.if_solid(right_head_tile) == True):
                     self.speed[0] = 0
                     self.on_PhysicsSprite_collided()
 
@@ -112,6 +112,14 @@ class PhysicsSprite(pyglet.sprite.Sprite):
 
     def on_PhysicsSprite_collided(self,):
         pass
+
+    def if_solid(self,block):
+        if block == 1:
+            return True
+        if  hasattr(block, "solid") and block.solid == True:
+            return True
+        else:
+            return False
 
 # the Screen class tracks the positioning of the screen within the entire environment
 class Screen():

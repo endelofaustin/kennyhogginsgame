@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import sys, pyglet, physics, player, editor, pickle
+import sys, pyglet, physics, player, editor, pickle, dill
 from engineglobals import EngineGlobals
 from decimal import getcontext, Decimal
 from text import Text_Crawl
@@ -53,6 +53,7 @@ WHITE = (255, 255, 255, 0)
 GREEN = (0, 255, 0, 0)
 white_bg = pyglet.image.SolidColorImagePattern(WHITE).create_image(EngineGlobals.width, EngineGlobals.height)
 green_block = pyglet.image.SolidColorImagePattern(GREEN).create_image(32, 32)
+hay_block = pyglet.resource.image('firstblock.png')
 
 
 # This is where we store instance objects as static members of EngineGlobals
@@ -60,8 +61,8 @@ green_block = pyglet.image.SolidColorImagePattern(GREEN).create_image(32, 32)
 #EngineGlobals.platform = environment
 
 # We are loading our pickled environment here for loading when the game starts. Chicken pot pie
-with open('map.pickle', 'rb') as f:
-    EngineGlobals.platform = pickle.load(f)
+with open('map.dill', 'rb') as f:
+    EngineGlobals.platform = dill.load(f)
 
 EngineGlobals.kenny = kenny
 EngineGlobals.our_screen = screen
@@ -103,7 +104,7 @@ def on_draw():
                 if this_block == 1:
                     green_block.blit(xrender_start, yrender_start)
                 elif hasattr(this_block, 'image'):
-                    this_block.image.blit(xrender_start, yrender_start)
+                    hay_block.blit(xrender_start, yrender_start)
 
             # after each time through the y loop, update the y rendering location
             yrender_start += 32

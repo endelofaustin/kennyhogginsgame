@@ -9,7 +9,7 @@ from bullet import Bullet
 class Player(PhysicsSprite):
     def __init__(self):
         PhysicsSprite.__init__(self, has_gravity=True, resource_image=pyglet.resource.image("kennystance1-2.png.png"))
-        
+
         # jumpct counts the number of jumps to allow for double-jumping
         self.jumpct = 0
         self.spit_bullet = pyglet.media.load("audio/spitbullets.wav", streaming=False)

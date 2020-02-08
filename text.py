@@ -1,19 +1,20 @@
 import pyglet
+from engineglobals import EngineGlobals
 
 class Text_Crawl():
 
     def __init__(self,):
 
-        self.label = pyglet.text.Label('Chase ME!!!! :) You cannnot catch me!',
-                          font_name='Times New Roman',
-                          font_size=12,
-                          x=32, y=233,color=(0,0,0,255),
-                          anchor_x='left', anchor_y='center')
+        self.document = pyglet.text.decode_text('Chase ME!!!! :) You cannat do the catching')
+        self.layout = pyglet.text.layout.TextLayout(self.document, EngineGlobals.width, EngineGlobals.height, wrap_lines=True, batch=EngineGlobals.main_batch,)
+        self.layout.x = 0
+        self.layout.y = -EngineGlobals.height
+        
 
     def on_draw(self,):
-        self.label.draw()
+        self.layout.draw()
 
     def updateloop(self, dt):
 
-        self.label.x += 1
-        self.label.y += 1
+        self.layout.x += 0
+        self.layout.y += 1

@@ -10,11 +10,12 @@ class PhysicsSprite(pyglet.sprite.Sprite):
 
     # constructor
     # Set has_gravity to False to create a sprite that hovers in defiance of all reason
-    def __init__(self, has_gravity = True, resource_image = None):
+    def __init__(self, has_gravity = True, resource_image_dict = None):
         self.landed = False
 
-        # call the parent Sprite constructor
-        pyglet.sprite.Sprite.__init__(self, img=resource_image, batch=EngineGlobals.main_batch)
+        # call the parent Sprite __init__
+        pyglet.sprite.Sprite.__init__(self, img=next(iter(resource_image_dict.values())), batch=EngineGlobals.main_batch)
+        self.resource_images = resource_image_dict
 
         # the 'speed' member is a Decimal representation of the sprite's speed at this
         # point in time; each time the game loop runs, the sprite will move by that

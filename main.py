@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import sys, pyglet, physics, player, editor, pickle, dill
+import sys, pyglet, physics, player, editor, pickle, dill, enemies
 from engineglobals import EngineGlobals
 from decimal import getcontext, Decimal
 from text import Text_Crawl
@@ -30,6 +30,9 @@ kenny = player.Player()
 mouse_events = editor.Editor()
 EngineGlobals.window.push_handlers(kenny)
 EngineGlobals.window.push_handlers(mouse_events)
+
+# load enemy sprite
+enemy = enemies.Enemy()
 
 # When adding to this set we are beginning to setup changable objects
 # any object in this set will have its update function called

@@ -125,8 +125,17 @@ def on_draw():
 
 #### Audio playback testing
 introwav = pyglet.media.load('audio/intro.wav', streaming=False)
-introwav.play()
+audio_player = pyglet.media.Player()
+audio_player.queue(introwav)
+riffwav = pyglet.media.load('audio/kenny_riff1.wav', streaming=False)
+audio_player.queue(riffwav)
+@audio_player.event('on_player_next_source')
+def loop_the_next_source():
+    audio_player.loop = True
+audio_player.play()
 
 # this is the main game loop!
 if __name__ == '__main__':
     pyglet.app.run()
+
+audio_player.delete()

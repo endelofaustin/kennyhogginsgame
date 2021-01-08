@@ -1,4 +1,3 @@
-
 import pyglet
 
 class EngineGlobals:

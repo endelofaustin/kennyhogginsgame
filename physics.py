@@ -101,6 +101,17 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                     self.speed[0] = 0
                     self.on_PhysicsSprite_collided()
 
+        # collisions with other sprites
+        for other_sprite in EngineGlobals.game_objects:
+            if other_sprite == self or not isinstance(other_sprite, PhysicsSprite):
+                continue
+            if ( other_sprite.dpos[0] + other_sprite.width < self.dpos[0]
+             or other_sprite.dpos[1] + other_sprite.height < self.dpos[1]
+             or other_sprite.dpos[0] > self.dpos[0] + self.width
+             or other_sprite.dpos[1] > self.dpos[1] + self.height ):
+                continue
+            # otherwise, they have collided
+            self.on_PhysicsSprite_collided(other_sprite)
 
         self.dpos[0] += self.speed[0]
         self.dpos[1] += self.speed[1]
@@ -111,7 +122,7 @@ class PhysicsSprite(pyglet.sprite.Sprite):
     def on_PhysicsSprite_landed(self):
         pass
 
-    def on_PhysicsSprite_collided(self,):
+    def on_PhysicsSprite_collided(self, collided_object=None):
         pass
 
     def if_solid(self,block):

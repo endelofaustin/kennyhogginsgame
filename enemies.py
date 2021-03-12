@@ -45,6 +45,4 @@ class Enemy(PhysicsSprite):
         self.dead_timer = 0
         self.image = self.resource_images['dead']
         dead_dude = pyglet.media.load('audio/glurk.wav', streaming=False)
-        EngineGlobals.audio_player.queue(dead_dude)
-        EngineGlobals.audio_player.play()
- 
+        dead_dude.play()

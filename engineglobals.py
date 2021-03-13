@@ -33,3 +33,5 @@ class EngineGlobals:
         # this is a game object list that will auto populate when sprites are generated
         EngineGlobals.game_objects = set()
         EngineGlobals.delete_us = []
+
+

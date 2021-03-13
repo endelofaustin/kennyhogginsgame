@@ -4,6 +4,8 @@ import sys, pyglet, physics, player, editor, pickle, dill, enemies
 from engineglobals import EngineGlobals
 from decimal import getcontext, Decimal
 from text import Text_Crawl
+from spike import Spike
+from bandaid import Bandaid
 
 # set Decimal precision to 7 places, much more efficient than the default 28
 # 6 places is enough for 1 million pixels of accuracy, which is enough to
@@ -33,6 +35,8 @@ EngineGlobals.window.push_handlers(mouse_events)
 
 # load enemy sprite
 enemy = enemies.Enemy()
+spike = Spike([172, 0])
+bandaid = Bandaid([236, 0], 'good')
 
 # When adding to this set we are beginning to setup changable objects
 # any object in this set will have its update function called
@@ -129,8 +133,6 @@ EngineGlobals.audio_player = pyglet.media.Player()
 EngineGlobals.audio_player.queue(introwav)
 riffwav = pyglet.media.load('audio/kenny_riff1.wav', streaming=False)
 EngineGlobals.audio_player.queue(riffwav)
-dying = pyglet.media.load('audio/glurk.wav', streaming=False)
-EngineGlobals.audio_player.queue(dying)
 @EngineGlobals.audio_player.event('on_player_next_source')
 def loop_the_next_source():
     pass

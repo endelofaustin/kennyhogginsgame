@@ -32,13 +32,6 @@ class Enemy(PhysicsSprite):
            self.speed[0] = Decimal(random.randrange(-5, 50))
            self.moving_time = 0
 
-#         if self.speed[0] < 0:
-#             self.direction = 'left'
-#             self.image = self.resource_images['left']
-#         elif self.speed[0] > 0:
-#             self.direction = 'right'
-#             self.image = self.resource_images['right']
-# 
         PhysicsSprite.updateloop(self, dt)
       
     def die_hard(self,):

@@ -7,18 +7,24 @@ from bullet import Bullet
 
 # the player object represents Kenny and responds to keyboard input
 class Player(PhysicsSprite):
+    
     def __init__(self):
         PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
             'right': pyglet.resource.image("kennystance1-2.png.png"),
-            'left': pyglet.resource.image("kennystance-left.png")
+            'left': pyglet.resource.image("kennystance-left.png"),
+            'bloody': pyglet.resource.image("bloodykenny-1.png")
         })
 
         # Which direction is Kenny facing?
         self.direction = 'right'
-
+        
         # jumpct counts the number of jumps to allow for double-jumping
         self.jumpct = 0
         self.spit_bullet = pyglet.media.load("audio/spitbullets.wav", streaming=False)
+
+        # let's get that blood flowing
+        self.bloody = False
+
 
     def updateloop(self, dt):
         # interpret arrow keys into velocity
@@ -34,7 +40,11 @@ class Player(PhysicsSprite):
         elif self.speed[0] > 0:
             self.direction = 'right'
             self.image = self.resource_images['right']
-
+        
+        if self.bloody == True:
+           self.image = self.resource_images['bloody']
+           
+        
         # then, run normal physics algorithm
         PhysicsSprite.updateloop(self, dt)
 
@@ -60,7 +70,7 @@ class Player(PhysicsSprite):
 
     # Lets do some shooting
 
-    def shoot_it(self,):
+    def shoot_it(self):
         bullet = Bullet()
         if self.direction == 'right':
             bullet.speed[0] -= Decimal('15.0')
@@ -70,3 +80,12 @@ class Player(PhysicsSprite):
             bullet.dpos[0],bullet.dpos[1] = self.dpos[0] + 5, self.dpos[1] + 22
         # Play the bullet spit audio
         self.spit_bullet.play()
+
+
+    def on_PhysicsSprite_collided(self, collided_object=None):
+        
+        if collided_object and type(collided_object).__name__ == 'Spike':
+            self.bloody = True
+        elif collided_object and type(collided_object).__name__ == 'Bandaid':
+            self.bloody = False
+            

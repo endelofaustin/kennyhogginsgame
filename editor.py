@@ -12,11 +12,11 @@ class Editor():
         x_coord = int((x + EngineGlobals.our_screen.x)/32)
         y_coord = len(EngineGlobals.platform) - 1 - int((EngineGlobals.our_screen.y + y)/32)
         if EngineGlobals.platform[int(y_coord)][int(x_coord)] == 0:
-            block = Block(1, True)            
+            block = Block(1, True)
             EngineGlobals.platform[int(y_coord)][int(x_coord)] = block
         else:
             EngineGlobals.platform[int(y_coord)][int(x_coord)] = 0
-         
+
     def on_mouse_motion(self,x, y, dx, dy):
         # commented out the below print statement since this appears to be working
         #print(x, y) 

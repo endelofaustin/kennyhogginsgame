@@ -127,10 +127,8 @@ def on_draw():
 introwav = pyglet.media.load('audio/intro.wav', streaming=False)
 EngineGlobals.audio_player = pyglet.media.Player()
 EngineGlobals.audio_player.queue(introwav)
-riffwav = pyglet.media.load('audio/kenny_riff1.wav', streaming=False)
-EngineGlobals.audio_player.queue(riffwav)
-dying = pyglet.media.load('audio/glurk.wav', streaming=False)
-EngineGlobals.audio_player.queue(dying)
+#riffwav = pyglet.media.load('audio/kenny_riff1.wav', streaming=False)
+#EngineGlobals.audio_player.queue(riffwav)
 @EngineGlobals.audio_player.event('on_player_next_source')
 def loop_the_next_source():
     pass

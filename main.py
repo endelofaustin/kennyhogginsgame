@@ -45,12 +45,13 @@ EngineGlobals.game_objects.add(screen)
 # this function will be set up for pyglet to call it every update cycle, 120 times per second
 # it simply calls the updated function for every object in game_objects
 def main_update_callback(dt):
+    physics.PhysicsSprite.collision_lists.clear()
     for obj in EngineGlobals.game_objects:
         obj.updateloop(dt)
     for delete_me in EngineGlobals.delete_us:
         EngineGlobals.game_objects.remove(delete_me)
         delete_me.delete()
-    EngineGlobals.delete_us = []
+    EngineGlobals.delete_us.clear()
 
 # ask pyglet to call our main_update_callback 120 times per second
 pyglet.clock.schedule_interval(main_update_callback, 1/120.0)

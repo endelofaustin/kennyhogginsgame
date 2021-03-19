@@ -8,6 +8,8 @@ from engineglobals import EngineGlobals
 # to speed and gravity.
 class PhysicsSprite(pyglet.sprite.Sprite):
 
+    collision_lists = {}
+
     # constructor
     # Set has_gravity to False to create a sprite that hovers in defiance of all reason
     def __init__(self, has_gravity = True, resource_image_dict = None):
@@ -102,22 +104,31 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                     self.on_PhysicsSprite_collided()
 
         # collisions with other sprites
-        for other_sprite in EngineGlobals.game_objects:
-            if other_sprite == self or not isinstance(other_sprite, PhysicsSprite):
-                continue
-            if ( other_sprite.dpos[0] + other_sprite.width < self.dpos[0]
-             or other_sprite.dpos[1] + other_sprite.height < self.dpos[1]
-             or other_sprite.dpos[0] > self.dpos[0] + self.width
-             or other_sprite.dpos[1] > self.dpos[1] + self.height ):
-                continue
-            # otherwise, they have collided
-            self.on_PhysicsSprite_collided(other_sprite)
+        for hashed_x in range(int(self.dpos[0] / EngineGlobals.collision_cell_size), int((self.dpos[0] + self.width - 1) / EngineGlobals.collision_cell_size) + 1):
+            for hashed_y in range(int(self.dpos[1] / EngineGlobals.collision_cell_size), int((self.dpos[1] + self.height - 1) / EngineGlobals.collision_cell_size) + 1):
+                # first, check for collisions with any other sprites in this cell
+                for collide_with in PhysicsSprite.collision_lists.setdefault(hashed_y * len(EngineGlobals.platform) + hashed_x, []):
+                    if not isinstance(collide_with, PhysicsSprite):
+                        continue
+                    if ( collide_with.dpos[0] + collide_with.width < self.dpos[0]
+                    or collide_with.dpos[1] + collide_with.height < self.dpos[1]
+                    or collide_with.dpos[0] > self.dpos[0] + self.width
+                    or collide_with.dpos[1] > self.dpos[1] + self.height ):
+                        continue
+                    self.on_PhysicsSprite_collided(collide_with)
+                    collide_with.on_PhysicsSprite_collided(self)
+                # then, add this sprite to the cell
+                PhysicsSprite.collision_lists[hashed_y * len(EngineGlobals.platform) + hashed_x].append(self)
 
+        # update position according to current speed
         self.dpos[0] += self.speed[0]
         self.dpos[1] += self.speed[1]
 
         # finally, update the x and y coords so that pyglet will know where to draw the sprite
         self.x, self.y = int(self.dpos[0] - EngineGlobals.our_screen.x), int(self.dpos[1] - EngineGlobals.our_screen.y)
+    
+    def destroy(self):
+        EngineGlobals.delete_us.add(self)
 
     def on_PhysicsSprite_landed(self):
         pass
@@ -158,5 +169,3 @@ class Screen():
         screen_top = self.y + EngineGlobals.height
         if kennys_head >= screen_top - 64:
             self.y = kennys_head - EngineGlobals.height + 64
-
-

@@ -24,7 +24,7 @@ class Enemy(PhysicsSprite):
         if hasattr(self, 'dead_timer'):
             self.dead_timer += 1
             if self.dead_timer == 240:
-                EngineGlobals.delete_us.append(self)
+                self.destroy()
 
         self.moving_time += 1
         self.speed[0] = Decimal(0)

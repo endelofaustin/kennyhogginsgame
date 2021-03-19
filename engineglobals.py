@@ -7,6 +7,9 @@ class EngineGlobals:
     # scale up all pixel art by this amount
     scale_factor = 2
 
+    # width/height of each cell in the collision grid
+    collision_cell_size = 32
+
     # do a bunch of engine initialization
     def init():
         # set the GL_NEAREST texture filter in order to create a precise pixelated look instead of blurring
@@ -32,6 +35,4 @@ class EngineGlobals:
 
         # this is a game object list that will auto populate when sprites are generated
         EngineGlobals.game_objects = set()
-        EngineGlobals.delete_us = []
-
-
+        EngineGlobals.delete_us = set()

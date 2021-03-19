@@ -43,8 +43,8 @@ class Player(PhysicsSprite):
         
         if self.bloody == True:
            self.image = self.resource_images['bloody']
-           
-        
+
+
         # then, run normal physics algorithm
         PhysicsSprite.updateloop(self, dt)
 
@@ -88,4 +88,4 @@ class Player(PhysicsSprite):
             self.bloody = True
         elif collided_object and type(collided_object).__name__ == 'Bandaid':
             self.bloody = False
-            
+            collided_object.destroy()            

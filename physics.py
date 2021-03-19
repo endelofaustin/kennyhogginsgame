@@ -103,7 +103,13 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                     self.speed[0] = 0
                     self.on_PhysicsSprite_collided()
 
-        # collisions with other sprites
+        # Collisions with other sprites. So what's going on here actually?
+        # 1. At the start of each update loop, we initialize an empty dict, PhysicsSprite.collision_lists. The dict will represent a grid in game space,
+        #    with each cell 32 pixels square, about the average size of a sprite.
+        # 2. Here in the update function, we are calculating the hashed_x and hashed_y of all possible cells that the sprite might be touching at this moment.
+        # 3. We append the sprite in a list stored at each cell.
+        # 4. We do a closer check of all other sprites that have been placed in the same cell, to see if their bounding boxes collide or not; but we no longer
+        #    have to check sprites elsewhere in the map that have not been placed in this cell.
         for hashed_x in range(int(self.dpos[0] / EngineGlobals.collision_cell_size), int((self.dpos[0] + self.width - 1) / EngineGlobals.collision_cell_size) + 1):
             for hashed_y in range(int(self.dpos[1] / EngineGlobals.collision_cell_size), int((self.dpos[1] + self.height - 1) / EngineGlobals.collision_cell_size) + 1):
                 # first, check for collisions with any other sprites in this cell

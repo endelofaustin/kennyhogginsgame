@@ -130,8 +130,10 @@ def on_draw():
 
 #### Audio playback testing
 introwav = pyglet.media.load('audio/intro.wav', streaming=False)
+lalala = pyglet.media.load('audio/LaLaLa.wav', streaming=False)
 EngineGlobals.audio_player = pyglet.media.Player()
 EngineGlobals.audio_player.queue(introwav)
+EngineGlobals.audio_player.queue(lalala)
 riffwav = pyglet.media.load('audio/kenny_riff1.wav', streaming=False)
 EngineGlobals.audio_player.queue(riffwav)
 

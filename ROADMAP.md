@@ -1,14 +1,14 @@
-PHASE 1:
+[DONE] PHASE 1:
  * Idea about a game about a hog who goes for a jog
 
-PHASE 2:
+[DONE] PHASE 2:
  * Spin up the python code base
 
-PHASE 3:
+[DONE, MOSTLY] PHASE 3:
  * Implement the game physics engine
- * Name the company
+ * Name the company == 
 
-PHASE 4:
+[IN PROGRESS] PHASE 4:
  * Artwork, animations, game mechanics
  * Boss fights?
  * Sound design, music, effects
@@ -16,7 +16,6 @@ PHASE 4:
 PHASE 5:
  * Advance soundtrack preview
  * Build / complete the map editor
-
 
 PHASE 6:
  * Do a crap-ton of maps / design work
@@ -37,3 +36,6 @@ PHASE 9:
 PHASE 10:
  * Research how games get on Steam
  * Steam release
+
+Phase 11:
+* Bring work on Kenny Hoggins Sequel -- Jackie Flan Back to the Pan  kung fu fighting dessert

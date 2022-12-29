@@ -16,7 +16,7 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         self.landed = False
 
         # call the parent Sprite __init__
-        pyglet.sprite.Sprite.__init__(self, img=next(iter(resource_image_dict.values())), batch=EngineGlobals.main_batch)
+        pyglet.sprite.Sprite.__init__(self, img=next(iter(resource_image_dict.values())), batch=EngineGlobals.main_batch, group=EngineGlobals.sprites_group)
         self.resource_images = resource_image_dict
 
         # the 'speed' member is a Decimal representation of the sprite's speed at this

@@ -6,6 +6,7 @@ from decimal import getcontext, Decimal
 from text import Text_Crawl
 from spike import Spike
 from bandaid import Bandaid
+from math import floor
 
 # set Decimal precision to 7 places, much more efficient than the default 28
 # 6 places is enough for 1 million pixels of accuracy, which is enough to
@@ -17,7 +18,6 @@ getcontext().prec = 7
 EngineGlobals.init()
 screen = physics.Screen()
 
-
 # create some debug text to be rendered
 EngineGlobals.textsurface = pyglet.text.Label(
     text='Arrow keys move and Ctrl or Up to jump',
@@ -26,6 +26,17 @@ EngineGlobals.textsurface = pyglet.text.Label(
     y=EngineGlobals.height,
     anchor_y='top'
 )
+
+# We are loading our pickled environment here for loading when the game starts. Chicken pot pie
+with open('map.dill', 'rb') as f:
+    EngineGlobals.platform = dill.load(f)
+    # convert tiles to sprites
+    for y, row in enumerate(EngineGlobals.platform):
+        for x, tile in enumerate(row):
+            if tile == 1:
+                EngineGlobals.platform[y][x] = gamepieces.Block(EngineGlobals.hay_block, True)
+            elif hasattr(tile, 'image'):
+                EngineGlobals.platform[y][x] = gamepieces.Block(EngineGlobals.hay_block, True)
 
 # load kenny sprite
 kenny = player.Player()
@@ -57,12 +68,12 @@ def main_update_callback(dt):
 
     # Track the screen through the platform iteration style
     # movement happens not within this code below
-    xstart = int(screen.x / 32) - 1
-    xend = int((screen.x + EngineGlobals.width) / 32) + 2
+    xstart = floor(screen.x / 32) - 1
+    xend = floor((screen.x + EngineGlobals.width) / 32) + 2
 
-    ystart = len(EngineGlobals.platform) - int(screen.y / 32)
+    ystart = len(EngineGlobals.platform) - floor(screen.y / 32)
     screen_top = screen.y + EngineGlobals.height
-    yend = len(EngineGlobals.platform) - int((screen_top) / 32) - 3
+    yend = len(EngineGlobals.platform) - floor((screen_top) / 32) - 3
 
     # xrender_start and yrender_start represent the offset of where to start drawing a given block on the screen - this origin
     # could be offscreen for blocks that are only partially onscreen at a given time
@@ -79,8 +90,12 @@ def main_update_callback(dt):
             # grab the block from the environment and see if we should render it or not
             if xcounter >= 0 and xcounter < len(EngineGlobals.platform[0]) and ycounter >= 0 and ycounter < len(EngineGlobals.platform):
                 if isinstance(EngineGlobals.platform[ycounter][xcounter], gamepieces.Block):
-                    EngineGlobals.platform[ycounter][xcounter].sprite.x = xrender_start
-                    EngineGlobals.platform[ycounter][xcounter].sprite.y = yrender_start
+                    if xrender_start + 32 <= 0 or xrender_start >= EngineGlobals.width or yrender_start + 32 <= 0 or yrender_start >= EngineGlobals.height:
+                        EngineGlobals.platform[ycounter][xcounter].sprite.visible = False
+                    else:
+                        EngineGlobals.platform[ycounter][xcounter].sprite.visible = True
+                        EngineGlobals.platform[ycounter][xcounter].sprite.x = xrender_start
+                        EngineGlobals.platform[ycounter][xcounter].sprite.y = yrender_start
 
             # after each time through the y loop, update the y rendering location
             yrender_start += 32
@@ -91,28 +106,6 @@ def main_update_callback(dt):
 
 # ask pyglet to call our main_update_callback 60 times per second
 pyglet.clock.schedule_interval(main_update_callback, 1/60.0)
-
-# set up some color values and create a white rectangle to white out the screen
-WHITE = (255, 255, 255, 0)
-GREEN = (0, 255, 0, 0)
-green_block = pyglet.image.SolidColorImagePattern(GREEN).create_image(32, 32)
-hay_block = pyglet.resource.image('firstblock.png')
-
-
-# This is where we store instance objects as static members of EngineGlobals
-#platform = environment
-#EngineGlobals.platform = environment
-
-# We are loading our pickled environment here for loading when the game starts. Chicken pot pie
-with open('map.dill', 'rb') as f:
-    EngineGlobals.platform = dill.load(f)
-    # convert tiles to sprites
-    for y, row in enumerate(EngineGlobals.platform):
-        for x, tile in enumerate(row):
-            if tile == 1:
-                EngineGlobals.platform[y][x] = gamepieces.Block(hay_block, True)
-            elif hasattr(tile, 'image'):
-                EngineGlobals.platform[y][x] = gamepieces.Block(hay_block, True)
 
 EngineGlobals.kenny = kenny
 EngineGlobals.our_screen = screen

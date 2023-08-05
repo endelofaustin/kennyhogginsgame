@@ -44,6 +44,8 @@ class Player(PhysicsSprite):
         if self.bloody == True:
            self.image = self.resource_images['bloody']
 
+        if self.landed:
+            self.jumpct = 0
 
         # then, run normal physics algorithm
         PhysicsSprite.updateloop(self, dt)
@@ -51,10 +53,11 @@ class Player(PhysicsSprite):
     # on_key_press is called by the pyglet engine when attached to a window
     # this lets us handle keyboard input events at the time they occur
     def on_key_press(self, symbol, modifiers):
-        if symbol == pyglet.window.key.LCTRL or symbol == pyglet.window.key.RCTRL or symbol == pyglet.window.key.UP:
+        if (symbol == pyglet.window.key.LCTRL or symbol == pyglet.window.key.RCTRL or symbol == pyglet.window.key.UP) and self.jumpct <= 1:
             # if on a solid object, normal jump
             if self.landed and self.jumpct == 0:
                 self.speed[1] = Decimal(max(self.speed[1], 0) + 13)
+                self.landed = False
             # if already in the air, allow one more smaller jump
             elif self.jumpct < 2:
                 self.speed[1] = 10

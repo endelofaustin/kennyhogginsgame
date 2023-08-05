@@ -2,6 +2,7 @@
 import pyglet
 from decimal import Decimal
 from engineglobals import EngineGlobals
+from math import floor
 
 # PhysicsSprite represents a sprite that honors the laws of physics.
 # It contains an update method that will alter the sprite's position according
@@ -73,10 +74,10 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                 # and upper right
                 # since this is only checking for up/down collisions, it's important that we use the new y coordinates
                 # (new_y) but the original x coordinates (self.dpos[0])
-                left_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int(new_y / 32) - 1][int(self.dpos[0]/32)]
-                right_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int(new_y / 32) - 1][int((self.dpos[0] + self.width - 1)/32)]
-                left_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int((new_y + self.height - 1) / 32) - 1][int(self.dpos[0]/32)]
-                right_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int((new_y + self.height - 1) / 32) - 1][int((self.dpos[0] + self.width - 1)/32)]
+                left_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor(new_y / 32) - 1][floor(self.dpos[0]/32)]
+                right_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor(new_y / 32) - 1][floor((self.dpos[0] + self.width - 1)/32)]
+                left_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor((new_y + self.height - 1) / 32) - 1][floor(self.dpos[0]/32)]
+                right_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor((new_y + self.height - 1) / 32) - 1][floor((self.dpos[0] + self.width - 1)/32)]
                 # if one of those tiles is solid, time to cease all vertical movement!
                 if (self.if_solid(left_foot_tile) == True or self.if_solid(right_foot_tile) == True
                         or self.if_solid(left_head_tile) == True or self.if_solid(right_head_tile) == True):
@@ -94,10 +95,10 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                 self.speed[0] = 0
                 self.on_PhysicsSprite_collided()
             else:
-                left_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int(self.dpos[1] / 32) - 1][int(new_x/32)]
-                right_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int(self.dpos[1] / 32) - 1][int((new_x + self.width - 1)/32)]
-                left_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int((self.dpos[1] + self.height - 1) / 32) - 1][int(new_x/32)]
-                right_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - int((self.dpos[1] + self.height - 1) / 32) - 1][int((new_x + self.width - 1)/32)]
+                left_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor(self.dpos[1] / 32) - 1][floor(new_x/32)]
+                right_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor(self.dpos[1] / 32) - 1][floor((new_x + self.width - 1)/32)]
+                left_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor((self.dpos[1] + self.height - 1) / 32) - 1][floor(new_x/32)]
+                right_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor((self.dpos[1] + self.height - 1) / 32) - 1][floor((new_x + self.width - 1)/32)]
                 if (self.if_solid(left_foot_tile) == True or self.if_solid(right_foot_tile) == True
                         or self.if_solid(left_head_tile) == True or self.if_solid(right_head_tile) == True):
                     self.speed[0] = 0
@@ -110,8 +111,8 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         # 3. We append the sprite in a list stored at each cell.
         # 4. We do a closer check of all other sprites that have been placed in the same cell, to see if their bounding boxes collide or not; but we no longer
         #    have to check sprites elsewhere in the map that have not been placed in this cell.
-        for hashed_x in range(int(self.dpos[0] / EngineGlobals.collision_cell_size), int((self.dpos[0] + self.width - 1) / EngineGlobals.collision_cell_size) + 1):
-            for hashed_y in range(int(self.dpos[1] / EngineGlobals.collision_cell_size), int((self.dpos[1] + self.height - 1) / EngineGlobals.collision_cell_size) + 1):
+        for hashed_x in range(floor(self.dpos[0] / EngineGlobals.collision_cell_size), floor((self.dpos[0] + self.width - 1) / EngineGlobals.collision_cell_size) + 1):
+            for hashed_y in range(floor(self.dpos[1] / EngineGlobals.collision_cell_size), floor((self.dpos[1] + self.height - 1) / EngineGlobals.collision_cell_size) + 1):
                 # first, check for collisions with any other sprites in this cell
                 for collide_with in PhysicsSprite.collision_lists.setdefault(hashed_y * len(EngineGlobals.platform) + hashed_x, []):
                     if not isinstance(collide_with, PhysicsSprite):
@@ -152,6 +153,9 @@ class PhysicsSprite(pyglet.sprite.Sprite):
 
 # the Screen class tracks the positioning of the screen within the entire environment
 class Screen():
+    left_right_margin = 200
+    top_bottom_margin = 96
+
     def __init__(self):
         self.x = 0
         self.y = 0
@@ -159,19 +163,19 @@ class Screen():
     # self.x is screen position
     # kenny.dpos[0] is x 1 is y
     def updateloop(self, dt):
-        if (EngineGlobals.kenny.dpos[0] - self.x) < 64:
-            self.x = (EngineGlobals.kenny.dpos[0]) - 64
+        if (EngineGlobals.kenny.dpos[0] - self.x) < Screen.left_right_margin:
+            self.x = int(EngineGlobals.kenny.dpos[0]) - Screen.left_right_margin
 
-        kennys_belly = EngineGlobals.kenny.dpos[0] + EngineGlobals.kenny.width
+        kennys_belly = int(EngineGlobals.kenny.dpos[0]) + EngineGlobals.kenny.width
         screen_redge = self.x + EngineGlobals.width
 
-        if kennys_belly >= screen_redge - 64:
-            self.x = kennys_belly - EngineGlobals.width + 64
+        if kennys_belly >= screen_redge - Screen.left_right_margin:
+            self.x = kennys_belly - EngineGlobals.width + Screen.left_right_margin
 
-        if (EngineGlobals.kenny.dpos[1]) - self.y < 64:
-            self.y = (EngineGlobals.kenny.dpos[1]) - 64
+        if (EngineGlobals.kenny.dpos[1]) - self.y < Screen.top_bottom_margin:
+            self.y = int(EngineGlobals.kenny.dpos[1]) - Screen.top_bottom_margin
 
-        kennys_head = EngineGlobals.kenny.dpos[1] + EngineGlobals.kenny.height
+        kennys_head = int(EngineGlobals.kenny.dpos[1]) + EngineGlobals.kenny.height
         screen_top = self.y + EngineGlobals.height
-        if kennys_head >= screen_top - 64:
-            self.y = kennys_head - EngineGlobals.height + 64
+        if kennys_head >= screen_top - Screen.top_bottom_margin:
+            self.y = kennys_head - EngineGlobals.height + Screen.top_bottom_margin

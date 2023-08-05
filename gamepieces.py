@@ -8,6 +8,7 @@ class Block:
 
     def __init__(self, image, solid,):
         if not isinstance(image, pyglet.image.AbstractImage):
-            image = pyglet.resource.image('firstblock.png')
+            image = EngineGlobals.hay_block
         self.sprite = Sprite(img=image, batch=EngineGlobals.main_batch, group=EngineGlobals.tiles_group)
+        self.sprite.visible = False
         self.solid = solid 

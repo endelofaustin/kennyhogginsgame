@@ -45,3 +45,5 @@ class EngineGlobals:
         EngineGlobals.sim_fps = 0
         EngineGlobals.last_render = 0
         EngineGlobals.last_sim = 0
+
+        EngineGlobals.hay_block = pyglet.resource.image('firstblock.png')

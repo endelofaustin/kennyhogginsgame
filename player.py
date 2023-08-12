@@ -16,6 +16,7 @@ class Player(PhysicsSprite):
             'right': pyglet.resource.image("kennystance1-2.png.png"),
             'left': pyglet.resource.image("kennystance-left.png"),
             'bloody': pyglet.resource.image("bloodykenny-1.png"),
+            'run_left': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-run-left.png"), rows=1, columns=4), duration=1/10, loop=True),
             'run_right': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-run-right.png"), rows=1, columns=4), duration=1/10, loop=True)
         })
 
@@ -40,8 +41,8 @@ class Player(PhysicsSprite):
 
         if self.speed[0] < 0:
             self.direction = 'left'
-            if self.image != self.resource_images['left']:
-                self.image = self.resource_images['left']
+            if self.image != self.resource_images['run_left']:
+                self.image = self.resource_images['run_left']
         elif self.speed[0] > 0:
             self.direction = 'right'
             if self.image != self.resource_images['run_right']:

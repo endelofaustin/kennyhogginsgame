@@ -13,12 +13,17 @@ class PhysicsSprite(pyglet.sprite.Sprite):
 
     # constructor
     # Set has_gravity to False to create a sprite that hovers in defiance of all reason
-    def __init__(self, has_gravity = True, resource_image_dict = None):
+    def __init__(self, has_gravity = True, resource_image_dict = None, collision_width = None, collision_height = None):
         self.landed = False
 
         # call the parent Sprite __init__
         pyglet.sprite.Sprite.__init__(self, img=next(iter(resource_image_dict.values())), batch=EngineGlobals.main_batch, group=EngineGlobals.sprites_group)
         self.resource_images = resource_image_dict
+
+        if not collision_width and len(resource_image_dict) > 0:
+            self.collision_width = resource_image_dict[next(iter(resource_image_dict))].width
+        if not collision_height and len(resource_image_dict) > 0:
+            self.collision_height = resource_image_dict[next(iter(resource_image_dict))].height
 
         # the 'speed' member is a Decimal representation of the sprite's speed at this
         # point in time; each time the game loop runs, the sprite will move by that
@@ -59,7 +64,7 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         # upward or downward collisions
         if self.speed[1] != 0:
             # first, check if trying to move off the bottom or top of the screen
-            if new_y < 0 or new_y + self.height >= len(EngineGlobals.platform) * 32:
+            if new_y < 0 or new_y + self.collision_height >= len(EngineGlobals.platform) * 32:
                 # if so, check if we should trigger landing event (moving downward and not already grounded)
                 if self.speed[1] < 0 and not self.landed:
                     self.landed = True
@@ -75,9 +80,9 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                 # since this is only checking for up/down collisions, it's important that we use the new y coordinates
                 # (new_y) but the original x coordinates (self.dpos[0])
                 left_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor(new_y / 32) - 1][floor(self.dpos[0]/32)]
-                right_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor(new_y / 32) - 1][floor((self.dpos[0] + self.width - 1)/32)]
-                left_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor((new_y + self.height - 1) / 32) - 1][floor(self.dpos[0]/32)]
-                right_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor((new_y + self.height - 1) / 32) - 1][floor((self.dpos[0] + self.width - 1)/32)]
+                right_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor(new_y / 32) - 1][floor((self.dpos[0] + self.collision_width - 1)/32)]
+                left_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor((new_y + self.collision_height - 1) / 32) - 1][floor(self.dpos[0]/32)]
+                right_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor((new_y + self.collision_height - 1) / 32) - 1][floor((self.dpos[0] + self.collision_width - 1)/32)]
                 # if one of those tiles is solid, time to cease all vertical movement!
                 if (self.if_solid(left_foot_tile) == True or self.if_solid(right_foot_tile) == True
                         or self.if_solid(left_head_tile) == True or self.if_solid(right_head_tile) == True):
@@ -91,14 +96,14 @@ class PhysicsSprite(pyglet.sprite.Sprite):
 
         # left or right collisions
         if self.speed[0] != 0:
-            if new_x < 0 or new_x + self.width >= len(EngineGlobals.platform[0]) * 32:
+            if new_x < 0 or new_x + self.collision_width >= len(EngineGlobals.platform[0]) * 32:
                 self.speed[0] = 0
                 self.on_PhysicsSprite_collided()
             else:
                 left_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor(self.dpos[1] / 32) - 1][floor(new_x/32)]
-                right_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor(self.dpos[1] / 32) - 1][floor((new_x + self.width - 1)/32)]
-                left_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor((self.dpos[1] + self.height - 1) / 32) - 1][floor(new_x/32)]
-                right_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor((self.dpos[1] + self.height - 1) / 32) - 1][floor((new_x + self.width - 1)/32)]
+                right_foot_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor(self.dpos[1] / 32) - 1][floor((new_x + self.collision_width - 1)/32)]
+                left_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor((self.dpos[1] + self.collision_height - 1) / 32) - 1][floor(new_x/32)]
+                right_head_tile = EngineGlobals.platform[len(EngineGlobals.platform) - floor((self.dpos[1] + self.collision_height - 1) / 32) - 1][floor((new_x + self.collision_width - 1)/32)]
                 if (self.if_solid(left_foot_tile) == True or self.if_solid(right_foot_tile) == True
                         or self.if_solid(left_head_tile) == True or self.if_solid(right_head_tile) == True):
                     self.speed[0] = 0
@@ -111,16 +116,16 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         # 3. We append the sprite in a list stored at each cell.
         # 4. We do a closer check of all other sprites that have been placed in the same cell, to see if their bounding boxes collide or not; but we no longer
         #    have to check sprites elsewhere in the map that have not been placed in this cell.
-        for hashed_x in range(floor(self.dpos[0] / EngineGlobals.collision_cell_size), floor((self.dpos[0] + self.width - 1) / EngineGlobals.collision_cell_size) + 1):
-            for hashed_y in range(floor(self.dpos[1] / EngineGlobals.collision_cell_size), floor((self.dpos[1] + self.height - 1) / EngineGlobals.collision_cell_size) + 1):
+        for hashed_x in range(floor(self.dpos[0] / EngineGlobals.collision_cell_size), floor((self.dpos[0] + self.collision_width - 1) / EngineGlobals.collision_cell_size) + 1):
+            for hashed_y in range(floor(self.dpos[1] / EngineGlobals.collision_cell_size), floor((self.dpos[1] + self.collision_height - 1) / EngineGlobals.collision_cell_size) + 1):
                 # first, check for collisions with any other sprites in this cell
                 for collide_with in PhysicsSprite.collision_lists.setdefault(hashed_y * len(EngineGlobals.platform) + hashed_x, []):
                     if not isinstance(collide_with, PhysicsSprite):
                         continue
-                    if ( collide_with.dpos[0] + collide_with.width < self.dpos[0]
-                    or collide_with.dpos[1] + collide_with.height < self.dpos[1]
-                    or collide_with.dpos[0] > self.dpos[0] + self.width
-                    or collide_with.dpos[1] > self.dpos[1] + self.height ):
+                    if ( collide_with.dpos[0] + collide_with.collision_width < self.dpos[0]
+                    or collide_with.dpos[1] + collide_with.collision_height < self.dpos[1]
+                    or collide_with.dpos[0] > self.dpos[0] + self.collision_width
+                    or collide_with.dpos[1] > self.dpos[1] + self.collision_height ):
                         continue
                     self.on_PhysicsSprite_collided(collide_with)
                     collide_with.on_PhysicsSprite_collided(self)
@@ -166,7 +171,7 @@ class Screen():
         if (EngineGlobals.kenny.dpos[0] - self.x) < Screen.left_right_margin:
             self.x = int(EngineGlobals.kenny.dpos[0]) - Screen.left_right_margin
 
-        kennys_belly = int(EngineGlobals.kenny.dpos[0]) + EngineGlobals.kenny.width
+        kennys_belly = int(EngineGlobals.kenny.dpos[0]) + EngineGlobals.kenny.collision_width
         screen_redge = self.x + EngineGlobals.width
 
         if kennys_belly >= screen_redge - Screen.left_right_margin:
@@ -175,7 +180,7 @@ class Screen():
         if (EngineGlobals.kenny.dpos[1]) - self.y < Screen.top_bottom_margin:
             self.y = int(EngineGlobals.kenny.dpos[1]) - Screen.top_bottom_margin
 
-        kennys_head = int(EngineGlobals.kenny.dpos[1]) + EngineGlobals.kenny.height
+        kennys_head = int(EngineGlobals.kenny.dpos[1]) + EngineGlobals.kenny.collision_height
         screen_top = self.y + EngineGlobals.height
         if kennys_head >= screen_top - Screen.top_bottom_margin:
             self.y = kennys_head - EngineGlobals.height + Screen.top_bottom_margin

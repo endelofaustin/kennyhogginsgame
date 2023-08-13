@@ -16,6 +16,8 @@ class Player(PhysicsSprite):
             'right': pyglet.resource.image("kennystance1-2.png.png"),
             'left': pyglet.resource.image("kennystance-left.png"),
             'bloody': pyglet.resource.image("bloodykenny-1.png"),
+            'crouch_left': pyglet.resource.image("kenny-crouch-left.png"),
+            'crouch_right': pyglet.resource.image("kenny-crouch-right.png"),
             'run_left': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-run-left.png"), rows=1, columns=4), duration=1/10, loop=True),
             'run_right': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-run-right.png"), rows=1, columns=4), duration=1/10, loop=True)
         })
@@ -30,29 +32,42 @@ class Player(PhysicsSprite):
         # let's get that blood flowing
         self.bloody = False
 
+        self.crouching = False
+
 
     def updateloop(self, dt):
-        # interpret arrow keys into velocity
-        self.speed[0] = Decimal(0)
-        if EngineGlobals.keys[pyglet.window.key.LEFT]:
-            self.speed[0] -= Decimal(Player.LEFT_RIGHT_RUN_SPEED)
-        if EngineGlobals.keys[pyglet.window.key.RIGHT]:
-            self.speed[0] += Decimal(Player.LEFT_RIGHT_RUN_SPEED)
 
-        if self.speed[0] < 0:
-            self.direction = 'left'
-            if self.image != self.resource_images['run_left']:
-                self.image = self.resource_images['run_left']
-        elif self.speed[0] > 0:
-            self.direction = 'right'
-            if self.image != self.resource_images['run_right']:
-                self.image = self.resource_images['run_right']
-        elif self.direction == 'left':
-            if self.image != self.resource_images['left']:
-                self.image = self.resource_images['left']
+        self.speed[0] = Decimal(0)
+        if EngineGlobals.keys[pyglet.window.key.DOWN] and self.landed:
+            self.crouching = True
         else:
-            if self.image != self.resource_images['right']:
-                self.image = self.resource_images['right']
+            self.crouching = False
+            # interpret arrow keys into velocity
+            if EngineGlobals.keys[pyglet.window.key.LEFT]:
+                self.speed[0] -= Decimal(Player.LEFT_RIGHT_RUN_SPEED)
+            if EngineGlobals.keys[pyglet.window.key.RIGHT]:
+                self.speed[0] += Decimal(Player.LEFT_RIGHT_RUN_SPEED)
+
+        if self.crouching:
+            if self.direction == 'left':
+                self.image = self.resource_images['crouch_left']
+            else:
+                self.image = self.resource_images['crouch_right']
+        else:
+            if self.speed[0] < 0:
+                self.direction = 'left'
+                if self.image != self.resource_images['run_left']:
+                    self.image = self.resource_images['run_left']
+            elif self.speed[0] > 0:
+                self.direction = 'right'
+                if self.image != self.resource_images['run_right']:
+                    self.image = self.resource_images['run_right']
+            elif self.direction == 'left':
+                if self.image != self.resource_images['left']:
+                    self.image = self.resource_images['left']
+            else:
+                if self.image != self.resource_images['right']:
+                    self.image = self.resource_images['right']
 
         if self.bloody == True:
            self.image = self.resource_images['bloody']

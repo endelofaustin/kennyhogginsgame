@@ -10,6 +10,7 @@ class Player(PhysicsSprite):
     LEFT_RIGHT_RUN_SPEED = 5
     JUMP_INITIAL_VELOCITY = 12
     DOUBLE_JUMP_VELOCITY = 9
+    BULLET_INITIAL_VELOCITY = Decimal('15.0')
     
     def __init__(self):
         PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
@@ -104,10 +105,10 @@ class Player(PhysicsSprite):
     def shoot_it(self):
         bullet = Bullet()
         if self.direction == 'right':
-            bullet.speed[0] -= Decimal('15.0')
+            bullet.speed[0] -= Player.BULLET_INITIAL_VELOCITY
             bullet.dpos[0],bullet.dpos[1] = self.dpos[0] - 5, self.dpos[1] + 22
         else:
-            bullet.speed[0] += Decimal('15.0')
+            bullet.speed[0] += Player.BULLET_INITIAL_VELOCITY
             bullet.dpos[0],bullet.dpos[1] = self.dpos[0] + 5, self.dpos[1] + 22
         # Play the bullet spit audio
         self.spit_bullet.play()

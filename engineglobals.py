@@ -25,7 +25,7 @@ class EngineGlobals:
         #EngineGlobals.screen = pygame.display.set_mode((EngineGlobals.width, EngineGlobals.height))
         EngineGlobals.window = pyglet.window.Window(width=EngineGlobals.width, height=EngineGlobals.height,
                                                     caption='All The Way To the Bacon Zone')
-        pyglet.gl.glClearColor(1, 1, 1, 1)
+        pyglet.gl.glClearColor(.5, .5, .5, 1)
 
         # set up a key state handler
         EngineGlobals.keys = pyglet.window.key.KeyStateHandler()

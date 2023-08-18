@@ -12,7 +12,7 @@ class Player(PhysicsSprite):
     DOUBLE_JUMP_VELOCITY = 9
     BULLET_INITIAL_VELOCITY = Decimal('15.0')
 
-    JUMP_CROUCH_FRAMES = 5
+    JUMP_CROUCH_FRAMES = 6
     NOT_JUMPING = 0
     CROUCHING_FOR_JUMP = 1
     FIRST_JUMP = 2
@@ -27,6 +27,7 @@ class Player(PhysicsSprite):
             'crouch_right': pyglet.resource.image("kenny-crouch-right.png"),
             'run_left': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-run-left.png"), rows=1, columns=4), duration=1/10, loop=True),
             'run_right': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-run-right.png"), rows=1, columns=4), duration=1/10, loop=True),
+            'jump_left': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-jump-left.png"), rows=1, columns=2), duration=1/10, loop=False),
             'jump_right': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-jump-right.png"), rows=1, columns=2), duration=1/10, loop=False)
         })
 
@@ -68,7 +69,10 @@ class Player(PhysicsSprite):
                 self.jumpct = Player.FIRST_JUMP
                 self.speed[1] = Decimal(max(self.speed[1], 0) + Player.JUMP_INITIAL_VELOCITY)
                 self.landed = False
-            if self.direction == 'right':
+            if self.direction == 'left':
+                if self.image != self.resource_images['jump_left']:
+                    self.image = self.resource_images['jump_left']
+            else:
                 if self.image != self.resource_images['jump_right']:
                     self.image = self.resource_images['jump_right']
         else:

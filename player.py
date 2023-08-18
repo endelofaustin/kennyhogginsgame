@@ -11,7 +11,13 @@ class Player(PhysicsSprite):
     JUMP_INITIAL_VELOCITY = 12
     DOUBLE_JUMP_VELOCITY = 9
     BULLET_INITIAL_VELOCITY = Decimal('15.0')
-    
+
+    JUMP_CROUCH_FRAMES = 5
+    NOT_JUMPING = 0
+    CROUCHING_FOR_JUMP = 1
+    FIRST_JUMP = 2
+    SECOND_JUMP = 3
+
     def __init__(self):
         PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
             'right': pyglet.resource.image("kennystance1-2.png.png"),
@@ -20,7 +26,8 @@ class Player(PhysicsSprite):
             'crouch_left': pyglet.resource.image("kenny-crouch-left.png"),
             'crouch_right': pyglet.resource.image("kenny-crouch-right.png"),
             'run_left': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-run-left.png"), rows=1, columns=4), duration=1/10, loop=True),
-            'run_right': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-run-right.png"), rows=1, columns=4), duration=1/10, loop=True)
+            'run_right': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-run-right.png"), rows=1, columns=4), duration=1/10, loop=True),
+            'jump_right': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-jump-right.png"), rows=1, columns=2), duration=1/10, loop=False)
         })
 
         # Which direction is Kenny facing?
@@ -28,6 +35,7 @@ class Player(PhysicsSprite):
 
         # jumpct counts the number of jumps to allow for double-jumping
         self.jumpct = 0
+        self.jump_frames = 0
         self.spit_bullet = pyglet.media.load("audio/spitbullets.wav", streaming=False)
 
         # let's get that blood flowing
@@ -54,6 +62,15 @@ class Player(PhysicsSprite):
                 self.image = self.resource_images['crouch_left']
             else:
                 self.image = self.resource_images['crouch_right']
+        elif self.jumpct > Player.NOT_JUMPING:
+            self.jump_frames += 1
+            if self.jumpct == Player.CROUCHING_FOR_JUMP and self.jump_frames >= Player.JUMP_CROUCH_FRAMES:
+                self.jumpct = Player.FIRST_JUMP
+                self.speed[1] = Decimal(max(self.speed[1], 0) + Player.JUMP_INITIAL_VELOCITY)
+                self.landed = False
+            if self.direction == 'right':
+                if self.image != self.resource_images['jump_right']:
+                    self.image = self.resource_images['jump_right']
         else:
             if self.speed[0] < 0:
                 self.direction = 'left'
@@ -73,8 +90,9 @@ class Player(PhysicsSprite):
         if self.bloody == True:
            self.image = self.resource_images['bloody']
 
-        if self.landed:
-            self.jumpct = 0
+        if self.landed and self.jumpct != Player.CROUCHING_FOR_JUMP:
+            self.jumpct = Player.NOT_JUMPING
+            self.jump_frames = 0
 
         # then, run normal physics algorithm
         PhysicsSprite.updateloop(self, dt)
@@ -82,15 +100,14 @@ class Player(PhysicsSprite):
     # on_key_press is called by the pyglet engine when attached to a window
     # this lets us handle keyboard input events at the time they occur
     def on_key_press(self, symbol, modifiers):
-        if (symbol == pyglet.window.key.LCTRL or symbol == pyglet.window.key.RCTRL or symbol == pyglet.window.key.UP) and self.jumpct <= 1:
-            # if on a solid object, normal jump
-            if self.landed and self.jumpct == 0:
-                self.speed[1] = Decimal(max(self.speed[1], 0) + Player.JUMP_INITIAL_VELOCITY)
-                self.landed = False
+        if (symbol == pyglet.window.key.LCTRL or symbol == pyglet.window.key.RCTRL or symbol == pyglet.window.key.UP) and self.jumpct <= Player.FIRST_JUMP:
+            # if on a solid object, crouch then jump
+            if self.landed and self.jumpct == Player.NOT_JUMPING:
+                self.jumpct = Player.CROUCHING_FOR_JUMP
             # if already in the air, allow one more smaller jump
-            elif self.jumpct < 2:
+            elif self.jumpct == Player.FIRST_JUMP:
                 self.speed[1] = Player.DOUBLE_JUMP_VELOCITY
-            self.jumpct += 1
+                self.jumpct = Player.SECOND_JUMP
         # Button press handeling for space bar to shoot
         if symbol == pyglet.window.key.SPACE:
             self.shoot_it()

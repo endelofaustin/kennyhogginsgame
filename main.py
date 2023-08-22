@@ -130,13 +130,20 @@ def on_draw():
     text_crawl.on_draw()
 
 #### Audio playback testing
-introwav = pyglet.media.load('audio/intro.wav', streaming=False)
-lalala = pyglet.media.load('audio/LaLaLa.wav', streaming=False)
+# introwav = pyglet.media.load('audio/intro.wav', streaming=False)
+# lalala = pyglet.media.load('audio/LaLaLa.wav', streaming=False)
 EngineGlobals.audio_player = pyglet.media.Player()
-EngineGlobals.audio_player.queue(introwav)
-EngineGlobals.audio_player.queue(lalala)
-riffwav = pyglet.media.load('audio/kenny_riff1.wav', streaming=False)
-EngineGlobals.audio_player.queue(riffwav)
+# EngineGlobals.audio_player.queue(introwav)
+# EngineGlobals.audio_player.queue(lalala)
+# riffwav = pyglet.media.load('audio/kenny_riff1.wav', streaming=False)
+# EngineGlobals.audio_player.queue(riffwav)
+
+music_list = ['takingahike', 'downrightbirthright', 'workingwithmagic']
+
+for music in music_list:
+    
+    load_music = pyglet.media.load(f'audio/{music}.wav', streaming=False)
+    EngineGlobals.audio_player.queue(load_music)
 
 @EngineGlobals.audio_player.event('on_player_next_source')
 def loop_the_next_source():

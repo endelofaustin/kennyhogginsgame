@@ -138,7 +138,8 @@ EngineGlobals.audio_player = pyglet.media.Player()
 # riffwav = pyglet.media.load('audio/kenny_riff1.wav', streaming=False)
 # EngineGlobals.audio_player.queue(riffwav)
 
-music_list = ['takingahike', 'downrightbirthright', 'workingwithmagic']
+music_list = ['sleeponit', 'stronglengthypunkbrawl', 'takingahike', 'downrightbirthright', 'kenny_riff1', 'workingwithmagic']
+
 
 for music in music_list:
     

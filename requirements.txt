@@ -1,2 +1,2 @@
-pyglet==2.0.8
+pyglet==2.0.9
 dill==0.3.6

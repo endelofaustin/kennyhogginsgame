@@ -47,6 +47,15 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         # so that it will be put into the update loop and not mess everything up like an idiot
         EngineGlobals.game_objects.add(self)
 
+    # pickler
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        print(state)
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
     # this function is called for each sprite during the main update loop
     def updateloop(self, dt):
         if self.has_gravity:

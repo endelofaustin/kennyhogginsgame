@@ -8,6 +8,13 @@ from spike import Spike
 from bandaid import Bandaid
 from math import floor
 
+# Most of the code in this file, other than the update callback, is executed
+# *BEFORE* the game starts and before the game window is shown. We set
+# everything up and then hand over to the Pyglet engine. The pyglet engine
+# then takes care of calling the update function 60 times per second and
+# displaying the graphics on screen after we tell it which graphics to display
+# where.
+
 # set Decimal precision to 7 places, much more efficient than the default 28
 # 6 places is enough for 1 million pixels of accuracy, which is enough to
 # precisely locate any position in an area that is 900 screens high and 1300
@@ -30,7 +37,9 @@ EngineGlobals.textsurface = pyglet.text.Label(
 # We are loading our pickled environment here for loading when the game starts. Chicken pot pie
 with open('map.dill', 'rb') as f:
     EngineGlobals.platform = dill.load(f)
-    # convert tiles to sprites
+    # Convert tiles to sprites. Early versions of the environment just contain 1 or 0 to
+    # represent a solid block or no block. If we see a 1, create a solid block at that
+    # location.
     for y, row in enumerate(EngineGlobals.platform):
         for x, tile in enumerate(row):
             if tile == 1:
@@ -38,10 +47,14 @@ with open('map.dill', 'rb') as f:
             elif hasattr(tile, 'image'):
                 EngineGlobals.platform[y][x] = gamepieces.Block(EngineGlobals.hay_block, True)
 
-# load kenny sprite
+# create the Kenny player sprite and assign it to receive
+# keyboard events with the push_handlers function
 kenny = player.Player()
-mouse_events = editor.Editor()
 EngineGlobals.window.push_handlers(kenny)
+
+# create the Editor function object and assign it to
+# receive mouse events with the push_handlers function
+mouse_events = editor.Editor()
 EngineGlobals.window.push_handlers(mouse_events)
 
 # load enemy sprite
@@ -51,32 +64,64 @@ bandaid = Bandaid([236, 0], 'good')
 
 # When adding to this set we are beginning to setup changable objects
 # any object in this set will have its update function called
+# One of the objects that needs to have its update function called
+# is the screen object, so that it can update which part of the
+# map it is looking at based on Kenny's position
 EngineGlobals.game_objects.add(screen)
 
 # this function will be set up for pyglet to call it every update cycle, 120 times per second
-# it simply calls the updated function for every object in game_objects
+# every game object has a specific updateloop function, this is the main update function that
+# simply iterates through every game object and calls its specific update function
 def main_update_callback(dt):
+
+    # see how much time has passed (in nanoseconds) since the last time the update function
+    # happened. This is nanoseconds-per-frame; invert it and multiply by 1000000000 to get
+    # frames-per-second
     EngineGlobals.sim_fps = int(1000000000/(time.perf_counter_ns() - EngineGlobals.last_sim))
     EngineGlobals.last_sim = time.perf_counter_ns()
+
+    # reset the grid-based collision lists so that they can be recalculated every frame
     physics.PhysicsSprite.collision_lists.clear()
+
+    # call the updateloop funcction for each game object
     for obj in EngineGlobals.game_objects:
         obj.updateloop(dt)
+
+    # some objects may have requested to be deleted during the update loop,
+    # by adding themselves to the delete_us list. Delete them now.
     for delete_me in EngineGlobals.delete_us:
         EngineGlobals.game_objects.remove(delete_me)
         delete_me.delete()
+    # every game object that requested it has now been deleted, so clear
+    # the list so that more objects can request deletion during the next
+    # update cycle
     EngineGlobals.delete_us.clear()
 
-    # Track the screen through the platform iteration style
-    # movement happens not within this code below
+    ### BLOCK RENDERING CODE ###
+    # This section of code is responsible for calculating the correct position of
+    # every block in the map relative to the position of the viewport within the map.
+
+    # 1. We are going to iterate from the left side of the screen to the right for our
+    # outer loop, and from the bottom of the screen to the top for our inner loop.
+
+    # Calculate the starting point of the outer loop (left to right) as xstart and the
+    # endpoint as xend.
+    #
+    # We are iterating one block at a time (32 pixels). The first block we look at will be
+    # the block the left side of the screen is touching -- it could be a block that is
+    # partly or nearly all the way off-screen. The last block we look at will be the block
+    # the right side of the screen is touching.
     xstart = floor(screen.x / 32) - 1
     xend = floor((screen.x + EngineGlobals.width) / 32) + 2
 
+    # Now calculate the starting and ending point of the inner loop (bottom to top).
     ystart = len(EngineGlobals.platform) - floor(screen.y / 32)
     screen_top = screen.y + EngineGlobals.height
     yend = len(EngineGlobals.platform) - floor((screen_top) / 32) - 3
 
-    # xrender_start and yrender_start represent the offset of where to start drawing a given block on the screen - this origin
-    # could be offscreen for blocks that are only partially onscreen at a given time
+    # xrender_start and yrender_start represent the offset (in pixels) of where to start
+    # drawing a given block on the screen - this origin could be offscreen for blocks that
+    # are only partially onscreen at a given time
     xrender_start = 0 - screen.x % 32 - 32
     yrender_start = 0 - screen.y % 32 - 32
 

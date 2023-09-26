@@ -6,7 +6,6 @@ from physics import *
 import random
 
 
-
 class Enemy(PhysicsSprite):
     
     def __init__(self,):
@@ -52,3 +51,19 @@ class Enemy(PhysicsSprite):
             self.image = self.resource_images['dead']
             dead_dude = pyglet.media.load('audio/glurk.wav', streaming=False)
             dead_dude.play()
+
+class Doggy(Enemy):
+
+     def __init__(self,):
+
+         PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
+            'left': pyglet.resource.image("doggy.png",)
+        })
+        
+        self.moving_time = 0
+
+    
+
+         
+
+    

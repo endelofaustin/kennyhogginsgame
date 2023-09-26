@@ -59,6 +59,7 @@ EngineGlobals.window.push_handlers(mouse_events)
 
 # load enemy sprite
 enemy = enemies.Enemy()
+doggy = enemies.Doggy()
 spike = Spike([172, 0])
 bandaid = Bandaid([236, 0], 'good')
 

@@ -18,3 +18,9 @@ Pig will jump on platform. There will be input and a game loop and sprites
  * ### The EngineGlobals static object
  * ### Blocks and map components
  * ### Editing and pickling of maps
+
+## Tools/libraries/components used
+
+ * Pyglet - game engine - https://pyglet.org/
+ * Piskel - sprite designer - https://www.piskelapp.com/p/create/sprite
+ * [TBD] tile sheet editor

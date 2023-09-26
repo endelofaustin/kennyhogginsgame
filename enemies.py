@@ -33,6 +33,14 @@ class Enemy(PhysicsSprite):
            self.moving_time = 0
 
         PhysicsSprite.updateloop(self, dt)
+
+    def make_it_jump(self,):
+        pass
+
+    def on_PhysicsSprite_collided(self, collided_object=None):
+         
+        if collided_object == None:
+             make_it_jump(self,)
       
     def die_hard(self,):
         

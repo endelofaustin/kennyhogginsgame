@@ -23,7 +23,7 @@ class Enemy(PhysicsSprite):
         
         if hasattr(self, 'dead_timer'):
             self.dead_timer += 1
-            if self.dead_timer == 240:
+            if self.dead_timer == 120:
                 self.destroy()
 
         self.moving_time += 1
@@ -35,7 +35,9 @@ class Enemy(PhysicsSprite):
         PhysicsSprite.updateloop(self, dt)
       
     def die_hard(self,):
-        self.dead_timer = 0
-        self.image = self.resource_images['dead']
-        dead_dude = pyglet.media.load('audio/glurk.wav', streaming=False)
-        dead_dude.play()
+        
+        if self.image != self.resource_images['dead']:
+            self.dead_timer = 0
+            self.image = self.resource_images['dead']
+            dead_dude = pyglet.media.load('audio/glurk.wav', streaming=False)
+            dead_dude.play()

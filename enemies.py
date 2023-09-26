@@ -59,11 +59,5 @@ class Doggy(Enemy):
          PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
             'left': pyglet.resource.image("doggy.png",)
         })
-        
-        self.moving_time = 0
-
-    
-
          
-
-    
+         self.moving_time = 0

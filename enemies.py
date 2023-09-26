@@ -23,7 +23,7 @@ class Enemy(PhysicsSprite):
         
         if hasattr(self, 'dead_timer'):
             self.dead_timer += 1
-            if self.dead_timer == 120:
+            if self.dead_timer == 60:
                 self.destroy()
 
         self.moving_time += 1

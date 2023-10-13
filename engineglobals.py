@@ -3,6 +3,7 @@ import pyglet
 class EngineGlobals:
     # the window width and height in pixels
     width, height = 800, 600
+    editor_addl_width = 164
 
     # scale up all pixel art by this amount
     scale_factor = 2
@@ -22,8 +23,8 @@ class EngineGlobals:
         pyglet.resource.reindex()
 
         # create a display window
-        #EngineGlobals.screen = pygame.display.set_mode((EngineGlobals.width, EngineGlobals.height))
-        EngineGlobals.window = pyglet.window.Window(width=EngineGlobals.width, height=EngineGlobals.height,
+        EngineGlobals.window = pyglet.window.Window(width=EngineGlobals.width + EngineGlobals.editor_addl_width * EngineGlobals.scale_factor,
+                                                    height=EngineGlobals.height,
                                                     caption='All The Way To the Bacon Zone')
         pyglet.gl.glClearColor(.5, .5, .5, 1)
 
@@ -36,6 +37,9 @@ class EngineGlobals:
         EngineGlobals.bg_group = pyglet.graphics.Group(0)
         EngineGlobals.tiles_group = pyglet.graphics.Group(1)
         EngineGlobals.sprites_group = pyglet.graphics.Group(2)
+        EngineGlobals.editor_group_back = pyglet.graphics.Group(3)
+        EngineGlobals.editor_group_mid = pyglet.graphics.Group(4)
+        EngineGlobals.editor_group_front = pyglet.graphics.Group(5)
 
         # this is a game object list that will auto populate when sprites are generated
         EngineGlobals.game_objects = set()
@@ -47,3 +51,5 @@ class EngineGlobals:
         EngineGlobals.last_sim = 0
 
         EngineGlobals.hay_block = pyglet.resource.image('firstblock.png')
+        EngineGlobals.tilesheet = pyglet.resource.image('plagiarism.png')
+        EngineGlobals.tilesheet_as_grid = pyglet.image.TextureGrid(pyglet.image.ImageGrid(EngineGlobals.tilesheet, 11, 10))

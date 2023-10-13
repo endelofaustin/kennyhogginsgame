@@ -54,8 +54,9 @@ EngineGlobals.window.push_handlers(kenny)
 
 # create the Editor function object and assign it to
 # receive mouse events with the push_handlers function
-mouse_events = editor.Editor()
-EngineGlobals.window.push_handlers(mouse_events)
+editor = editor.Editor()
+EngineGlobals.window.push_handlers(editor)
+EngineGlobals.game_objects.add(editor)
 
 # load enemy sprite
 enemy = enemies.Enemy()
@@ -196,7 +197,7 @@ for music in music_list:
 def loop_the_next_source():
     pass
     # EngineGlobals.audio_player.loop = True
-EngineGlobals.audio_player.play()
+#EngineGlobals.audio_player.play()
 
 # this is the main game loop!
 if __name__ == '__main__':

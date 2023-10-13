@@ -7,6 +7,26 @@ from engineglobals import EngineGlobals
 from math import floor
 
 class Editor():
+    TILESHEET_WIDTH = 160
+
+    def __init__(self,):
+        self.editor_bg_sprite = pyglet.sprite.Sprite(img=pyglet.resource.image('editor_bg.png'),
+                                                     x=EngineGlobals.width, y=0,
+                                                     batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_back)
+        self.editor_bg_sprite.update(scale=EngineGlobals.scale_factor)
+        self.tilesheet = pyglet.resource.image('plagiarism.png')
+        self.tilesheet_sprite = pyglet.sprite.Sprite(img=self.tilesheet,
+                                                     x=EngineGlobals.width + 2, y=0,
+                                                     batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_mid)
+        self.tilesheet_sprite.update(scale=EngineGlobals.scale_factor * 2)
+        self.tilesheet_as_grid = pyglet.image.TextureGrid(pyglet.image.ImageGrid(self.tilesheet, 11, 10))
+        self.tilesheet_grid_sprite = pyglet.sprite.Sprite(img=pyglet.resource.image('tilesheet_fg_grid.png'),
+                                                     x=EngineGlobals.width, y=0,
+                                                     batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_front)
+        self.tilesheet_grid_sprite.update(scale=EngineGlobals.scale_factor)
+
+    def updateloop(self, dt):
+        pass
 
     def on_mouse_press(self, x, y, button, modifiers):
         # commented out the below print statement since this appears to be working
@@ -45,5 +65,3 @@ class Editor():
 
             with open('map.dill', 'rb') as f:
                 EngineGlobals.platform = dill.load(f)
-
-

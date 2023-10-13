@@ -26,18 +26,18 @@ class Enemy(PhysicsSprite):
                 self.destroy()
 
         self.moving_time += 1
-        self.speed[0] = Decimal(0)
-        if self.moving_time > 50 and self.speed[1] <= 0:
-           self.speed[0] = Decimal(random.randrange(-5, 50))
-           self.speed[1] = Decimal(random.randrange(1, 10))
+        self.x_speed = Decimal(0)
+        if self.moving_time > 50 and self.y_speed <= 0:
+           self.x_speed = Decimal(random.randrange(-5, 50))
+           self.y_speed = Decimal(random.randrange(1, 10))
            self.moving_time = 0
 
         PhysicsSprite.updateloop(self, dt)
 
     def make_it_jump(self,):
 
-        self.speed[1] = 10
-        self.speed[0] = 12
+        self.y_speed = 10
+        self.x_speed = 12
         
     def on_PhysicsSprite_collided(self, collided_object=None):
          

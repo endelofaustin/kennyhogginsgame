@@ -8,7 +8,4 @@ class Spike(PhysicsSprite):
                 'point': pyglet.resource.image("spikey.png"),
             })
             self.update(scale=.445)
-            self.dpos = spawning_coords
-
-
-
+            (self.x_position, self.y_position) = spawning_coords

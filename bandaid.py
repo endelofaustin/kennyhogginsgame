@@ -11,5 +11,5 @@ class Bandaid(PhysicsSprite):
                 'good': pyglet.resource.image("good_band_aid.png")
             })
             self.update(scale=.695)
-            self.dpos = spawn_coords
+            (self.x_position, self.y_position) = spawn_coords
             self.image = self.resource_images[style]

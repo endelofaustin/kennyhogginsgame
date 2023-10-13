@@ -47,16 +47,16 @@ class Player(PhysicsSprite):
 
     def updateloop(self, dt):
 
-        self.speed[0] = Decimal(0)
+        self.x_speed = Decimal(0)
         if EngineGlobals.keys[pyglet.window.key.DOWN] and self.landed:
             self.crouching = True
         else:
             self.crouching = False
             # interpret arrow keys into velocity
             if EngineGlobals.keys[pyglet.window.key.LEFT]:
-                self.speed[0] -= Decimal(Player.LEFT_RIGHT_RUN_SPEED)
+                self.x_speed -= Decimal(Player.LEFT_RIGHT_RUN_SPEED)
             if EngineGlobals.keys[pyglet.window.key.RIGHT]:
-                self.speed[0] += Decimal(Player.LEFT_RIGHT_RUN_SPEED)
+                self.x_speed += Decimal(Player.LEFT_RIGHT_RUN_SPEED)
 
         if self.crouching:
             if self.direction == 'left':
@@ -67,7 +67,7 @@ class Player(PhysicsSprite):
             self.jump_frames += 1
             if self.jumpct == Player.CROUCHING_FOR_JUMP and self.jump_frames >= Player.JUMP_CROUCH_FRAMES:
                 self.jumpct = Player.FIRST_JUMP
-                self.speed[1] = Decimal(max(self.speed[1], 0) + Player.JUMP_INITIAL_VELOCITY)
+                self.y_speed = Decimal(max(self.y_speed, 0) + Player.JUMP_INITIAL_VELOCITY)
                 self.landed = False
             if self.direction == 'left':
                 if self.image != self.resource_images['jump_left']:
@@ -76,11 +76,11 @@ class Player(PhysicsSprite):
                 if self.image != self.resource_images['jump_right']:
                     self.image = self.resource_images['jump_right']
         else:
-            if self.speed[0] < 0:
+            if self.x_speed < 0:
                 self.direction = 'left'
                 if self.image != self.resource_images['run_left']:
                     self.image = self.resource_images['run_left']
-            elif self.speed[0] > 0:
+            elif self.x_speed > 0:
                 self.direction = 'right'
                 if self.image != self.resource_images['run_right']:
                     self.image = self.resource_images['run_right']
@@ -110,7 +110,7 @@ class Player(PhysicsSprite):
                 self.jumpct = Player.CROUCHING_FOR_JUMP
             # if already in the air, allow one more smaller jump
             elif self.jumpct == Player.FIRST_JUMP:
-                self.speed[1] = Player.DOUBLE_JUMP_VELOCITY
+                self.y_speed = Player.DOUBLE_JUMP_VELOCITY
                 self.jumpct = Player.SECOND_JUMP
         # Button press handeling for space bar to shoot
         if symbol == pyglet.window.key.SPACE:
@@ -126,11 +126,11 @@ class Player(PhysicsSprite):
     def shoot_it(self):
         bullet = Bullet()
         if self.direction == 'right':
-            bullet.speed[0] -= Player.BULLET_INITIAL_VELOCITY
-            bullet.dpos[0],bullet.dpos[1] = self.dpos[0] - 5, self.dpos[1] + 22
+            bullet.x_speed -= Player.BULLET_INITIAL_VELOCITY
+            bullet.x_position,bullet.y_position = self.x_position - 5, self.y_position + 22
         else:
-            bullet.speed[0] += Player.BULLET_INITIAL_VELOCITY
-            bullet.dpos[0],bullet.dpos[1] = self.dpos[0] + 5, self.dpos[1] + 22
+            bullet.x_speed += Player.BULLET_INITIAL_VELOCITY
+            bullet.x_position,bullet.y_position = self.x_position + 5, self.y_position + 22
         # Play the bullet spit audio
         self.spit_bullet.play()
 

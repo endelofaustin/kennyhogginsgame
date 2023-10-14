@@ -7,6 +7,7 @@ from text import Text_Crawl
 from spike import Spike
 from bandaid import Bandaid
 from math import floor
+from menu import GameMenu
 
 # Most of the code in this file, other than the update callback, is executed
 # *BEFORE* the game starts and before the game window is shown. We set
@@ -57,6 +58,8 @@ EngineGlobals.window.push_handlers(kenny)
 editor = editor.Editor()
 EngineGlobals.window.push_handlers(editor)
 EngineGlobals.game_objects.add(editor)
+menu = GameMenu()
+EngineGlobals.window.push_handlers(menu)
 
 # load enemy sprite
 enemy = enemies.Enemy()
@@ -165,16 +168,23 @@ EngineGlobals.game_objects.add(text_crawl)
 # (typically every vsync event, 60 times per second)
 @EngineGlobals.window.event
 def on_draw():
-    EngineGlobals.render_fps = int(1000000000/(time.perf_counter_ns() - EngineGlobals.last_render))
-    EngineGlobals.last_render = time.perf_counter_ns()
-    EngineGlobals.textsurface.text = "render fps: {}\nsim fps: {}".format(EngineGlobals.render_fps, EngineGlobals.sim_fps)
-    EngineGlobals.window.clear()
-
-    # now that we've drawn the environment, draw all sprites
-    EngineGlobals.main_batch.draw()
-
-    # Drawing the Text Crawl object now:::: Right here! 
-    text_crawl.on_draw()
+    
+    if EngineGlobals.show_menu == True:
+        
+        menu.on_draw()
+        
+    else:
+ 
+        EngineGlobals.render_fps = int(1000000000/(time.perf_counter_ns() - EngineGlobals.last_render))
+        EngineGlobals.last_render = time.perf_counter_ns()
+        EngineGlobals.textsurface.text = "render fps: {}\nsim fps: {}".format(EngineGlobals.render_fps, EngineGlobals.sim_fps)
+        EngineGlobals.window.clear()
+    
+        # now that we've drawn the environment, draw all sprites 
+        EngineGlobals.main_batch.draw()
+    
+        # Drawing the Text Crawl object now:::: Right here!
+        text_crawl.on_draw()
 
 #### Audio playback testing
 # introwav = pyglet.media.load('audio/intro.wav', streaming=False)

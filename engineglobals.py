@@ -53,3 +53,4 @@ class EngineGlobals:
         EngineGlobals.hay_block = pyglet.resource.image('firstblock.png')
         EngineGlobals.tilesheet = pyglet.resource.image('plagiarism.png')
         EngineGlobals.tilesheet_as_grid = pyglet.image.TextureGrid(pyglet.image.ImageGrid(EngineGlobals.tilesheet, 11, 10))
+        EngineGlobals.show_menu = True

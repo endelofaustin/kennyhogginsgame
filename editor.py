@@ -35,11 +35,22 @@ class Editor():
     def updateloop(self, dt):
         pass
 
+    def update_selected_tile(self, tile_idx):
+        tile_x = EngineGlobals.width + 4 + tile_idx % floor(EngineGlobals.TILESHEET_WIDTH / 16) * 32
+        tile_y = floor(tile_idx / floor(EngineGlobals.TILESHEET_WIDTH / 16)) * 32
+        self.selected_tile_overlay_sprite.x = tile_x
+        self.selected_tile_overlay_sprite.y = tile_y
+        self.selected_tile_idx = tile_idx
+
     def handle_tilesheet_click(self, x, y, button, modifiers):
         if x < EngineGlobals.width + 2 or x >= EngineGlobals.width + 2 + Editor.TILESHEET_WIDTH * EngineGlobals.scale_factor:
             return pyglet.event.EVENT_UNHANDLED
         if y < 0 or y >= Editor.TILESHEET_HEIGHT * EngineGlobals.scale_factor:
             return pyglet.event.EVENT_UNHANDLED
+        tile_x = floor((x - EngineGlobals.width - 4) / 32)
+        tile_y = floor(y / 32)
+        tile_idx = tile_y * floor(EngineGlobals.TILESHEET_WIDTH / 16) + tile_x
+        self.update_selected_tile(tile_idx)
         return pyglet.event.EVENT_HANDLED
 
     def handle_main_screen_click(self, x, y, button, modifiers):
@@ -55,8 +66,6 @@ class Editor():
             if hasattr(EngineGlobals.platform[floor(y_coord)][floor(x_coord)], 'sprite'):
                 EngineGlobals.platform[floor(y_coord)][floor(x_coord)].sprite.delete()
             EngineGlobals.platform[floor(y_coord)][floor(x_coord)] = 0
-        return True
-
         return pyglet.event.EVENT_HANDLED
 
     def on_mouse_motion(self, x, y, dx, dy):

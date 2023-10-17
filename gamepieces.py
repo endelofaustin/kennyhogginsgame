@@ -8,10 +8,10 @@ from math import floor
 class Block:
 
     def __init__(self, tilesheet_idx, solid,):
-        tile_x = tilesheet_idx % floor(EngineGlobals.TILESHEET_WIDTH / 16) * 32
-        tile_y = floor(tilesheet_idx / floor(EngineGlobals.TILESHEET_WIDTH / 16)) * 32
-        self.sprite = Sprite(img=EngineGlobals.tilesheet.get_region(tile_x, tile_y, 32, 32), batch=EngineGlobals.main_batch, group=EngineGlobals.tiles_group)
-        # self.sprite.update(scale=EngineGlobals.scale_factor)
+        tile_x = tilesheet_idx % floor(EngineGlobals.TILESHEET_WIDTH / 16) * 16
+        tile_y = floor(tilesheet_idx / floor(EngineGlobals.TILESHEET_WIDTH / 16)) * 16
+        self.sprite = Sprite(img=EngineGlobals.tilesheet.get_region(tile_x, tile_y, 16, 16), batch=EngineGlobals.main_batch, group=EngineGlobals.tiles_group)
+        self.sprite.update(scale=EngineGlobals.scale_factor)
         self.sprite.visible = False
         self.tilesheet_idx = tilesheet_idx
         self.solid = solid

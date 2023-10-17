@@ -3,15 +3,18 @@
 import pyglet.resource, pyglet.image
 from pyglet.sprite import Sprite
 from engineglobals import EngineGlobals
+from math import floor
 
 class Block:
 
-    def __init__(self, image, solid,):
-        if not isinstance(image, pyglet.image.AbstractImage):
-            image = EngineGlobals.hay_block
-        self.sprite = Sprite(img=image, batch=EngineGlobals.main_batch, group=EngineGlobals.tiles_group)
+    def __init__(self, tilesheet_idx, solid,):
+        tile_x = tilesheet_idx % floor(EngineGlobals.TILESHEET_WIDTH / 16) * 32
+        tile_y = floor(tilesheet_idx / floor(EngineGlobals.TILESHEET_WIDTH / 16)) * 32
+        self.sprite = Sprite(img=EngineGlobals.tilesheet.get_region(tile_x, tile_y, 32, 32), batch=EngineGlobals.main_batch, group=EngineGlobals.tiles_group)
+        # self.sprite.update(scale=EngineGlobals.scale_factor)
         self.sprite.visible = False
-        self.solid = solid 
+        self.tilesheet_idx = tilesheet_idx
+        self.solid = solid
 
     # pickler
     def __getstate__(self):
@@ -21,4 +24,7 @@ class Block:
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.__init__(None, self.solid)
+        if 'tilesheet_idx' in state:
+            self.__init__(self.tilesheet_idx, self.solid)
+        else:
+            self.__init__(0, self.solid)

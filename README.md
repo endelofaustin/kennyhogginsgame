@@ -23,4 +23,5 @@ Pig will jump on platform. There will be input and a game loop and sprites
 
  * Pyglet - game engine - https://pyglet.org/
  * Piskel - sprite designer - https://www.piskelapp.com/p/create/sprite
+ * BobSprite - sprite designer with adjustable alpha transparency - https://bobsprite.com/editor
  * [TBD] tile sheet editor

@@ -1,4 +1,5 @@
 import pyglet
+from math import floor
 
 class EngineGlobals:
     # the window width and height in pixels
@@ -10,6 +11,9 @@ class EngineGlobals:
 
     # width/height of each cell in the collision grid
     collision_cell_size = 32
+
+    TILESHEET_WIDTH = 160
+    TILESHEET_HEIGHT = 176
 
     # do a bunch of engine initialization
     def init():
@@ -25,7 +29,7 @@ class EngineGlobals:
         # create a display window
         EngineGlobals.window = pyglet.window.Window(width=EngineGlobals.width + EngineGlobals.editor_addl_width * EngineGlobals.scale_factor,
                                                     height=EngineGlobals.height,
-                                                    caption='All The Way To the Bacon Zone')
+                                                    caption='All The Way To the Bacon Zone', vsync=False)
         pyglet.gl.glClearColor(.5, .5, .5, 1)
 
         # set up a key state handler
@@ -52,5 +56,11 @@ class EngineGlobals:
 
         EngineGlobals.hay_block = pyglet.resource.image('firstblock.png')
         EngineGlobals.tilesheet = pyglet.resource.image('plagiarism.png')
-        EngineGlobals.tilesheet_as_grid = pyglet.image.TextureGrid(pyglet.image.ImageGrid(EngineGlobals.tilesheet, 11, 10))
+        #EngineGlobals.tilesheet_as_grid = pyglet.image.TextureGrid(pyglet.image.ImageGrid(EngineGlobals.tilesheet, 11, 10, 16, 16))
+        #EngineGlobals.tilesheet_as_anim = pyglet.image.Animation.from_image_sequence(EngineGlobals.tilesheet_as_grid, duration=1, loop=False)
         EngineGlobals.show_menu = True
+
+    def get_tile(idx):
+        tile_x = idx % floor(EngineGlobals.TILESHEET_WIDTH / 32) * 32
+        tile_y = floor(idx / floor(EngineGlobals.TILESHEET_WIDTH / 32)) * 32
+        return EngineGlobals.tilesheet.get_region(tile_x, tile_y, 32, 32)

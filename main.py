@@ -43,10 +43,10 @@ with open('map.dill', 'rb') as f:
     # location.
     for y, row in enumerate(EngineGlobals.platform):
         for x, tile in enumerate(row):
-            if tile == 1:
-                EngineGlobals.platform[y][x] = gamepieces.Block(EngineGlobals.hay_block, True)
-            elif hasattr(tile, 'image'):
-                EngineGlobals.platform[y][x] = gamepieces.Block(EngineGlobals.hay_block, True)
+            if hasattr(tile, 'image'):
+                EngineGlobals.platform[y][x] = gamepieces.Block(0, True)
+            elif isinstance(tile, int) and tile > 0:
+                EngineGlobals.platform[y][x] = gamepieces.Block(tile - 1, True)
 
 # create the Kenny player sprite and assign it to receive
 # keyboard events with the push_handlers function
@@ -179,7 +179,7 @@ def on_draw():
         EngineGlobals.last_render = time.perf_counter_ns()
         EngineGlobals.textsurface.text = "render fps: {}\nsim fps: {}".format(EngineGlobals.render_fps, EngineGlobals.sim_fps)
         EngineGlobals.window.clear()
-    
+
         # now that we've drawn the environment, draw all sprites 
         EngineGlobals.main_batch.draw()
     

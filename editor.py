@@ -15,16 +15,20 @@ class Editor():
                                                      x=EngineGlobals.width, y=0,
                                                      batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_back)
         self.editor_bg_sprite.update(scale=EngineGlobals.scale_factor)
-        self.tilesheet = pyglet.resource.image('plagiarism.png')
-        self.tilesheet_sprite = pyglet.sprite.Sprite(img=self.tilesheet,
-                                                     x=EngineGlobals.width + 2, y=0,
+        self.tilesheet_sprite = pyglet.sprite.Sprite(img=EngineGlobals.tilesheet,
+                                                     x=EngineGlobals.width + 4, y=0,
                                                      batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_mid)
-        self.tilesheet_sprite.update(scale=EngineGlobals.scale_factor * 2)
-        self.tilesheet_as_grid = pyglet.image.TextureGrid(pyglet.image.ImageGrid(self.tilesheet, 11, 10))
+        self.tilesheet_sprite.update(scale=EngineGlobals.scale_factor)
         self.tilesheet_grid_sprite = pyglet.sprite.Sprite(img=pyglet.resource.image('tilesheet_fg_grid.png'),
                                                      x=EngineGlobals.width, y=0,
                                                      batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_front)
         self.tilesheet_grid_sprite.update(scale=EngineGlobals.scale_factor)
+        self.selected_tile_overlay_sprite = pyglet.sprite.Sprite(img=pyglet.resource.image('selected_tile.png'),
+                                                                 batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_front)
+        self.selected_tile_overlay_sprite.update(scale=EngineGlobals.scale_factor)
+        self.mouse_dragged_before_release = False
+        self.selected_tile_idx = 0
+        self.update_selected_tile(0)
 
         self.mouse_drag_before_release = False
 
@@ -45,12 +49,13 @@ class Editor():
         x_coord = floor((x + EngineGlobals.our_screen.x)/32)
         y_coord = len(EngineGlobals.platform) - 1 - floor((EngineGlobals.our_screen.y + y)/32)
         if EngineGlobals.platform[floor(y_coord)][floor(x_coord)] == 0:
-            block = Block(1, True)
+            block = Block(self.selected_tile_idx, True)
             EngineGlobals.platform[floor(y_coord)][floor(x_coord)] = block
         else:
             if hasattr(EngineGlobals.platform[floor(y_coord)][floor(x_coord)], 'sprite'):
                 EngineGlobals.platform[floor(y_coord)][floor(x_coord)].sprite.delete()
             EngineGlobals.platform[floor(y_coord)][floor(x_coord)] = 0
+        return True
 
         return pyglet.event.EVENT_HANDLED
 

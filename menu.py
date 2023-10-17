@@ -33,26 +33,27 @@ class GameMenu():
 
     def handle_mouse_click(self, x, y):
 
-        if self.start_label.x - self.start_label.content_width / 2 <= x <= self.start_label.x + self.start_label.content_width / 2 and \
-           self.start_label.y - self.start_label.content_height / 2 <= y <= self.start_label.y + self.start_label.content_height / 2:
-            # Handle "Start" button click - You can implement your game logic here
-            EngineGlobals.show_menu = False
+        if EngineGlobals.show_menu:
+            if self.start_label.x - self.start_label.content_width / 2 <= x <= self.start_label.x + self.start_label.content_width / 2 and \
+            self.start_label.y - self.start_label.content_height / 2 <= y <= self.start_label.y + self.start_label.content_height / 2:
+                # Handle "Start" button click - You can implement your game logic here
+                EngineGlobals.show_menu = False
 
-        elif self.settings_label.x - self.settings_label.content_width / 2 <= x <= self.settings_label.x + self.settings_label.content_width / 2 and \
-             self.settings_label.y - self.settings_label.content_height / 2 <= y <= self.settings_label.y + self.settings_label.content_height / 2:
-            # Handle "Settings" button click
-            print("Settings button clicked")
-            self.menu_batch.add(pyglet.shapes.Rectangle(0, 0, 800, 600, color=(0, 0, 255)))
+            elif self.settings_label.x - self.settings_label.content_width / 2 <= x <= self.settings_label.x + self.settings_label.content_width / 2 and \
+                 self.settings_label.y - self.settings_label.content_height / 2 <= y <= self.settings_label.y + self.settings_label.content_height / 2:
+                # Handle "Settings" button click
+                print("Settings button clicked")
+                self.menu_batch.add(pyglet.shapes.Rectangle(0, 0, 800, 600, color=(0, 0, 255)))
 
-        elif self.password_label.x - self.password_label.content_width / 2 <= x <= self.password_label.x + self.password_label.content_width / 2 and \
-             self.password_label.y - self.password_label.content_height / 2 <= y <= self.password_label.y + self.password_label.content_height / 2:
-            # Handle "Password" button click
-            print("Password button clicked")
-            self.password_label_visible = True
+            elif self.password_label.x - self.password_label.content_width / 2 <= x <= self.password_label.x + self.password_label.content_width / 2 and \
+                 self.password_label.y - self.password_label.content_height / 2 <= y <= self.password_label.y + self.password_label.content_height / 2:
+                # Handle "Password" button click
+                print("Password button clicked")
+                self.password_label_visible = True
 
     def handle_text_input(self, text):
 
-        if self.password_label_visible:
+        if self.password_label_visible and EngineGlobals.show_menu:
 
             if text.isalnum():
                 self.password += text

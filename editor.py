@@ -25,7 +25,7 @@ class Editor():
         self.tilesheet_grid_sprite.update(scale=EngineGlobals.scale_factor)
         self.selected_tile_overlay_sprite = pyglet.sprite.Sprite(img=pyglet.resource.image('selected_tile.png'),
                                                                  batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_front)
-        self.selected_tile_overlay_sprite.update(scale=EngineGlobals.scale_factor)
+        #self.selected_tile_overlay_sprite.update(scale=EngineGlobals.scale_factor)
         self.mouse_dragged_before_release = False
         self.selected_tile_idx = 0
         self.update_selected_tile(0)

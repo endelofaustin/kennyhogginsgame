@@ -4,6 +4,7 @@ import pyglet.resource, pyglet.image
 from pyglet.sprite import Sprite
 from engineglobals import EngineGlobals
 from math import floor
+from physics import PhysicsSprite
 
 class Block:
 
@@ -28,3 +29,10 @@ class Block:
             self.__init__(self.tilesheet_idx, self.solid)
         else:
             self.__init__(0, self.solid)
+
+class Door(PhysicsSprite):
+
+    def __init__(self, starting_position) -> None:
+        super().__init__(has_gravity=False, resource_image_dict={0: pyglet.resource.image("door-1.png")})
+        self.x_position = starting_position[0]
+        self.y_position = starting_position[1]

@@ -8,6 +8,7 @@ from spike import Spike
 from bandaid import Bandaid
 from math import floor
 from menu import GameMenu
+from gamepieces import Door
 
 # Most of the code in this file, other than the update callback, is executed
 # *BEFORE* the game starts and before the game window is shown. We set
@@ -66,6 +67,7 @@ enemy = enemies.Enemy()
 doggy = enemies.Doggy()
 spike = Spike([172, 0])
 bandaid = Bandaid([236, 0], 'good')
+door = Door(starting_position=[500, 0])
 
 # When adding to this set we are beginning to setup changable objects
 # any object in this set will have its update function called

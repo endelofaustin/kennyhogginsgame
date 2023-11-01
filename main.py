@@ -36,18 +36,7 @@ EngineGlobals.textsurface = pyglet.text.Label(
     anchor_y='top'
 )
 
-# We are loading our pickled environment here for loading when the game starts. Chicken pot pie
-with open('map.dill', 'rb') as f:
-    EngineGlobals.platform = dill.load(f)
-    # Convert tiles to sprites. Early versions of the environment just contain 1 or 0 to
-    # represent a solid block or no block. If we see a 1, create a solid block at that
-    # location.
-    for y, row in enumerate(EngineGlobals.platform):
-        for x, tile in enumerate(row):
-            if hasattr(tile, 'image'):
-                EngineGlobals.platform[y][x] = gamepieces.Block(0, True)
-            elif isinstance(tile, int) and tile > 0:
-                EngineGlobals.platform[y][x] = gamepieces.Block(tile - 1, True)
+EngineGlobals.platform = load_map("map.dill")
 
 # create the Kenny player sprite and assign it to receive
 # keyboard events with the push_handlers function

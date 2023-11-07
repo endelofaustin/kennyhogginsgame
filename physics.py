@@ -57,6 +57,33 @@ class PhysicsSprite(pyglet.sprite.Sprite):
     def __setstate__(self, state):
         self.__dict__.update(state)
 
+    def get_collision_cell_hashes(self):
+        for hashed_x in range(floor(self.x_position / EngineGlobals.collision_cell_size), floor((self.x_position + self.collision_width - 1) / EngineGlobals.collision_cell_size) + 1):
+            for hashed_y in range(floor(self.y_position / EngineGlobals.collision_cell_size), floor((self.y_position + self.collision_height - 1) / EngineGlobals.collision_cell_size) + 1):
+                yield (hashed_x, hashed_y)
+
+    def get_all_colliding_objects(self):
+        # Collisions with other sprites. So what's going on here actually?
+        # 1. At the start of each update loop, we initialize an empty dict, PhysicsSprite.collision_lists.
+        #    The dict will represent a grid in game space, with each cell 32 pixels square, about the
+        #    average size of a sprite.
+        # 2. Here in the update function, we are calculating the hashed_x and hashed_y of all possible
+        #    cells that the sprite might be touching at this moment.
+        # 3. We append the sprite in a list stored at each cell.
+        # 4. We do a closer check of all other sprites that have been placed in the same cell, to see if
+        #    their bounding boxes collide or not; but we no longer have to check every other sprite that
+        #    has not been placed in this cell.
+        for (hashed_x, hashed_y) in self.get_collision_cell_hashes():
+            for collide_with in PhysicsSprite.collision_lists.setdefault(hashed_y * len(EngineGlobals.platform) + hashed_x, []):
+                if not isinstance(collide_with, PhysicsSprite):
+                    continue
+                if ( collide_with.x_position + collide_with.collision_width < self.x_position
+                or collide_with.y_position + collide_with.collision_height < self.y_position
+                or collide_with.x_position > self.x_position + self.collision_width
+                or collide_with.y_position > self.y_position + self.collision_height ):
+                    continue
+                yield collide_with
+
     # this function is called for each sprite during the main update loop
     def updateloop(self, dt):
         if self.has_gravity:
@@ -119,28 +146,13 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                     self.x_speed = 0
                     self.on_PhysicsSprite_collided()
 
-        # Collisions with other sprites. So what's going on here actually?
-        # 1. At the start of each update loop, we initialize an empty dict, PhysicsSprite.collision_lists. The dict will represent a grid in game space,
-        #    with each cell 32 pixels square, about the average size of a sprite.
-        # 2. Here in the update function, we are calculating the hashed_x and hashed_y of all possible cells that the sprite might be touching at this moment.
-        # 3. We append the sprite in a list stored at each cell.
-        # 4. We do a closer check of all other sprites that have been placed in the same cell, to see if their bounding boxes collide or not; but we no longer
-        #    have to check sprites elsewhere in the map that have not been placed in this cell.
-        for hashed_x in range(floor(self.x_position / EngineGlobals.collision_cell_size), floor((self.x_position + self.collision_width - 1) / EngineGlobals.collision_cell_size) + 1):
-            for hashed_y in range(floor(self.y_position / EngineGlobals.collision_cell_size), floor((self.y_position + self.collision_height - 1) / EngineGlobals.collision_cell_size) + 1):
-                # first, check for collisions with any other sprites in this cell
-                for collide_with in PhysicsSprite.collision_lists.setdefault(hashed_y * len(EngineGlobals.platform) + hashed_x, []):
-                    if not isinstance(collide_with, PhysicsSprite):
-                        continue
-                    if ( collide_with.x_position + collide_with.collision_width < self.x_position
-                    or collide_with.y_position + collide_with.collision_height < self.y_position
-                    or collide_with.x_position > self.x_position + self.collision_width
-                    or collide_with.y_position > self.y_position + self.collision_height ):
-                        continue
-                    self.on_PhysicsSprite_collided(collide_with)
-                    collide_with.on_PhysicsSprite_collided(self)
-                # then, add this sprite to the cell
-                PhysicsSprite.collision_lists[hashed_y * len(EngineGlobals.platform) + hashed_x].append(self)
+        # check for collisions with other sprites
+        for collide_with in self.get_all_colliding_objects():
+            self.on_PhysicsSprite_collided(collide_with)
+            collide_with.on_PhysicsSprite_collided(self)
+        # add this sprite to the cells it's touching
+        for (hashed_x, hashed_y) in self.get_collision_cell_hashes():
+            PhysicsSprite.collision_lists[hashed_y * len(EngineGlobals.platform) + hashed_x].append(self)
 
         # update position according to current speed
         self.x_position += self.x_speed

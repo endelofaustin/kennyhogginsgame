@@ -9,6 +9,7 @@ from bandaid import Bandaid
 from math import floor
 from menu import GameMenu
 from gamepieces import Door
+from maploader import load_map
 
 # Most of the code in this file, other than the update callback, is executed
 # *BEFORE* the game starts and before the game window is shown. We set

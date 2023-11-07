@@ -115,6 +115,11 @@ class Player(PhysicsSprite):
         # Button press handeling for space bar to shoot
         if symbol == pyglet.window.key.SPACE:
             self.shoot_it()
+        # door entry
+        if symbol == pyglet.window.key.D:
+            for collide_with in self.get_all_colliding_objects():
+                if type(collide_with).__name__ == 'Door':
+                    self.bloody = True
 
     # this function is called by the physics simulator when it detects landing on a solid object
     def on_PhysicsSprite_landed(self):

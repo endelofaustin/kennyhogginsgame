@@ -20,10 +20,13 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         pyglet.sprite.Sprite.__init__(self, img=next(iter(resource_image_dict.values())), batch=EngineGlobals.main_batch, group=EngineGlobals.sprites_group)
         self.resource_images = resource_image_dict
 
-        if not collision_width and len(resource_image_dict) > 0:
-            self.collision_width = resource_image_dict[next(iter(resource_image_dict))].width
-        if not collision_height and len(resource_image_dict) > 0:
-            self.collision_height = resource_image_dict[next(iter(resource_image_dict))].height
+        if (not collision_width or not collision_height) and len(resource_image_dict) > 0:
+            if isinstance(resource_image_dict[next(iter(resource_image_dict))], pyglet.image.AbstractImage):
+                self.collision_width = resource_image_dict[next(iter(resource_image_dict))].width
+                self.collision_height = resource_image_dict[next(iter(resource_image_dict))].height
+            elif isinstance(resource_image_dict[next(iter(resource_image_dict))], pyglet.image.Animation):
+                self.collision_width = resource_image_dict[next(iter(resource_image_dict))].get_max_width()
+                self.collision_height = resource_image_dict[next(iter(resource_image_dict))].get_max_height()
 
         # the 'x_speed' and 'y_speed' members are Decimal representations of the sprite's speed
         # at this moment; each time the game loop runs, the sprite will move by that amount;

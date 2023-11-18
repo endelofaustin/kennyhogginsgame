@@ -4,6 +4,7 @@ import pyglet
 from decimal import Decimal
 from engineglobals import EngineGlobals
 from bullet import Bullet
+from maploader import GameMap
 
 # the player object represents Kenny and responds to keyboard input
 class Player(PhysicsSprite):
@@ -119,7 +120,7 @@ class Player(PhysicsSprite):
         if symbol == pyglet.window.key.D:
             for collide_with in self.get_all_colliding_objects():
                 if type(collide_with).__name__ == 'Door':
-                    self.bloody = True
+                    EngineGlobals.game_map = GameMap.load_map("bossfight.dill")
 
     # this function is called by the physics simulator when it detects landing on a solid object
     def on_PhysicsSprite_landed(self):

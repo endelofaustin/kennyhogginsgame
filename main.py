@@ -9,7 +9,7 @@ from bandaid import Bandaid
 from math import floor
 from menu import GameMenu
 from gamepieces import Door
-from maploader import load_map
+from maploader import GameMap
 
 # Most of the code in this file, other than the update callback, is executed
 # *BEFORE* the game starts and before the game window is shown. We set
@@ -37,7 +37,7 @@ EngineGlobals.textsurface = pyglet.text.Label(
     anchor_y='top'
 )
 
-EngineGlobals.platform = load_map("map.dill")
+EngineGlobals.game_map = GameMap.load_map("map.dill")
 
 # create the Kenny player sprite and assign it to receive
 # keyboard events with the push_handlers function
@@ -112,9 +112,9 @@ def main_update_callback(dt):
     xend = floor((screen.x + EngineGlobals.width) / 32) + 2
 
     # Now calculate the starting and ending point of the inner loop (bottom to top).
-    ystart = len(EngineGlobals.platform) - floor(screen.y / 32)
+    ystart = len(EngineGlobals.game_map.platform) - floor(screen.y / 32)
     screen_top = screen.y + EngineGlobals.height
-    yend = len(EngineGlobals.platform) - floor((screen_top) / 32) - 3
+    yend = len(EngineGlobals.game_map.platform) - floor((screen_top) / 32) - 3
 
     # xrender_start and yrender_start represent the offset (in pixels) of where to start
     # drawing a given block on the screen - this origin could be offscreen for blocks that
@@ -130,14 +130,14 @@ def main_update_callback(dt):
         for ycounter in range(ystart, yend, -1):
 
             # grab the block from the environment and see if we should render it or not
-            if xcounter >= 0 and xcounter < len(EngineGlobals.platform[0]) and ycounter >= 0 and ycounter < len(EngineGlobals.platform):
-                if isinstance(EngineGlobals.platform[ycounter][xcounter], gamepieces.Block):
+            if xcounter >= 0 and xcounter < len(EngineGlobals.game_map.platform[0]) and ycounter >= 0 and ycounter < len(EngineGlobals.game_map.platform):
+                if isinstance(EngineGlobals.game_map.platform[ycounter][xcounter], gamepieces.Block):
                     if xrender_start + 32 <= 0 or xrender_start >= EngineGlobals.width or yrender_start + 32 <= 0 or yrender_start >= EngineGlobals.height:
-                        EngineGlobals.platform[ycounter][xcounter].sprite.visible = False
+                        EngineGlobals.game_map.platform[ycounter][xcounter].sprite.visible = False
                     else:
-                        EngineGlobals.platform[ycounter][xcounter].sprite.visible = True
-                        EngineGlobals.platform[ycounter][xcounter].sprite.x = xrender_start
-                        EngineGlobals.platform[ycounter][xcounter].sprite.y = yrender_start
+                        EngineGlobals.game_map.platform[ycounter][xcounter].sprite.visible = True
+                        EngineGlobals.game_map.platform[ycounter][xcounter].sprite.x = xrender_start
+                        EngineGlobals.game_map.platform[ycounter][xcounter].sprite.y = yrender_start
 
             # after each time through the y loop, update the y rendering location
             yrender_start += 32

@@ -58,14 +58,14 @@ class Editor():
             return pyglet.event.EVENT_UNHANDLED
 
         x_coord = floor((x + EngineGlobals.our_screen.x)/32)
-        y_coord = len(EngineGlobals.platform) - 1 - floor((EngineGlobals.our_screen.y + y)/32)
-        if EngineGlobals.platform[floor(y_coord)][floor(x_coord)] == 0:
+        y_coord = len(EngineGlobals.game_map.platform) - 1 - floor((EngineGlobals.our_screen.y + y)/32)
+        if EngineGlobals.game_map.platform[floor(y_coord)][floor(x_coord)] == 0:
             block = Block(self.selected_tile_idx, True)
-            EngineGlobals.platform[floor(y_coord)][floor(x_coord)] = block
+            EngineGlobals.game_map.platform[floor(y_coord)][floor(x_coord)] = block
         else:
-            if hasattr(EngineGlobals.platform[floor(y_coord)][floor(x_coord)], 'sprite'):
-                EngineGlobals.platform[floor(y_coord)][floor(x_coord)].sprite.delete()
-            EngineGlobals.platform[floor(y_coord)][floor(x_coord)] = 0
+            if hasattr(EngineGlobals.game_map.platform[floor(y_coord)][floor(x_coord)], 'sprite'):
+                EngineGlobals.game_map.platform[floor(y_coord)][floor(x_coord)].sprite.delete()
+            EngineGlobals.game_map.platform[floor(y_coord)][floor(x_coord)] = 0
         return pyglet.event.EVENT_HANDLED
 
     def on_mouse_motion(self, x, y, dx, dy):
@@ -94,13 +94,13 @@ class Editor():
         if symbol == pyglet.window.key.S and modifiers & pyglet.window.key.MOD_CTRL:
             
             with open('map.dill', 'wb') as f:
-                dill.dump(EngineGlobals.platform, f,)
+                dill.dump(EngineGlobals.game_map, f,)
             return pyglet.event.EVENT_HANDLED
 
         if symbol == pyglet.window.key.L and modifiers & pyglet.window.key.MOD_CTRL:
 
             with open('map.dill', 'rb') as f:
-                EngineGlobals.platform = dill.load(f)
+                EngineGlobals.game_map = dill.load(f)
             return pyglet.event.EVENT_HANDLED
 
         return pyglet.event.EVENT_UNHANDLED

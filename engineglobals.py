@@ -55,6 +55,8 @@ class EngineGlobals:
         EngineGlobals.last_sim = 0
 
         EngineGlobals.hay_block = pyglet.resource.image('firstblock.png')
+        # John says that is the act of passing off the creative work of another as your own. such as farm work, art. 
+        # cant plagiarize a farm or music. You can now all of a sudden
         EngineGlobals.tilesheet = pyglet.resource.image('plagiarism.png')
         #EngineGlobals.tilesheet_as_grid = pyglet.image.TextureGrid(pyglet.image.ImageGrid(EngineGlobals.tilesheet, 11, 10, 16, 16))
         #EngineGlobals.tilesheet_as_anim = pyglet.image.Animation.from_image_sequence(EngineGlobals.tilesheet_as_grid, duration=1, loop=False)

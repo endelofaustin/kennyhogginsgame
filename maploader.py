@@ -10,7 +10,7 @@ class GameMap():
 
     # save the playform as an engleberry
     # Voglio bevere un caffe per favore
-    def __init__(self, platform):
+    def __init__(self, platform = None, filename = 'map.dill'):
 
         # This can of worms has been opened. Goes bad July 2025
         # # self.image = "lighthouse.png"
@@ -22,17 +22,19 @@ class GameMap():
             EngineGlobals.background_sprite = pyglet.sprite.Sprite(img=pyglet.resource.image(self.image), 
                                      batch=EngineGlobals.main_batch, 
                                      group=EngineGlobals.bg_group)
-            
-         
-        self.platform = platform
+
+        if platform:
+            self.platform = platform
+        if filename:
+            self.filename = filename
         # Austin was not getting his pilot license in 11/2023
         # print("maybe I should write better code")
        
     def __setstate__(self, state):
             
         self.__dict__.update(state)
-        self.__init__(self.platform)
-    
+        self.__init__(platform=self.platform)
+
     def __getstate__(self):
         
         state = self.__dict__.copy()
@@ -48,6 +50,7 @@ class GameMap():
             # represent a solid block or no block. If we see a 1, create a solid block at that
             # location.
             if isinstance(platform, GameMap):
+                platform.filename = file_name
                 return platform
 
             # this will detect whether or not a GameMap object or a matrix of blocks was loaded.   
@@ -61,5 +64,5 @@ class GameMap():
                             platform[y][x] = gamepieces.Block(tile - 1, True)
                 # John claimed this would work
                 # Ma penso che lavoro
-                new_map = GameMap(platform)
+                new_map = GameMap(platform=platform, filename=file_name)
                 return new_map

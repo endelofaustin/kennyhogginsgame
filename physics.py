@@ -46,7 +46,7 @@ class PhysicsSprite(pyglet.sprite.Sprite):
 
         # When a physics sprite is generated it needs to be added to engineglobals.game_objects
         # so that it will be put into the update loop and not mess everything up like an idiot
-        EngineGlobals.game_objects.add(self)
+        EngineGlobals.add_us.add(self)
 
     # pickler
     def __getstate__(self):

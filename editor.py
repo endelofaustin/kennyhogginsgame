@@ -93,7 +93,7 @@ class Editor():
 
         if symbol == pyglet.window.key.S and modifiers & pyglet.window.key.MOD_CTRL:
             
-            with open('map.dill', 'wb') as f:
+            with open(EngineGlobals.game_map.filename, 'wb') as f:
                 dill.dump(EngineGlobals.game_map, f,)
             return pyglet.event.EVENT_HANDLED
 

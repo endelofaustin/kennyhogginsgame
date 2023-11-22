@@ -94,6 +94,13 @@ def main_update_callback(dt):
     # update cycle
     EngineGlobals.delete_us.clear()
 
+    # This is the same as the deletion but for addition.
+    # You cant add to a set while iterating over it. 
+    for add_me in EngineGlobals.add_us:
+        EngineGlobals.game_objects.add(add_me)
+    
+    EngineGlobals.add_us.clear()
+
     ### BLOCK RENDERING CODE ###
     # This section of code is responsible for calculating the correct position of
     # every block in the map relative to the position of the viewport within the map.

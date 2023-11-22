@@ -48,12 +48,22 @@ class Player(PhysicsSprite):
 
     def updateloop(self, dt):
 
+        # John has done 5 flight lessons as of nov 21 24..... corrections only 4
+        if hasattr(self, "blow_up_timer"):
+
+            if self.blow_up_timer <= 20:
+                self.image = pyglet.resource.image("kaboom.png")
+            
+            self.blow_up_timer -= 1
+
+
         self.x_speed = Decimal(0)
+        
         if EngineGlobals.keys[pyglet.window.key.DOWN] and self.landed:
             self.crouching = True
         else:
             self.crouching = False
-            # interpret arrow keys into velocity
+            # interpret arrow keys into velocity like a boss
             if EngineGlobals.keys[pyglet.window.key.LEFT]:
                 self.x_speed -= Decimal(Player.LEFT_RIGHT_RUN_SPEED)
             if EngineGlobals.keys[pyglet.window.key.RIGHT]:
@@ -140,7 +150,18 @@ class Player(PhysicsSprite):
         # Play the bullet spit audio
         self.spit_bullet.play()
 
+    def hit(self):
 
+        if not self.bloody:
+            self.bloody = True
+        else:
+            self.die_hard()
+
+    def die_hard(self):
+
+        self.image = pyglet.resource.image("lucinda.png")
+        self.blow_up_timer = 40
+        
     def on_PhysicsSprite_collided(self, collided_object=None):
         
         if collided_object and type(collided_object).__name__ == 'Spike':

@@ -2,6 +2,7 @@ import dill, pickle
 import gamepieces
 import pyglet
 from engineglobals import EngineGlobals
+from bosses import PearlyPaul
 
 """ John is very confused """
 
@@ -12,6 +13,7 @@ class GameMap():
     # Voglio bevere un caffe per favore
     def __init__(self, platform = None, filename = 'map.dill'):
 
+        self.sprites = []
         # This can of worms has been opened. Goes bad July 2025
         # # self.image = "lighthouse.png"
         # create a sprite htat is not a member of the class and it wont try to pickle the sprite
@@ -30,10 +32,13 @@ class GameMap():
         # Austin was not getting his pilot license in 11/2023
         # print("maybe I should write better code")
        
+        if filename == "bossfight.dill":
+            boss = PearlyPaul()
+            self.sprites.append(boss)
+            
     def __setstate__(self, state):
             
         self.__dict__.update(state)
-        self.__init__(platform=self.platform)
 
     def __getstate__(self):
         
@@ -48,9 +53,10 @@ class GameMap():
             platform = dill.load(f)
             # Convert tiles to sprites. Early versions of the environment just contain 1 or 0 to
             # represent a solid block or no block. If we see a 1, create a solid block at that
-            # location.
+            # location. Quote from john... 11/26/2023 "That will work I think. I committed code that I didnt remember writing... So cirle dependency" 
             if isinstance(platform, GameMap):
-                platform.filename = file_name
+                # I hate bill... sorry dill. bill aight... goitta be a better way we fix later
+                platform.__init__(platform=platform.platform, filename=file_name)
                 return platform
 
             # this will detect whether or not a GameMap object or a matrix of blocks was loaded.   
@@ -63,6 +69,8 @@ class GameMap():
                         elif isinstance(tile, int) and tile > 0:
                             platform[y][x] = gamepieces.Block(tile - 1, True)
                 # John claimed this would work
-                # Ma penso che lavoro
+                # Ma penso che lavoro troppo
+                # il vero modo  e essere intelligente ma...
+                # vorriste giocare kenny hoggins con la mia madre... Nein
                 new_map = GameMap(platform=platform, filename=file_name)
                 return new_map

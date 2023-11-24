@@ -1,6 +1,7 @@
 #!/bin/python3
 
 import pyglet, pickle, dill
+import json
 from gamepieces import *
 from pyglet.window import mouse
 from engineglobals import EngineGlobals
@@ -94,7 +95,8 @@ class Editor():
         if symbol == pyglet.window.key.S and modifiers & pyglet.window.key.MOD_CTRL:
             
             with open(EngineGlobals.game_map.filename, 'wb') as f:
-                dill.dump(EngineGlobals.game_map, f,)
+                f.write(json.dumps(EngineGlobals.game_map.__dict__, indent=4, sort_keys=True))
+                #dill.dump(EngineGlobals.game_map, f,)
             return pyglet.event.EVENT_HANDLED
 
         if symbol == pyglet.window.key.L and modifiers & pyglet.window.key.MOD_CTRL:

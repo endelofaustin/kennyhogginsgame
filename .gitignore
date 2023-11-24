@@ -2,3 +2,4 @@
 .vscode/
 __pycache__/
 *.code-workspace
+*-debug.txt

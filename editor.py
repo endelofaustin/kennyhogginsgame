@@ -1,7 +1,6 @@
 #!/bin/python3
 
 import pyglet, pickle, dill
-import json
 from gamepieces import *
 from pyglet.window import mouse
 from engineglobals import EngineGlobals
@@ -31,7 +30,7 @@ class Editor():
         self.selected_tile_idx = 0
         self.update_selected_tile(0)
 
-        self.mouse_drag_before_release = False
+        self.mouse_down_coords = (0, 0)
 
     def updateloop(self, dt):
         pass
@@ -73,12 +72,12 @@ class Editor():
         return pyglet.event.EVENT_UNHANDLED
 
     def on_mouse_press(self, x, y, button, modifiers):
-        self.mouse_drag_before_release = False
+        self.mouse_down_coords = (x, y)
         return pyglet.event.EVENT_UNHANDLED
 
     def on_mouse_release(self, x, y, button, modifiers):
         # don't do anything if it was a mouse drag
-        if self.mouse_drag_before_release:
+        if abs(x - self.mouse_down_coords[0]) > 4 or abs(y - self.mouse_down_coords[1]) > 4:
             return pyglet.event.EVENT_UNHANDLED
         # see if the click is happening in the right side editor or in the main map
         if self.handle_tilesheet_click(x, y, button, modifiers) == pyglet.event.EVENT_HANDLED:
@@ -87,7 +86,6 @@ class Editor():
             return pyglet.event.EVENT_HANDLED
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
-        self.mouse_drag_before_release = True
         return pyglet.event.EVENT_UNHANDLED
 
     def on_key_release(self, symbol, modifiers,):
@@ -95,8 +93,7 @@ class Editor():
         if symbol == pyglet.window.key.S and modifiers & pyglet.window.key.MOD_CTRL:
             
             with open(EngineGlobals.game_map.filename, 'wb') as f:
-                f.write(json.dumps(EngineGlobals.game_map.__dict__, indent=4, sort_keys=True))
-                #dill.dump(EngineGlobals.game_map, f,)
+                dill.dump(EngineGlobals.game_map, f,)
             return pyglet.event.EVENT_HANDLED
 
         if symbol == pyglet.window.key.L and modifiers & pyglet.window.key.MOD_CTRL:

@@ -73,6 +73,13 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         # 4. We do a closer check of all other sprites that have been placed in the same cell, to see if
         #    their bounding boxes collide or not; but we no longer have to check every other sprite that
         #    has not been placed in this cell.
+        # 5. Because each sprite can be touching multiple cells and will be added to the list for each
+        #    cell, we are going to potentially find that sprite multiple times when enumerating over
+        #    the lists. We don't want to initiate the collision detection logic multiple times, only
+        #    once per unique sprite. So store the found sprites in a set and then when we try to add
+        #    them to the set multiple times, it will ignore the later times and return just the unique
+        #    set of sprites at the end.
+        found_objects = set()
         for (hashed_x, hashed_y) in self.get_collision_cell_hashes():
             for collide_with in PhysicsSprite.collision_lists.setdefault(hashed_y * len(EngineGlobals.game_map.platform) + hashed_x, []):
                 if not isinstance(collide_with, PhysicsSprite):
@@ -82,7 +89,8 @@ class PhysicsSprite(pyglet.sprite.Sprite):
                 or collide_with.x_position > self.x_position + self.collision_width
                 or collide_with.y_position > self.y_position + self.collision_height ):
                     continue
-                yield collide_with
+                found_objects.add(collide_with)
+        return found_objects
 
     # this function is called for each sprite during the main update loop
     def updateloop(self, dt):

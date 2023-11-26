@@ -50,19 +50,16 @@ class PearlyPaul(Enemy):
         pearl.y_speed = -12
         pearl.x_position,pearl.y_position = self.x_position, self.y_position + 22
         self.pearl_dropping_time = random.randrange(50 ,500)
-        PearlyPaul.poop_pearl.play()
+        self.poop_pearl.play()
 
 class Pearl(PhysicsSprite):
 
     def __init__(self,):
         PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
-           'left': pyglet.resource.image("left_pearl.png"),
-           'right': pyglet.resource.image("right_pearl.png"),
-           'down': pyglet.resource.image("down_pearl.png"),
-           'reg': pyglet.resource.image("reg_pearl.png"
-           )
-        })
-
+            'pearl_left': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("pearled_out.png"), rows=3, columns=2), duration=1/10, loop=True),
+            'pearl_right': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("pearled_out.png"), rows=3, columns=2), duration=1/10, loop=True)
+            })
+        
     def on_PhysicsSprite_collided(self, collided_object=None):
         
         if collided_object and type(collided_object).__name__ == 'Player':
@@ -71,3 +68,4 @@ class Pearl(PhysicsSprite):
         if type(collided_object).__name__ == 'Player':
             collided_object.hit()
 
+        

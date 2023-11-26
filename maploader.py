@@ -46,7 +46,7 @@ def additional_map_definitions(map):
 
     return
 
-# This is a class
+# This is a class John said this while we were coding it out
 class GameMap():
 
     # save the playform as an engleberry

@@ -77,6 +77,7 @@ class Editor():
 
     def on_mouse_release(self, x, y, button, modifiers):
         # don't do anything if it was a mouse drag
+        # drag is a click that is greater than four 
         if abs(x - self.mouse_down_coords[0]) > 4 or abs(y - self.mouse_down_coords[1]) > 4:
             return pyglet.event.EVENT_UNHANDLED
         # see if the click is happening in the right side editor or in the main map

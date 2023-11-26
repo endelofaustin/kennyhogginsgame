@@ -53,11 +53,11 @@ menu = GameMenu()
 EngineGlobals.window.push_handlers(menu)
 
 # load enemy sprite
-enemy = enemies.Enemy()
-doggy = enemies.Doggy()
-spike = Spike([172, 0])
-bandaid = Bandaid([236, 0], 'good')
-door = Door(starting_position=[500, 0])
+EngineGlobals.game_map.sprites.append(enemies.Enemy())
+EngineGlobals.game_map.sprites.append(enemies.Doggy())
+EngineGlobals.game_map.sprites.append(Spike([172, 0]))
+EngineGlobals.game_map.sprites.append(Bandaid([236, 0], 'good'))
+EngineGlobals.game_map.sprites.append(Door(starting_position=[500, 0]))
 
 # When adding to this set we are beginning to setup changable objects
 # any object in this set will have its update function called

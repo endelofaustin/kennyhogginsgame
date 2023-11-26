@@ -9,17 +9,18 @@ from decimal import Decimal
 
 class PearlyPaul(Enemy):
 
-     def __init__(self,):
+    def __init__(self,):
 
-         PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
+        PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
             'left': pyglet.resource.image("pearly_paul.png",)
         })
-         
-         self.moving_time = 0
-         self.pearl_dropping_time = 0 
-         self.poop_pearl = pyglet.media.load("audio/spitbullets.wav", streaming=False)
-         print("I created")
-     def updateloop(self, dt):
+
+        self.moving_time = 0
+        self.pearl_dropping_time = 0
+        if not hasattr(PearlyPaul, 'poop_pearl'):
+            PearlyPaul.poop_pearl = pyglet.media.load("audio/spitbullets.wav", streaming=False)
+
+    def updateloop(self, dt):
 
         if hasattr(self, 'dead_timer'):
             self.dead_timer += 1
@@ -41,7 +42,7 @@ class PearlyPaul(Enemy):
 
         PhysicsSprite.updateloop(self, dt)
 
-     def drop_pearl(self):
+    def drop_pearl(self):
         # John thinks this is very interesting. and that this sucks why would we have to do that...
         # that is what we have to do. we need an add_list function in engineglobals, we cant create game objects on the fly in the update
         # Loop... hahaha pig candy.
@@ -49,7 +50,7 @@ class PearlyPaul(Enemy):
         pearl.y_speed = -12
         pearl.x_position,pearl.y_position = self.x_position - 5, self.y_position + 22
         self.pearl_dropping_time = random.randrange(50 ,500)
-        self.poop_pearl.play()
+        PearlyPaul.poop_pearl.play()
 
 class Pearl(PhysicsSprite):
 

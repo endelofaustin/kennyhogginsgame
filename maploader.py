@@ -17,6 +17,9 @@ from bosses import PearlyPaul
 # already there then we don't add them again.
 def additional_map_definitions(map):
 
+    if not hasattr(map, 'sprites'):
+        map.sprites = []
+
     # the main map that loads when the game starts
     if not hasattr(map, 'filename') or map.filename == "map.dill":
 
@@ -34,15 +37,9 @@ def additional_map_definitions(map):
         map.one_offs_version = ONE_OFFS_VERSION
 
         # add some one-offs
-        if not hasattr(map, 'sprites'):
-            map.sprites = []
         map.image = "lighthouse.png"
         boss = PearlyPaul()
         map.sprites.append(boss)
-
-    # We can also delete old crufty attributes that we
-    # don't want any longer.
-    delattr(map, 'filename')
 
     return
 
@@ -71,13 +68,16 @@ class GameMap():
         # Austin was not getting his pilot license in 11/2023
         # print("maybe I should write better code")
 
+        additional_map_definitions(self)
+
         with open(self.filename + "-debug.txt", "w") as dumpf:
             dumpf.write(str(self.__dict__))
 
     def __setstate__(self, state):
         # This function is called when dill is unpickling from a file to create the object
         self.__dict__.update(state)
-        additional_map_definitions(self)
+        if hasattr(self, 'filename'):
+            del state['filename']
 
     def __getstate__(self):
         # This function is called when dill is pickling the object into a file -- it needs
@@ -100,6 +100,12 @@ class GameMap():
                 game_map = file_stuff
                 # I hate bill... sorry dill. bill aight... goitta be a better way we fix later
                 # when objects are loaded via dill their __init__ never gets called, so call it
+
+                # first, delete all old sprites associated with the old map
+                if hasattr(EngineGlobals.game_map, 'sprites'):
+                    for sprite in EngineGlobals.game_map.sprites:
+                        sprite.destroy()
+
                 game_map.__init__(platform=game_map.platform, filename=filename)
                 return game_map
 

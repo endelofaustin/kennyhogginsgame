@@ -45,6 +45,9 @@ class Player(PhysicsSprite):
 
         self.crouching = False
 
+        if not hasattr(Player, 'door_open_close'):
+            Player.door_open_close = pyglet.media.load("audio/door_open_close.mp3", streaming=False)
+
 
     def updateloop(self, dt):
 
@@ -130,6 +133,7 @@ class Player(PhysicsSprite):
         if symbol == pyglet.window.key.D:
             for collide_with in self.get_all_colliding_objects():
                 if type(collide_with).__name__ == 'Door':
+                    Player.door_open_close.play()
                     EngineGlobals.game_map = GameMap.load_map("bossfight.dill")
 
     # this function is called by the physics simulator when it detects landing on a solid object

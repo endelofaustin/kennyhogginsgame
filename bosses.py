@@ -17,7 +17,8 @@ class PearlyPaul(Enemy):
          
          self.moving_time = 0
          self.pearl_dropping_time = 0 
-         self.poop_pearl = pyglet.media.load("audio/plop.mp3", streaming=False)
+         if not hasattr(PearlyPaul, 'poop_pearl'):
+            PearlyPaul.poop_pearl = pyglet.media.load("audio/plop.mp3", streaming=False)
     
     def updateloop(self, dt):
 

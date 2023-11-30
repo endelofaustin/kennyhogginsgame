@@ -13,11 +13,14 @@ class PhysicsSprite(pyglet.sprite.Sprite):
 
     # constructor
     # Set has_gravity to False to create a sprite that hovers in defiance of all reason
-    def __init__(self, has_gravity = True, resource_image_dict = None, collision_width = None, collision_height = None):
+    def __init__(self, has_gravity = True, resource_image_dict = None, collision_width = None, collision_height = None,
+                 group=None):
         self.landed = False
 
         # call the parent Sprite __init__
-        pyglet.sprite.Sprite.__init__(self, img=next(iter(resource_image_dict.values())), batch=EngineGlobals.main_batch, group=EngineGlobals.sprites_group)
+        if not group:
+            group = EngineGlobals.sprites_back_group
+        pyglet.sprite.Sprite.__init__(self, img=next(iter(resource_image_dict.values())), batch=EngineGlobals.main_batch, group=group)
         self.resource_images = resource_image_dict
 
         if (not collision_width or not collision_height) and len(resource_image_dict) > 0:

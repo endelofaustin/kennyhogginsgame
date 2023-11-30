@@ -40,10 +40,11 @@ class EngineGlobals:
         EngineGlobals.main_batch = pyglet.graphics.Batch()
         EngineGlobals.bg_group = pyglet.graphics.Group(0)
         EngineGlobals.tiles_group = pyglet.graphics.Group(1)
-        EngineGlobals.sprites_group = pyglet.graphics.Group(2)
-        EngineGlobals.editor_group_back = pyglet.graphics.Group(3)
-        EngineGlobals.editor_group_mid = pyglet.graphics.Group(4)
-        EngineGlobals.editor_group_front = pyglet.graphics.Group(5)
+        EngineGlobals.sprites_back_group = pyglet.graphics.Group(2)
+        EngineGlobals.sprites_front_group = pyglet.graphics.Group(3)
+        EngineGlobals.editor_group_back = pyglet.graphics.Group(4)
+        EngineGlobals.editor_group_mid = pyglet.graphics.Group(5)
+        EngineGlobals.editor_group_front = pyglet.graphics.Group(6)
 
         # this is a game object list that will auto populate when sprites are generated
         EngineGlobals.game_objects = set()

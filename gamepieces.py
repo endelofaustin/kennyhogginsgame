@@ -33,6 +33,6 @@ class Block:
 class Door(PhysicsSprite):
 
     def __init__(self, starting_position) -> None:
-        super().__init__(has_gravity=False, resource_image_dict={0: pyglet.resource.image("door-1.png")})
+        super().__init__(has_gravity=False, resource_image_dict={0: pyglet.resource.image("door-1.png")}, group=EngineGlobals.sprites_back_group)
         self.x_position = starting_position[0]
         self.y_position = starting_position[1]

@@ -17,13 +17,14 @@ from bosses import PearlyPaul
 # already there then we don't add them again.
 def additional_map_definitions(map):
 
-    if not hasattr(map, 'sprites'):
-        map.sprites = []
-
     # the main map that loads when the game starts
     if not hasattr(map, 'filename') or map.filename == "map.dill":
 
-        ONE_OFFS_VERSION = 1
+        ONE_OFFS_VERSION = 2
+        if hasattr(map, 'sprites'):
+            map.sprites = set(map.sprites)
+        else:
+            map.sprites = set()
         if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
             return
         map.one_offs_version = ONE_OFFS_VERSION
@@ -31,15 +32,19 @@ def additional_map_definitions(map):
     # the boss fight with pearly paul
     elif map.filename == "bossfight.dill":
 
-        ONE_OFFS_VERSION = 1
+        ONE_OFFS_VERSION = 2
         if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
             return
         map.one_offs_version = ONE_OFFS_VERSION
 
         # add some one-offs
+        if hasattr(map, 'sprites'):
+            map.sprites = set(map.sprites)
+        else:
+            map.sprites = set()
         map.image = "lighthouse.png"
         boss = PearlyPaul()
-        map.sprites.append(boss)
+        map.sprites.add(boss)
 
     return
 

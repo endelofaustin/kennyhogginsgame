@@ -53,11 +53,11 @@ menu = GameMenu()
 EngineGlobals.window.push_handlers(menu)
 
 # load enemy sprite
-EngineGlobals.game_map.sprites.append(enemies.Enemy())
-EngineGlobals.game_map.sprites.append(enemies.Doggy())
-EngineGlobals.game_map.sprites.append(Spike([172, 0]))
-EngineGlobals.game_map.sprites.append(Bandaid([236, 0], 'good'))
-EngineGlobals.game_map.sprites.append(Door(starting_position=[500, 0]))
+EngineGlobals.game_map.sprites.add(enemies.Enemy())
+EngineGlobals.game_map.sprites.add(enemies.Doggy())
+EngineGlobals.game_map.sprites.add(Spike([172, 0]))
+EngineGlobals.game_map.sprites.add(Bandaid([236, 0], 'good'))
+EngineGlobals.game_map.sprites.add(Door(starting_position=[500, 0]))
 
 # When adding to this set we are beginning to setup changable objects
 # any object in this set will have its update function called
@@ -87,7 +87,8 @@ def main_update_callback(dt):
     # some objects may have requested to be deleted during the update loop,
     # by adding themselves to the delete_us list. Delete them now.
     for delete_me in EngineGlobals.delete_us:
-        EngineGlobals.game_objects.remove(delete_me)
+        EngineGlobals.game_objects.discard(delete_me)
+        EngineGlobals.game_map.sprites.discard(delete_me)
         delete_me.delete()
     # every game object that requested it has now been deleted, so clear
     # the list so that more objects can request deletion during the next

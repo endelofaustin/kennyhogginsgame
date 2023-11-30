@@ -30,7 +30,7 @@ class Player(PhysicsSprite):
             'run_right': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-run-right.png"), rows=1, columns=4), duration=1/10, loop=True),
             'jump_left': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-jump-left.png"), rows=1, columns=2), duration=1/10, loop=False),
             'jump_right': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-jump-right.png"), rows=1, columns=2), duration=1/10, loop=False)
-        })
+        }, group=EngineGlobals.sprites_front_group)
 
         # Which direction is Kenny facing?
         self.direction = 'right'

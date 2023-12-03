@@ -4,12 +4,19 @@ import pyglet
 
 class Bandaid(PhysicsSprite):
 
-        def __init__(self, spawn_coords, style):
+        def __init__(self, init_params={
+            'has_gravity': True,
+            'resource_images': {
+                'gross': "gross_band_aid.png",
+                'good': "good_band_aid.png"
+            }},
+            spawn_coords=None,
+            style='good'
+        ):
 
-            PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
-                'gross': pyglet.resource.image("gross_band_aid.png"),
-                'good': pyglet.resource.image("good_band_aid.png")
-            })
-            self.update(scale=.695)
-            (self.x_position, self.y_position) = spawn_coords
-            self.image = self.resource_images[style]
+            if spawn_coords:
+                init_params['spawn_coords'] = spawn_coords
+            PhysicsSprite.__init__(self, init_params)
+
+            self.sprite.update(scale=.695)
+            self.sprite.image = self.resource_images[style]

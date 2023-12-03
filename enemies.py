@@ -8,15 +8,18 @@ import random
 
 class Enemy(PhysicsSprite):
     
-    def __init__(self,):
+    def __init__(self, init_params={
+        'has_gravity': True,
+        'resource_images': {
+            '0': "mrspudl.png",
+            'dead': "deadspud.png"
+        }
+    }):
 
-        PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
-            'left': pyglet.resource.image("mrspudl.png",),
-            'dead': pyglet.resource.image("deadspud.png"),
-        })
-        
+        PhysicsSprite.__init__(self, init_params)
+
         self.moving_time = 0
-        
+
 
     def updateloop(self, dt):
         
@@ -38,15 +41,16 @@ class Enemy(PhysicsSprite):
 
         self.y_speed = 10
         self.x_speed = Decimal(random.randrange(-50, 50))
-        
+
     def on_PhysicsSprite_collided(self, collided_object=None):
-         
+
         if collided_object == None:
-             self.make_it_jump()
-      
+            self.make_it_jump()
+
     def die_hard(self,):
-        
+
         if self.image != self.resource_images['dead']:
+
             self.dead_timer = 0
             self.image = self.resource_images['dead']
             dead_dude = pyglet.media.load('audio/glurk.wav', streaming=False)
@@ -54,10 +58,8 @@ class Enemy(PhysicsSprite):
 
 class Doggy(Enemy):
 
-     def __init__(self,):
+     def __init__(self, init_params={'has_gravity': True, 'resource_images': {0: "doggy.png"}}):
 
-         PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
-            'left': pyglet.resource.image("doggy.png",)
-        })
-         
-         self.moving_time = 0
+        PhysicsSprite.__init__(self, init_params)
+
+        self.moving_time = 0

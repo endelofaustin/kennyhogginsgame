@@ -1,5 +1,5 @@
 
-from physics import PhysicsSprite
+from physics import PhysicsSprite, SpriteBatch
 import pyglet
 from decimal import Decimal
 from engineglobals import EngineGlobals
@@ -20,17 +20,21 @@ class Player(PhysicsSprite):
     SECOND_JUMP = 3
 
     def __init__(self):
-        PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
-            'right': pyglet.resource.image("kennystance1-2.png.png"),
-            'left': pyglet.resource.image("kennystance-left.png"),
-            'bloody': pyglet.resource.image("bloodykenny-1.png"),
-            'crouch_left': pyglet.resource.image("kenny-crouch-left.png"),
-            'crouch_right': pyglet.resource.image("kenny-crouch-right.png"),
-            'run_left': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-run-left.png"), rows=1, columns=4), duration=1/10, loop=True),
-            'run_right': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-run-right.png"), rows=1, columns=4), duration=1/10, loop=True),
-            'jump_left': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-jump-left.png"), rows=1, columns=2), duration=1/10, loop=False),
-            'jump_right': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("kenny-jump-right.png"), rows=1, columns=2), duration=1/10, loop=False)
-        }, group=EngineGlobals.sprites_front_group)
+        PhysicsSprite.__init__(self, {
+            'has_gravity': True,
+            'resource_images': {
+                'right': "kennystance1-2.png.png",
+                'left': "kennystance-left.png",
+                'bloody': "bloodykenny-1.png",
+                'crouch_left': "kenny-crouch-left.png",
+                'crouch_right': "kenny-crouch-right.png",
+                'run_left': {'file': "kenny-run-left.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': True},
+                'run_right': {'file': "kenny-run-right.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': True},
+                'jump_left': {'file': "kenny-jump-left.png", 'rows': 1, 'columns': 2, 'duration': 1/10, 'loop': False},
+                'jump_right': {'file': "kenny-jump-right.png", 'rows': 1, 'columns': 2, 'duration': 1/10, 'loop': False}
+            },
+            'group': SpriteBatch.FRONT
+        })
 
         # Which direction is Kenny facing?
         self.direction = 'right'
@@ -55,7 +59,7 @@ class Player(PhysicsSprite):
         if hasattr(self, "blow_up_timer"):
 
             if self.blow_up_timer <= 20:
-                self.image = pyglet.resource.image("kaboom.png")
+                self.sprite.image = pyglet.resource.image("kaboom.png")
             
             self.blow_up_timer -= 1
 
@@ -74,9 +78,9 @@ class Player(PhysicsSprite):
 
         if self.crouching:
             if self.direction == 'left':
-                self.image = self.resource_images['crouch_left']
+                self.sprite.image = self.resource_images['crouch_left']
             else:
-                self.image = self.resource_images['crouch_right']
+                self.sprite.image = self.resource_images['crouch_right']
         elif self.jumpct > Player.NOT_JUMPING:
             self.jump_frames += 1
             if self.jumpct == Player.CROUCHING_FOR_JUMP and self.jump_frames >= Player.JUMP_CROUCH_FRAMES:
@@ -84,29 +88,29 @@ class Player(PhysicsSprite):
                 self.y_speed = Decimal(max(self.y_speed, 0) + Player.JUMP_INITIAL_VELOCITY)
                 self.landed = False
             if self.direction == 'left':
-                if self.image != self.resource_images['jump_left']:
-                    self.image = self.resource_images['jump_left']
+                if self.sprite.image != self.resource_images['jump_left']:
+                    self.sprite.image = self.resource_images['jump_left']
             else:
-                if self.image != self.resource_images['jump_right']:
-                    self.image = self.resource_images['jump_right']
+                if self.sprite.image != self.resource_images['jump_right']:
+                    self.sprite.image = self.resource_images['jump_right']
         else:
             if self.x_speed < 0:
                 self.direction = 'left'
-                if self.image != self.resource_images['run_left']:
-                    self.image = self.resource_images['run_left']
+                if self.sprite.image != self.resource_images['run_left']:
+                    self.sprite.image = self.resource_images['run_left']
             elif self.x_speed > 0:
                 self.direction = 'right'
-                if self.image != self.resource_images['run_right']:
-                    self.image = self.resource_images['run_right']
+                if self.sprite.image != self.resource_images['run_right']:
+                    self.sprite.image = self.resource_images['run_right']
             elif self.direction == 'left':
-                if self.image != self.resource_images['left']:
-                    self.image = self.resource_images['left']
+                if self.sprite.image != self.resource_images['left']:
+                    self.sprite.image = self.resource_images['left']
             else:
-                if self.image != self.resource_images['right']:
-                    self.image = self.resource_images['right']
+                if self.sprite.image != self.resource_images['right']:
+                    self.sprite.image = self.resource_images['right']
 
         if self.bloody == True:
-           self.image = self.resource_images['bloody']
+           self.sprite.image = self.resource_images['bloody']
 
         if self.landed and self.jumpct != Player.CROUCHING_FOR_JUMP:
             self.jumpct = Player.NOT_JUMPING
@@ -163,7 +167,7 @@ class Player(PhysicsSprite):
 
     def die_hard(self):
 
-        self.image = pyglet.resource.image("lucinda.png")
+        self.sprite.image = pyglet.resource.image("lucinda.png")
         self.blow_up_timer = 40
         
     def on_PhysicsSprite_collided(self, collided_object=None):

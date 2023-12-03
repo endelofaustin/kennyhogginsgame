@@ -3,6 +3,10 @@ import gamepieces
 import pyglet
 from engineglobals import EngineGlobals
 from bosses import PearlyPaul
+from spike import Spike
+from bandaid import Bandaid
+from enemies import Enemy, Doggy
+from gamepieces import Door
 
 """ John is very confused """
 
@@ -20,14 +24,21 @@ def additional_map_definitions(map):
     # the main map that loads when the game starts
     if not hasattr(map, 'filename') or map.filename == "map.dill":
 
-        ONE_OFFS_VERSION = 2
+        ONE_OFFS_VERSION = 3
+        if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
+            return
+        map.one_offs_version = ONE_OFFS_VERSION
+
         if hasattr(map, 'sprites'):
             map.sprites = set(map.sprites)
         else:
             map.sprites = set()
-        if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
-            return
-        map.one_offs_version = ONE_OFFS_VERSION
+
+        map.sprites.add(Enemy())
+        map.sprites.add(Doggy())
+        map.sprites.add(Spike(spawning_coords=[172, 0]))
+        map.sprites.add(Bandaid(spawn_coords=[236, 0], style='good'))
+        map.sprites.add(Door(starting_position=[500, 0]))
 
     # the boss fight with pearly paul
     elif map.filename == "bossfight.dill":
@@ -89,6 +100,9 @@ class GameMap():
         # a dict representation of the object.
         state = self.__dict__.copy()
         del state['filename']
+        # for (k, v) in state.items():
+        #     if k != 'platform':
+        #         print("{} is {}".format(str(k), str(v)))
         return state
 
     def load_map(filename):
@@ -107,7 +121,7 @@ class GameMap():
                 # when objects are loaded via dill their __init__ never gets called, so call it
 
                 # first, delete all old sprites associated with the old map
-                if hasattr(EngineGlobals.game_map, 'sprites'):
+                if hasattr(EngineGlobals, 'game_map') and hasattr(EngineGlobals.game_map, 'sprites'):
                     for sprite in EngineGlobals.game_map.sprites:
                         sprite.destroy()
 

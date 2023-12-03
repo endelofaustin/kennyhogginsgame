@@ -3,33 +3,51 @@ import pyglet
 from decimal import Decimal
 from engineglobals import EngineGlobals
 from math import floor
+from enum import Enum
 
 # PhysicsSprite represents a sprite that honors the laws of physics.
 # It contains an update method that will alter the sprite's position according
 # to speed and gravity.
-class PhysicsSprite(pyglet.sprite.Sprite):
+class SpriteBatch(Enum):
+    BACK = 1
+    FRONT = 2
 
+class PhysicsSprite:
     collision_lists = {}
 
     # constructor
     # Set has_gravity to False to create a sprite that hovers in defiance of all reason
-    def __init__(self, has_gravity = True, resource_image_dict = None, collision_width = None, collision_height = None,
-                 group=None):
+    def __init__(self, init_params={}):
+        self.init_params = init_params
+
         self.landed = False
 
-        # call the parent Sprite __init__
-        if not group:
-            group = EngineGlobals.sprites_back_group
-        pyglet.sprite.Sprite.__init__(self, img=next(iter(resource_image_dict.values())), batch=EngineGlobals.main_batch, group=group)
-        self.resource_images = resource_image_dict
+        self.resource_images = {}
 
-        if (not collision_width or not collision_height) and len(resource_image_dict) > 0:
-            if isinstance(resource_image_dict[next(iter(resource_image_dict))], pyglet.image.AbstractImage):
-                self.collision_width = resource_image_dict[next(iter(resource_image_dict))].width
-                self.collision_height = resource_image_dict[next(iter(resource_image_dict))].height
-            elif isinstance(resource_image_dict[next(iter(resource_image_dict))], pyglet.image.Animation):
-                self.collision_width = resource_image_dict[next(iter(resource_image_dict))].get_max_width()
-                self.collision_height = resource_image_dict[next(iter(resource_image_dict))].get_max_height()
+        for k, resource_id in init_params['resource_images'].items():
+            if isinstance(resource_id, dict):
+                self.resource_images[k] = pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image(resource_id['file']), rows=resource_id['rows'], columns=resource_id['columns']), duration=resource_id['duration'], loop=resource_id['loop'])
+            else:
+                self.resource_images[k] = pyglet.resource.image(resource_id)
+
+        group = EngineGlobals.sprites_front_group if ('group' in init_params and init_params['group'] == SpriteBatch.FRONT) else EngineGlobals.sprites_back_group
+        self.sprite = pyglet.sprite.Sprite(img=next(iter(self.resource_images.values())), batch=EngineGlobals.main_batch, group=group)
+
+        # if collision_width and collision_height are not provided, calculate them from the width and height
+        # of the provided image/animation
+        collision_width = init_params['collision_width'] if 'collision_width' in init_params else None
+        collision_height = init_params['collision_height'] if 'collision_height' in init_params else None
+        if (not collision_width or not collision_height) and len(self.resource_images) > 0:
+
+            if isinstance(self.resource_images[next(iter(self.resource_images))], pyglet.image.AbstractImage):
+
+                self.collision_width = self.resource_images[next(iter(self.resource_images))].width
+                self.collision_height = self.resource_images[next(iter(self.resource_images))].height
+
+            elif isinstance(self.resource_images[next(iter(self.resource_images))], pyglet.image.Animation):
+
+                self.collision_width = self.resource_images[next(iter(self.resource_images))].get_max_width()
+                self.collision_height = self.resource_images[next(iter(self.resource_images))].get_max_height()
 
         # the 'x_speed' and 'y_speed' members are Decimal representations of the sprite's speed
         # at this moment; each time the game loop runs, the sprite will move by that amount;
@@ -40,15 +58,18 @@ class PhysicsSprite(pyglet.sprite.Sprite):
 
         # the 'has_gravity' member is a true/false flag to indicate whether this sprite truly
         # obeys Isaac Newton's decrees.
-        self.has_gravity = has_gravity
+        self.has_gravity = False if 'has_gravity' not in init_params else bool(init_params['has_gravity'])
 
         # scale up the image
-        self.update(scale=EngineGlobals.scale_factor)
+        self.sprite.update(scale=EngineGlobals.scale_factor)
 
         # initialize the x_position and y_position members as a Decimal representation of the
         # sprite's position in the environment - self.x_position is the 'x' or left-to-right
         # coordinate, self.y_position is the 'y' or bottom-to-top coordinate
-        (self.x_position, self.y_position) = (Decimal(), Decimal())
+        if 'spawn_coords' in init_params:
+            (self.x_position, self.y_position) = init_params['spawn_coords']
+        else:
+            (self.x_position, self.y_position) = (Decimal(), Decimal())
 
         # When a physics sprite is generated it needs to be added to engineglobals.game_objects
         # so that it will be put into the update loop and not mess everything up like an idiot
@@ -56,12 +77,10 @@ class PhysicsSprite(pyglet.sprite.Sprite):
 
     # pickler
     def __getstate__(self):
-        state = self.__dict__.copy()
-        print(state)
-        return state
+        return self.init_params.copy()
 
     def __setstate__(self, state):
-        self.__dict__.update(state)
+        self.__init__(init_params=state)
 
     def get_collision_cell_hashes(self):
         for hashed_x in range(floor(self.x_position / EngineGlobals.collision_cell_size), floor((self.x_position + self.collision_width - 1) / EngineGlobals.collision_cell_size) + 1):
@@ -173,7 +192,7 @@ class PhysicsSprite(pyglet.sprite.Sprite):
         self.y_position += self.y_speed
 
         # finally, update the x and y coords so that pyglet will know where to draw the sprite
-        self.x, self.y = int(self.x_position - EngineGlobals.our_screen.x), int(self.y_position - EngineGlobals.our_screen.y)
+        self.sprite.x, self.sprite.y = int(self.x_position - EngineGlobals.our_screen.x), int(self.y_position - EngineGlobals.our_screen.y)
     
     def destroy(self):
         EngineGlobals.delete_us.add(self)
@@ -189,8 +208,7 @@ class PhysicsSprite(pyglet.sprite.Sprite):
             return True
         if  hasattr(block, "solid") and block.solid == True:
             return True
-        else:
-            return False
+        return False
 
 # the Screen class tracks the positioning of the screen within the entire environment
 class Screen():
@@ -201,8 +219,7 @@ class Screen():
         self.x = 0
         self.y = 0
 
-    # self.x is screen position
-    # kenny.x_position is x 1 is y
+    # self.x, self.y is screen position
     def updateloop(self, dt):
         if (EngineGlobals.kenny.x_position - self.x) < Screen.left_right_margin:
             self.x = int(EngineGlobals.kenny.x_position) - Screen.left_right_margin

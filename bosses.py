@@ -9,38 +9,43 @@ from decimal import Decimal
 
 class PearlyPaul(Enemy):
 
-    def __init__(self,):
+    def __init__(self, init_params={
+        'has_gravity': True,
+        'resource_images': {
+            'left': "pearly_paul.png"
+        },
+    }, spawn_coords=None):
 
-         PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
-            'left': pyglet.resource.image("pearly_paul.png"),
-        })
-         
-         self.moving_time = 0
-         self.pearl_dropping_time = 0 
-         if not hasattr(PearlyPaul, 'poop_pearl'):
+        if spawn_coords:
+            init_params['spawn_coords'] = spawn_coords
+        PhysicsSprite.__init__(self, init_params)
+
+        self.moving_time = 0
+        self.pearl_dropping_time = 0 
+        if not hasattr(PearlyPaul, 'poop_pearl'):
             PearlyPaul.poop_pearl = pyglet.media.load("audio/plop.mp3", streaming=False)
-    
+
     def updateloop(self, dt):
 
-       if hasattr(self, 'dead_timer'):
-           self.dead_timer += 1
-           if self.dead_timer == 60:
-               self.destroy()
-       
-       if self.pearl_dropping_time <= 0:
-           self.drop_pearl()
-       else:
-           self.pearl_dropping_time -= 1
+        if hasattr(self, 'dead_timer'):
+            self.dead_timer += 1
+            if self.dead_timer == 60:
+                self.destroy()
+
+        if self.pearl_dropping_time <= 0:
+            self.drop_pearl()
+        else:
+            self.pearl_dropping_time -= 1
 
        
-       self.moving_time += 1
-       self.x_speed = Decimal(0)
-       if self.moving_time > 200 and self.y_speed <= 0:
-          self.x_speed = Decimal(random.randrange(-50, 50))
-          self.y_speed = Decimal(random.randrange(1, 10))
-          self.moving_time = 0
+        self.moving_time += 1
+        self.x_speed = Decimal(0)
+        if self.moving_time > 200 and self.y_speed <= 0:
+            self.x_speed = Decimal(random.randrange(-50, 50))
+            self.y_speed = Decimal(random.randrange(1, 10))
+            self.moving_time = 0
 
-       PhysicsSprite.updateloop(self, dt)
+        PhysicsSprite.updateloop(self, dt)
 
     def drop_pearl(self):
         # John thinks this is very interesting. and that this sucks why would we have to do that...
@@ -50,22 +55,20 @@ class PearlyPaul(Enemy):
         pearl.y_speed = -12
         pearl.x_position,pearl.y_position = self.x_position, self.y_position + 22
         self.pearl_dropping_time = random.randrange(50 ,500)
-        self.poop_pearl.play()
+        PearlyPaul.poop_pearl.play()
 
 class Pearl(PhysicsSprite):
 
     def __init__(self,):
-        PhysicsSprite.__init__(self, has_gravity=True, resource_image_dict={
-            'pearl_left': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("pearled_out.png"), rows=3, columns=2), duration=1/10, loop=True),
-            'pearl_right': pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image("pearled_out.png"), rows=3, columns=2), duration=1/10, loop=True)
-            })
-        
+        PhysicsSprite.__init__(self, {
+            'has_gravity': True,
+            'resource_images': {
+                'pearl_left': {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True},
+                'pearl_right': {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True}
+            }
+        })
+
     def on_PhysicsSprite_collided(self, collided_object=None):
         
         if collided_object and type(collided_object).__name__ == 'Player':
-            return
-        
-        if type(collided_object).__name__ == 'Player':
             collided_object.hit()
-
-        

@@ -66,11 +66,11 @@ class MessageBox():
 
 class RandomTalker():
 
-    def __init__(self) -> None:
+    def __init__(self, is_map_object=False) -> None:
 
         self.timer = random.randrange(100, 500)
         self.mbox = None
-        EngineGlobals.add_us.add((self, False))
+        EngineGlobals.add_us.add((self, is_map_object))
 
     def updateloop(self, dt):
 
@@ -86,3 +86,10 @@ class RandomTalker():
                     ('A piece of fruit just appeared at a random location! Go find it quickly if you want superpowers!!', 2),
                 ]), 300)
                 self.timer = random.randrange(100, 500)
+
+    # pickler
+    def __getstate__(self):
+        return self.__dict__.copy()
+
+    def __setstate__(self, state):
+        self.__init__(is_map_object=True)

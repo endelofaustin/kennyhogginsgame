@@ -72,10 +72,18 @@ class Editor():
         return pyglet.event.EVENT_UNHANDLED
 
     def on_mouse_press(self, x, y, button, modifiers):
+
+        if EngineGlobals.show_menu:
+            return pyglet.event.EVENT_UNHANDLED
+
         self.mouse_down_coords = (x, y)
         return pyglet.event.EVENT_UNHANDLED
 
     def on_mouse_release(self, x, y, button, modifiers):
+
+        if EngineGlobals.show_menu:
+            return pyglet.event.EVENT_UNHANDLED
+
         # don't do anything if it was a mouse drag
         # drag is a click that is greater than four 
         if abs(x - self.mouse_down_coords[0]) > 4 or abs(y - self.mouse_down_coords[1]) > 4:
@@ -90,6 +98,9 @@ class Editor():
         return pyglet.event.EVENT_UNHANDLED
 
     def on_key_release(self, symbol, modifiers,):
+
+        if EngineGlobals.show_menu:
+            return pyglet.event.EVENT_UNHANDLED
 
         if symbol == pyglet.window.key.S and modifiers & pyglet.window.key.MOD_CTRL:
             

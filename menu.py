@@ -31,10 +31,10 @@ class GameMenu():
         self.menu_batch.draw()
 
     def on_mouse_press(self, x, y, button, modifiers):
-        self.handle_mouse_click(x, y)
+        return self.handle_mouse_click(x, y)
 
     def on_text(self, text):
-        self.handle_text_input(text)
+        return self.handle_text_input(text)
 
     def handle_mouse_click(self, x, y):
 
@@ -54,6 +54,11 @@ class GameMenu():
                 # Handle "Password" button click
                 self.password_label_visible = True
                 print("Password Clicked")
+            
+            return pyglet.event.EVENT_HANDLED
+        
+        else:
+            return pyglet.event.EVENT_UNHANDLED
 
     def handle_text_input(self, text):
 

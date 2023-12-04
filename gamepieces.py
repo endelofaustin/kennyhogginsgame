@@ -37,3 +37,26 @@ class Door(PhysicsSprite):
         if starting_position:
             init_params['spawn_coords'] = starting_position
         super().__init__(init_params=init_params, is_map_object=is_map_object)
+
+class NirvanaFruit(PhysicsSprite):
+
+    def __init__(self, init_params={
+        'has_gravity': False,
+        'resource_images': {
+            0: {"file": "nirvana-fruit.png", 'rows': 1, 'columns': 6, 'duration': 1/10, 'loop': True}
+        }
+    }, spawn_coords=None, is_map_object=False, destroy_after=None):
+
+        if spawn_coords:
+            init_params['spawn_coords'] = spawn_coords
+
+        super().__init__(init_params, is_map_object)
+
+        self.destroy_after = destroy_after
+
+    def updateloop(self, dt):
+        if self.destroy_after:
+            self.destroy_after -= 1
+            if self.destroy_after <= 0:
+                EngineGlobals.delete_us.add(self)
+        return super().updateloop(dt)

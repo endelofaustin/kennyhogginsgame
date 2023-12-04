@@ -1,5 +1,6 @@
 import pyglet, random
 from engineglobals import EngineGlobals
+from gamepieces import NirvanaFruit
 
 class Text_Crawl():
 
@@ -80,12 +81,18 @@ class RandomTalker():
         if self.timer > 0:
             self.timer -= 1
             if self.timer <= 0:
-                self.mbox = MessageBox(random.choice([
-                    ('Your mom says hi.', 1),
-                    ('A long time ago, in a galaxy far, far away...', 1),
-                    ('A piece of fruit just appeared at a random location! Go find it quickly if you want superpowers!!', 2),
-                ]), 300)
+                chosen = random.choice([
+                    ('Your mom says hi.', 1, lambda: None),
+                    ('A long time ago, in a galaxy far, far away...', 1, lambda: None),
+                    ('A bunch of fruit just appeared at a random location! Go find it quickly if you want superpowers!!', 2, self.make_a_fruit),
+                ])
+                self.mbox = MessageBox((chosen[0], chosen[1]), 300)
+                chosen[2]()
                 self.timer = random.randrange(100, 500)
+
+    def make_a_fruit(self):
+        spawn_coords = [random.randrange(20, len(EngineGlobals.game_map.platform[0]) * 32 - 20), 50]
+        NirvanaFruit(spawn_coords=spawn_coords, destroy_after=800)
 
     # pickler
     def __getstate__(self):

@@ -169,11 +169,19 @@ class Player(PhysicsSprite):
 
         self.sprite.image = pyglet.resource.image("lucinda.png")
         self.blow_up_timer = 40
-        
+
+    def activate_super_powers(self):
+        pass
+
     def on_PhysicsSprite_collided(self, collided_object=None):
         
         if collided_object and type(collided_object).__name__ == 'Spike':
             self.bloody = True
         elif collided_object and type(collided_object).__name__ == 'Bandaid':
             self.bloody = False
-            collided_object.destroy()            
+            collided_object.destroy()
+        elif collided_object and type(collided_object).__name__ == 'NirvanaFruit':
+            collided_object.destroy()
+            self.activate_super_powers()
+
+        super().on_PhysicsSprite_collided(collided_object=collided_object)

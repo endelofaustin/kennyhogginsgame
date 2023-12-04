@@ -14,9 +14,9 @@ class Enemy(PhysicsSprite):
             '0': "mrspudl.png",
             'dead': "deadspud.png"
         }
-    }):
+    }, is_map_object=False):
 
-        PhysicsSprite.__init__(self, init_params)
+        PhysicsSprite.__init__(self, init_params=init_params, is_map_object=is_map_object)
 
         self.moving_time = 0
 
@@ -58,8 +58,8 @@ class Enemy(PhysicsSprite):
 
 class Doggy(Enemy):
 
-     def __init__(self, init_params={'has_gravity': True, 'resource_images': {0: "doggy.png"}}):
+     def __init__(self, init_params={'has_gravity': True, 'resource_images': {0: "doggy.png"}}, is_map_object=False):
 
-        PhysicsSprite.__init__(self, init_params)
+        PhysicsSprite.__init__(self, init_params=init_params, is_map_object=is_map_object)
 
         self.moving_time = 0

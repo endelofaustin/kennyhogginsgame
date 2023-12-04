@@ -73,25 +73,29 @@ def main_update_callback(dt):
     # call the updateloop funcction for each game object
     for obj in EngineGlobals.game_objects:
         obj.updateloop(dt)
+    for obj in EngineGlobals.map_objects:
+        obj.updateloop(dt)
+
+    # This is the same as the deletion but for addition.
+    # You cant add to a set while iterating over it. 
+    for (add_me, is_map_object) in EngineGlobals.add_us:
+        if is_map_object:
+            EngineGlobals.map_objects.add(add_me)
+        else:
+            EngineGlobals.game_objects.add(add_me)
+    EngineGlobals.add_us.clear()
 
     # some objects may have requested to be deleted during the update loop,
     # by adding themselves to the delete_us list. Delete them now.
     for delete_me in EngineGlobals.delete_us:
         EngineGlobals.game_objects.discard(delete_me)
-        EngineGlobals.game_map.sprites.discard(delete_me)
+        EngineGlobals.map_objects.discard(delete_me)
         if hasattr(delete_me, 'sprite'):
             delete_me.sprite.delete()
     # every game object that requested it has now been deleted, so clear
     # the list so that more objects can request deletion during the next
     # update cycle
     EngineGlobals.delete_us.clear()
-
-    # This is the same as the deletion but for addition.
-    # You cant add to a set while iterating over it. 
-    for add_me in EngineGlobals.add_us:
-        EngineGlobals.game_objects.add(add_me)
-    
-    EngineGlobals.add_us.clear()
 
     ### BLOCK RENDERING CODE ###
     # This section of code is responsible for calculating the correct position of
@@ -115,11 +119,13 @@ def main_update_callback(dt):
     screen_top = screen.y + EngineGlobals.height
     yend = len(EngineGlobals.game_map.platform) - floor((screen_top) / 32) - 3
 
-    # xrender_start and yrender_start represent the offset (in pixels) of where to start
+    # xrender and yrender represent the offset (in pixels) of where to start
     # drawing a given block on the screen - this origin could be offscreen for blocks that
     # are only partially onscreen at a given time
     xrender_start = 0 - screen.x % 32 - 32
+    xrender = xrender_start
     yrender_start = 0 - screen.y % 32 - 32
+    yrender = yrender_start
 
     # iterate through the environment horizontally from blocks on the left side of the screen to blocks on the right
     for xcounter in range(xstart, xend,):
@@ -131,19 +137,19 @@ def main_update_callback(dt):
             # grab the block from the environment and see if we should render it or not
             if xcounter >= 0 and xcounter < len(EngineGlobals.game_map.platform[0]) and ycounter >= 0 and ycounter < len(EngineGlobals.game_map.platform):
                 if isinstance(EngineGlobals.game_map.platform[ycounter][xcounter], gamepieces.Block):
-                    if xrender_start + 32 <= 0 or xrender_start >= EngineGlobals.width or yrender_start + 32 <= 0 or yrender_start >= EngineGlobals.height:
+                    if xrender + 32 <= 0 or xrender >= EngineGlobals.width or yrender + 32 <= 0 or yrender >= EngineGlobals.height:
                         EngineGlobals.game_map.platform[ycounter][xcounter].sprite.visible = False
                     else:
                         EngineGlobals.game_map.platform[ycounter][xcounter].sprite.visible = True
-                        EngineGlobals.game_map.platform[ycounter][xcounter].sprite.x = xrender_start
-                        EngineGlobals.game_map.platform[ycounter][xcounter].sprite.y = yrender_start
+                        EngineGlobals.game_map.platform[ycounter][xcounter].sprite.x = xrender
+                        EngineGlobals.game_map.platform[ycounter][xcounter].sprite.y = yrender
 
             # after each time through the y loop, update the y rendering location
-            yrender_start += 32
+            yrender += 32
 
         # after each time through the x loop, update the x rendering location and reset y to the bottom of the column
-        xrender_start += 32
-        yrender_start = 0 - screen.y % 32 - 32
+        xrender += 32
+        yrender = yrender_start
 
 # ask pyglet to call our main_update_callback 60 times per second
 pyglet.clock.schedule_interval(main_update_callback, 1/60.0)

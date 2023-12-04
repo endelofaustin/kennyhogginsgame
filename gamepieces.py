@@ -1,5 +1,6 @@
 # This is where we will create game pieces to place on the board
 
+from pyglet.gl import GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA
 import pyglet.resource, pyglet.image
 from pyglet.sprite import Sprite
 from engineglobals import EngineGlobals
@@ -32,7 +33,7 @@ class Block:
 
 class Door(PhysicsSprite):
 
-    def __init__(self, init_params={'has_gravity': False, 'resource_images': {0: "door-1.png"}}, starting_position=None) -> None:
+    def __init__(self, init_params={'has_gravity': False, 'resource_images': {0: "door-1.png"}}, starting_position=None, is_map_object=False) -> None:
         if starting_position:
             init_params['spawn_coords'] = starting_position
-        super().__init__(init_params)
+        super().__init__(init_params=init_params, is_map_object=is_map_object)

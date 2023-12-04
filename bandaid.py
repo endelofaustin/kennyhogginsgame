@@ -11,12 +11,12 @@ class Bandaid(PhysicsSprite):
                 'good': "good_band_aid.png"
             }},
             spawn_coords=None,
-            style='good'
+            style='good', is_map_object=False
         ):
 
             if spawn_coords:
                 init_params['spawn_coords'] = spawn_coords
-            PhysicsSprite.__init__(self, init_params)
+            PhysicsSprite.__init__(self, init_params, is_map_object=is_map_object)
 
             self.sprite.update(scale=.695)
             self.sprite.image = self.resource_images[style]

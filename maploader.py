@@ -7,6 +7,7 @@ from spike import Spike
 from bandaid import Bandaid
 from enemies import Enemy, Doggy
 from gamepieces import Door
+from text import RandomTalker
 
 """ John is very confused """
 
@@ -21,43 +22,42 @@ from gamepieces import Door
 # already there then we don't add them again.
 def additional_map_definitions(map):
 
+    # delete old stuff
+    if hasattr(map, 'sprites') and isinstance(map.sprites, set):
+        for sprite in map.sprites:
+            sprite.destroy()
+        map.sprites.clear()
+
     # the main map that loads when the game starts
     if not hasattr(map, 'filename') or map.filename == "map.dill":
 
-        ONE_OFFS_VERSION = 3
+        ONE_OFFS_VERSION = 4
         if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
             return
         map.one_offs_version = ONE_OFFS_VERSION
 
-        if hasattr(map, 'sprites'):
-            map.sprites = set(map.sprites)
-        else:
-            map.sprites = set()
+        map.sprites = {}
 
-        map.sprites.add(Enemy())
-        map.sprites.add(Doggy())
-        map.sprites.add(Spike(spawning_coords=[172, 0]))
-        map.sprites.add(Bandaid(spawn_coords=[236, 0], style='good'))
-        map.sprites.add(Door(starting_position=[500, 0]))
+        map.sprites['mrspud'] = Enemy(is_map_object=True)
+        map.sprites['doggy'] = Doggy(is_map_object=True)
+        map.sprites['spike'] = Spike(spawning_coords=[172, 0], is_map_object=True)
+        map.sprites['bandaid'] = Bandaid(spawn_coords=[236, 0], style='good', is_map_object=True)
+        map.sprites['door'] = Door(starting_position=[500, 0], is_map_object=True)
+        map.talker = RandomTalker()
 
     # the boss fight with pearly paul
     elif map.filename == "bossfight.dill":
 
-        ONE_OFFS_VERSION = 2
+        ONE_OFFS_VERSION = 4
         if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
             return
         map.one_offs_version = ONE_OFFS_VERSION
 
         # add some one-offs
-        if hasattr(map, 'sprites'):
-            map.sprites = set(map.sprites)
-        else:
-            map.sprites = set()
+        map.sprites = {}
         map.image = "lighthouse.png"
-        boss = PearlyPaul()
-        map.sprites.add(boss)
+        map.sprites['pearlypaul'] = PearlyPaul(is_map_object=True)
 
-    return
 
 # This is a class John said this while we were coding it out
 class GameMap():
@@ -106,7 +106,13 @@ class GameMap():
         return state
 
     def load_map(filename):
-    
+
+        # first, delete all old sprites associated with the old map
+        for sprite in EngineGlobals.map_objects:
+            if hasattr(sprite, 'destroy'):
+                sprite.destroy()
+        EngineGlobals.map_objects.clear()
+
         # We are loading our pickled environment here for loading when the game starts. Chicken pot pie
         with open(filename, 'rb') as f:
                 
@@ -119,11 +125,6 @@ class GameMap():
                 game_map = file_stuff
                 # I hate bill... sorry dill. bill aight... goitta be a better way we fix later
                 # when objects are loaded via dill their __init__ never gets called, so call it
-
-                # first, delete all old sprites associated with the old map
-                if hasattr(EngineGlobals, 'game_map') and hasattr(EngineGlobals.game_map, 'sprites'):
-                    for sprite in EngineGlobals.game_map.sprites:
-                        sprite.destroy()
 
                 game_map.__init__(platform=game_map.platform, filename=filename)
                 return game_map

@@ -17,7 +17,7 @@ class PhysicsSprite:
 
     # constructor
     # Set has_gravity to False to create a sprite that hovers in defiance of all reason
-    def __init__(self, init_params={}):
+    def __init__(self, init_params, is_map_object=False):
         self.init_params = init_params
 
         self.landed = False
@@ -73,14 +73,14 @@ class PhysicsSprite:
 
         # When a physics sprite is generated it needs to be added to engineglobals.game_objects
         # so that it will be put into the update loop and not mess everything up like an idiot
-        EngineGlobals.add_us.add(self)
+        EngineGlobals.add_us.add((self, is_map_object))
 
     # pickler
     def __getstate__(self):
         return self.init_params.copy()
 
     def __setstate__(self, state):
-        self.__init__(init_params=state)
+        self.__init__(init_params=state, is_map_object=True)
 
     def get_collision_cell_hashes(self):
         for hashed_x in range(floor(self.x_position / EngineGlobals.collision_cell_size), floor((self.x_position + self.collision_width - 1) / EngineGlobals.collision_cell_size) + 1):
@@ -121,7 +121,7 @@ class PhysicsSprite:
     def updateloop(self, dt):
         if self.has_gravity:
             # accelerate downwards by a certain amount
-            self.y_speed -= Decimal('.6')
+            self.y_speed = Decimal(self.y_speed) - Decimal('.6')
             # terminal velocity is 20 for now, so we won't move any faster than that
             if self.y_speed < -20:
                 self.y_speed = -20
@@ -188,12 +188,12 @@ class PhysicsSprite:
             PhysicsSprite.collision_lists[hashed_y * len(EngineGlobals.game_map.platform) + hashed_x].append(self)
 
         # update position according to current speed
-        self.x_position += self.x_speed
-        self.y_position += self.y_speed
+        self.x_position = Decimal(self.x_position) + self.x_speed
+        self.y_position = Decimal(self.y_position) + self.y_speed
 
         # finally, update the x and y coords so that pyglet will know where to draw the sprite
         self.sprite.x, self.sprite.y = int(self.x_position - EngineGlobals.our_screen.x), int(self.y_position - EngineGlobals.our_screen.y)
-    
+
     def destroy(self):
         EngineGlobals.delete_us.add(self)
 

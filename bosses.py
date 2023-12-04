@@ -14,11 +14,11 @@ class PearlyPaul(Enemy):
         'resource_images': {
             'left': "pearly_paul.png"
         },
-    }, spawn_coords=None):
+    }, spawn_coords=None, is_map_object=False):
 
         if spawn_coords:
             init_params['spawn_coords'] = spawn_coords
-        PhysicsSprite.__init__(self, init_params)
+        PhysicsSprite.__init__(self, init_params, is_map_object=is_map_object)
 
         self.moving_time = 0
         self.pearl_dropping_time = 0 

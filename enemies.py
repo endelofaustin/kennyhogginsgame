@@ -49,10 +49,9 @@ class Enemy(PhysicsSprite):
 
     def die_hard(self,):
 
-        if self.image != self.resource_images['dead']:
-
+        if self.sprite.image != self.resource_images['dead']:
             self.dead_timer = 0
-            self.image = self.resource_images['dead']
+            self.sprite.image = self.resource_images['dead']
             dead_dude = pyglet.media.load('audio/glurk.wav', streaming=False)
             dead_dude.play()
 

@@ -42,8 +42,7 @@ class Player(PhysicsSprite):
         # jumpct counts the number of jumps to allow for double-jumping
         self.jumpct = 0
         self.jump_frames = 0
-        self.spit_bullet = pyglet.media.load("audio/spitbullets.wav", streaming=False)
-
+        self.spit_bullet = pyglet.media.StaticSource(pyglet.media.load("audio/spitbullets.wav"))
         # let's get that blood flowing
         self.bloody = False
 

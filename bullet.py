@@ -5,8 +5,8 @@ import pyglet
 class Bullet(PhysicsSprite):
 
     def __init__(self,):
-        PhysicsSprite.__init__(self, has_gravity = False, resource_image_dict={0:pyglet.resource.image("bullet1-1.png.png")})
-        
+        PhysicsSprite.__init__(self, {"has_gravity": False, "resource_images": {0:"bullet1-1.png.png"}})
+         
     def on_PhysicsSprite_collided(self, collided_object=None):
         if collided_object and type(collided_object).__name__ == 'Player':
             return

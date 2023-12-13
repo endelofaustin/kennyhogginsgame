@@ -54,7 +54,7 @@ def additional_map_definitions(map):
 class GameMap():
 
     # save the playform as an engleberry
-    # Voglio bevere un caffe per favore
+    # Voglio bere un caffe e daverro abbiamo scrivere piu codice. 
     def __init__(self, platform = None, filename = 'map.dill'):
 
         # This can of worms has been opened. Goes bad July 2025

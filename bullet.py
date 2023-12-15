@@ -12,7 +12,7 @@ class Bullet(PhysicsSprite):
         if collided_object and type(collided_object).__name__ == 'Player':
             return
         self.destroy()
-        if type(collided_object).__name__ == 'Enemy':
+        if type(collided_object).__name__ == 'Enemy' or type(collided_object).__name__ == 'Pearl':
             collided_object.die_hard()
 
         if type(collided_object).__name__ == 'PearlyPaul':

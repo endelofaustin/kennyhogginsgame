@@ -79,7 +79,8 @@ class Pearl(Enemy):
             'has_gravity': True,
             'resource_images': {
                 'pearl_left': {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True},
-                'pearl_right': {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True}
+                'pearl_right': {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True},
+                'dead': 'sushiroll.png'
             }
         })
 

@@ -59,9 +59,9 @@ class Player(PhysicsSprite):
 
             if self.blow_up_timer <= 20:
                 self.sprite.image = pyglet.resource.image("kaboom.png")
-            
+                
             self.blow_up_timer -= 1
-
+            return 
 
         self.x_speed = Decimal(0)
         

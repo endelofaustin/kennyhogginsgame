@@ -40,8 +40,9 @@ class PearlyPaul(Enemy):
        
         self.moving_time += 1
         self.x_speed = Decimal(0)
-        if self.moving_time > 200 and self.y_speed <= 0:
-            self.x_speed = Decimal(random.randrange(-50, 50))
+        
+        if self.moving_time > 100 and self.y_speed <= 0:
+            self.x_speed = Decimal(random.randrange(0, 20))
             self.y_speed = Decimal(random.randrange(1, 10))
             self.moving_time = 0
 

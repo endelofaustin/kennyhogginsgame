@@ -9,7 +9,7 @@ from enemies import Enemy, Doggy
 from gamepieces import Door, NirvanaFruit
 from text import RandomTalker
 
-""" John is very confused """
+""" John is very cool """
 
 #### OKAY HERE IT IS, MAP DEFINITIONS WITH SPRITES AND STUFF
 # Basically the idea is that we can have some parts of the map defined in code,
@@ -39,12 +39,16 @@ def additional_map_definitions(map):
     # the boss fight with pearly paul
     elif map.filename == "bossfight.dill":
 
-        ONE_OFFS_VERSION = 4
+        ONE_OFFS_VERSION = 5
         if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
             return
         map.one_offs_version = ONE_OFFS_VERSION
 
         # add some one-offs
+        
+        for sprite in map.sprites.values():
+            sprite.destroy()
+        
         map.sprites = {}
         map.image = "lighthouse.png"
         map.sprites['pearlypaul'] = PearlyPaul(is_map_object=True)

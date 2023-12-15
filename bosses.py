@@ -12,8 +12,9 @@ class PearlyPaul(Enemy):
     def __init__(self, init_params={
         'has_gravity': True,
         'resource_images': {
-            'left': "pearly_paul.png"
-        },
+            'left': 'pearly_paul.png',
+            'dead': 'lucinda.png'
+            },
     }, spawn_coords=None, is_map_object=False):
 
         if spawn_coords:
@@ -23,7 +24,9 @@ class PearlyPaul(Enemy):
         self.moving_time = 0
         self.pearl_dropping_time = 0 
         if not hasattr(PearlyPaul, 'poop_pearl'):
-            PearlyPaul.poop_pearl = pyglet.media.load("audio/plop.mp3", streaming=False)
+            PearlyPaul.poop_pearl = pyglet.media.load('audio/plop.mp3', streaming=False)
+        
+        self.hit_count = 0
 
     def updateloop(self, dt):
 
@@ -42,7 +45,7 @@ class PearlyPaul(Enemy):
         self.x_speed = Decimal(0)
         
         if self.moving_time > 100 and self.y_speed <= 0:
-            self.x_speed = Decimal(random.randrange(0, 20))
+            self.x_speed = Decimal(random.randrange(-10, 20))
             self.y_speed = Decimal(random.randrange(1, 10))
             self.moving_time = 0
 
@@ -55,8 +58,19 @@ class PearlyPaul(Enemy):
         pearl = Pearl()
         pearl.y_speed = -12
         pearl.x_position,pearl.y_position = self.x_position, self.y_position + 22
-        self.pearl_dropping_time = random.randrange(50 ,500)
+        self.pearl_dropping_time = random.randrange(50 , 500)
         PearlyPaul.poop_pearl.play()
+
+    def getting_hit(self):
+        
+        self.hit_count += 1
+
+        if self.hit_count >= 4:
+       
+            self.dead_timer = 0
+            self.sprite.image = self.resource_images['dead']
+            dead_dude = pyglet.media.load("audio/kenny_sounds/boss_beaten.mp3", streaming=False)
+            dead_dude.play()
 
 class Pearl(PhysicsSprite):
 

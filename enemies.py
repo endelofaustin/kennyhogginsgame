@@ -29,9 +29,9 @@ class Enemy(PhysicsSprite):
                 self.destroy()
 
         self.moving_time += 1
-        self.x_speed = Decimal(0)
+        
         if self.moving_time > 200 and self.y_speed <= 0:
-           self.x_speed = Decimal(random.randrange(-50, 50))
+           self.x_speed = Decimal(random.randrange(-10, 10))
            self.y_speed = Decimal(random.randrange(1, 10))
            self.moving_time = 0
 
@@ -40,7 +40,7 @@ class Enemy(PhysicsSprite):
     def make_it_jump(self,):
 
         self.y_speed = 10
-        self.x_speed = Decimal(random.randrange(-50, 50))
+        self.x_speed = Decimal(random.randrange(-10, 10))
 
     def on_PhysicsSprite_collided(self, collided_object=None):
 

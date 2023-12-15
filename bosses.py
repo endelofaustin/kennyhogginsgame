@@ -72,10 +72,10 @@ class PearlyPaul(Enemy):
             dead_dude = pyglet.media.load("audio/kenny_sounds/boss_beaten.mp3", streaming=False)
             dead_dude.play()
 
-class Pearl(PhysicsSprite):
+class Pearl(Enemy):
 
     def __init__(self,):
-        PhysicsSprite.__init__(self, {
+        Enemy.__init__(self, {
             'has_gravity': True,
             'resource_images': {
                 'pearl_left': {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True},
@@ -83,7 +83,9 @@ class Pearl(PhysicsSprite):
             }
         })
 
+    
     def on_PhysicsSprite_collided(self, collided_object=None):
         
         if collided_object and type(collided_object).__name__ == 'Player':
             collided_object.hit()
+

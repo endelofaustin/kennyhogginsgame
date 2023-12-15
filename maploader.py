@@ -35,6 +35,10 @@ def additional_map_definitions(map):
         if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
             return
         map.one_offs_version = ONE_OFFS_VERSION
+        
+        map.sprites['door'].destroy()
+        map.sprites['door'] = Door(starting_position=[0,15], target_map="bossfight.dill", player_position=[250 ,250])
+
 
     # the boss fight with pearly paul
     elif map.filename == "bossfight.dill":

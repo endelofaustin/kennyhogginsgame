@@ -33,9 +33,17 @@ class Block:
 
 class Door(PhysicsSprite):
 
-    def __init__(self, init_params={'has_gravity': False, 'resource_images': {0: "door-1.png"}}, starting_position=None, is_map_object=False) -> None:
+    def __init__(self, init_params={'has_gravity': False, 'resource_images': {0: "door-1.png"}}, starting_position=None, is_map_object=False,
+                                     target_map=None, player_position=None) -> None:
         if starting_position:
             init_params['spawn_coords'] = starting_position
+        
+        if target_map:
+            init_params['target_map'] = target_map
+
+        if player_position:
+            init_params['player_position'] = player_position
+            
         super().__init__(init_params=init_params, is_map_object=is_map_object)
 
 class NirvanaFruit(PhysicsSprite):

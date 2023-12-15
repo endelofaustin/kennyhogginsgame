@@ -129,6 +129,7 @@ class Player(PhysicsSprite):
             elif self.jumpct == Player.FIRST_JUMP:
                 self.y_speed = Player.DOUBLE_JUMP_VELOCITY
                 self.jumpct = Player.SECOND_JUMP
+        
         # Button press handeling for space bar to shoot
         if symbol == pyglet.window.key.SPACE:
             self.shoot_it()
@@ -137,8 +138,8 @@ class Player(PhysicsSprite):
             for collide_with in self.get_all_colliding_objects():
                 if type(collide_with).__name__ == 'Door':
                     Player.door_open_close.play()
-                    EngineGlobals.game_map = GameMap.load_map("bossfight.dill")
-
+                    EngineGlobals.game_map = GameMap.load_map(collide_with.init_params["target_map"])
+                    self.x_position, self.y_position = collide_with.init_params["player_position"]                                                                          
     # this function is called by the physics simulator when it detects landing on a solid object
     def on_PhysicsSprite_landed(self):
         # set our jumpct back to zero to allow future jumps

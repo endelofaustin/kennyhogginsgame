@@ -6,6 +6,7 @@ from enemies import Enemy
 from physics import PhysicsSprite
 import random
 from decimal import Decimal
+from gamepieces import Door
 
 class PearlyPaul(Enemy):
 
@@ -34,6 +35,14 @@ class PearlyPaul(Enemy):
             self.dead_timer += 1
             if self.dead_timer == 60:
                 self.destroy()
+                Door(starting_position=[1000, 0])
+                Door(starting_position=[550, 0])
+                Door(starting_position=[770, 0])
+                
+                for sprite in EngineGlobals.game_objects:
+                
+                    if type(sprite).__name__ == 'Pearl':
+                        sprite.destroy()
 
         if self.pearl_dropping_time <= 0:
             self.drop_pearl()

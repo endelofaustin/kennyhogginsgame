@@ -46,3 +46,13 @@ COOL IDEAS:
 * What if part of the game was having to fix a bad level design so that you could complete it
 * One huge map but parts of it change when you're not looking
 * Random text in the background like a poem or Kenny's thoughts
+* Generate an infinite map from randomized saved chunks
+
+TO REFACTOR:
+ * main.py cleanup
+ * map loader -> convert to JSON? or something
+ * move stuff out of EngineGlobals that belong as separate concerns
+ * make game object lifecycle manager to help with adding/deleting objects when loading maps
+ * use decorators or pub/sub or better model for event handling instead of random callback functions
+ * state machines for player and other sprites
+ * fix discrepancies in how sprites are instantiated and make it consistent

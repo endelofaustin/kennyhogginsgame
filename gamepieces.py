@@ -33,7 +33,7 @@ class Block:
 
 class Door(PhysicsSprite):
 
-    def __init__(self, init_params={'has_gravity': False, 'resource_images': {0: "door-1.png"}}, starting_position=None, is_map_object=False,
+    def __init__(self,  init_params={'has_gravity': False, 'resource_images': {0: "door-1.png"}}, starting_position=None,
                                      target_map=None, player_position=None) -> None:
         if starting_position:
             init_params['spawn_coords'] = starting_position
@@ -44,7 +44,7 @@ class Door(PhysicsSprite):
         if player_position:
             init_params['player_position'] = player_position
             
-        super().__init__(init_params=init_params, is_map_object=is_map_object)
+        super().__init__(init_params=init_params)
 
 class NirvanaFruit(PhysicsSprite):
 
@@ -53,12 +53,12 @@ class NirvanaFruit(PhysicsSprite):
         'resource_images': {
             0: {"file": "nirvana-fruit.png", 'rows': 1, 'columns': 6, 'duration': 1/10, 'loop': True}
         }
-    }, spawn_coords=None, is_map_object=False, destroy_after=None):
+    }, spawn_coords=None, destroy_after=None):
 
         if spawn_coords:
             init_params['spawn_coords'] = spawn_coords
 
-        super().__init__(init_params, is_map_object)
+        super().__init__(init_params=init_params)
 
         self.destroy_after = destroy_after
 
@@ -66,5 +66,5 @@ class NirvanaFruit(PhysicsSprite):
         if self.destroy_after:
             self.destroy_after -= 1
             if self.destroy_after <= 0:
-                EngineGlobals.delete_us.add(self)
+                self.destroy()
         return super().updateloop(dt)

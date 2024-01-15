@@ -5,7 +5,6 @@ from bullet import Bullet
 from physics import *
 import random
 
-
 class Enemy(PhysicsSprite):
     
     def __init__(self, init_params={
@@ -14,9 +13,9 @@ class Enemy(PhysicsSprite):
             '0': "mrspudl.png",
             'dead': "deadspud.png"
         }
-    }, is_map_object=False):
+    }):
 
-        PhysicsSprite.__init__(self, init_params=init_params, is_map_object=is_map_object)
+        PhysicsSprite.__init__(self, init_params=init_params)
 
         self.moving_time = 0
 
@@ -57,8 +56,8 @@ class Enemy(PhysicsSprite):
 
 class Doggy(Enemy):
 
-     def __init__(self, init_params={'has_gravity': True, 'resource_images': {0: "doggy.png"}}, is_map_object=False):
+     def __init__(self, init_params={'has_gravity': True, 'resource_images': {0: "doggy.png"}}):
 
-        PhysicsSprite.__init__(self, init_params=init_params, is_map_object=is_map_object)
+        PhysicsSprite.__init__(self, init_params=init_params)
 
         self.moving_time = 0

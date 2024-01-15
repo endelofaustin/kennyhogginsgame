@@ -20,7 +20,7 @@ class Player(PhysicsSprite):
     SECOND_JUMP = 3
 
     def __init__(self):
-        PhysicsSprite.__init__(self, {
+        PhysicsSprite.__init__(self, lifecycle_manager='UNDYING', init_params={
             'has_gravity': True,
             'resource_images': {
                 'right': "kennystance1-2.png.png",

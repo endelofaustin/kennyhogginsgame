@@ -7,6 +7,7 @@ from physics import PhysicsSprite
 import random
 from decimal import Decimal
 from gamepieces import Door
+from lifecycle import LifeCycleManager
 
 class PearlyPaul(Enemy):
 
@@ -16,11 +17,11 @@ class PearlyPaul(Enemy):
             'left': 'pearly_paul.png',
             'dead': 'lucinda.png'
             },
-    }, spawn_coords=None, is_map_object=False):
+    }, spawn_coords=None):
 
         if spawn_coords:
             init_params['spawn_coords'] = spawn_coords
-        PhysicsSprite.__init__(self, init_params, is_map_object=is_map_object)
+        PhysicsSprite.__init__(self, init_params=init_params)
 
         self.moving_time = 0
         self.pearl_dropping_time = 0 
@@ -38,9 +39,9 @@ class PearlyPaul(Enemy):
                 Door(starting_position=[1000, 0])
                 Door(starting_position=[550, 0])
                 Door(starting_position=[770, 0])
-                
-                for sprite in EngineGlobals.game_objects:
-                
+
+                for sprite in LifeCycleManager.ALL_SETS['PER_MAP'].objects:
+
                     if type(sprite).__name__ == 'Pearl':
                         sprite.destroy()
 
@@ -84,7 +85,7 @@ class PearlyPaul(Enemy):
 class Pearl(Enemy):
 
     def __init__(self,):
-        Enemy.__init__(self, {
+        Enemy.__init__(self, init_params={
             'has_gravity': True,
             'resource_images': {
                 'pearl_left': {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True},

@@ -1,6 +1,7 @@
 import pyglet, random
 from engineglobals import EngineGlobals
 from gamepieces import NirvanaFruit
+from lifecycle import GameObject
 
 class Text_Crawl():
 
@@ -10,7 +11,6 @@ class Text_Crawl():
         self.layout = pyglet.text.layout.TextLayout(self.document, EngineGlobals.width, EngineGlobals.height, wrap_lines=True, batch=EngineGlobals.main_batch,)
         self.layout.x = 0
         self.layout.y = -EngineGlobals.height
-        
 
     def on_draw(self,):
         self.layout.draw()
@@ -22,7 +22,7 @@ class Text_Crawl():
 
 # A box that displays a temporary message to the player and then disappears after
 # a set time.
-class MessageBox():
+class MessageBox(GameObject):
 
     def __init__(self, text=('', 1), timer=0) -> None:
 
@@ -46,7 +46,7 @@ class MessageBox():
 
         self.timer = timer
 
-        EngineGlobals.add_us.add((self, False))
+        super().__init__()
 
     def updateloop(self, dt):
 
@@ -54,15 +54,17 @@ class MessageBox():
             self.timer -= 1
             if self.timer <= 0:
                 self.label.delete()
-                EngineGlobals.delete_us.add(self)
+                self.sprite.delete()
+                self.destroy()
 
-class RandomTalker():
+class RandomTalker(GameObject):
 
-    def __init__(self, is_map_object=False) -> None:
+    def __init__(self) -> None:
 
         self.timer = random.randrange(100, 500)
         self.mbox = None
-        EngineGlobals.add_us.add((self, is_map_object))
+
+        super().__init__()
 
     def updateloop(self, dt):
 
@@ -90,4 +92,4 @@ class RandomTalker():
         return self.__dict__.copy()
 
     def __setstate__(self, state):
-        self.__init__(is_map_object=True)
+        self.__init__()

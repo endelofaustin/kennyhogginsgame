@@ -8,6 +8,7 @@ from bandaid import Bandaid
 from enemies import Enemy, Doggy
 from gamepieces import Door, NirvanaFruit
 from text import RandomTalker
+from lifecycle import LifeCycleManager
 
 """ John is very cool """
 
@@ -35,10 +36,9 @@ def additional_map_definitions(map):
         if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
             return
         map.one_offs_version = ONE_OFFS_VERSION
-        
+
         map.sprites['door'].destroy()
         map.sprites['door'] = Door(starting_position=[0,15], target_map="bossfight.dill", player_position=[250 ,250])
-
 
     # the boss fight with pearly paul
     elif map.filename == "bossfight.dill":
@@ -55,7 +55,7 @@ def additional_map_definitions(map):
         
         map.sprites = {}
         map.image = "lighthouse.png"
-        map.sprites['pearlypaul'] = PearlyPaul(is_map_object=True)
+        map.sprites['pearlypaul'] = PearlyPaul()
 
 
 # This is a class John said this while we were coding it out
@@ -99,49 +99,16 @@ class GameMap():
         # a dict representation of the object.
         state = self.__dict__.copy()
         del state['filename']
-        # for (k, v) in state.items():
-        #     if k != 'platform':
-        #         print("{} is {}".format(str(k), str(v)))
         return state
 
     def load_map(filename):
 
-        # first, delete all old sprites associated with the old map
-        for sprite in EngineGlobals.map_objects:
-            if hasattr(sprite, 'destroy'):
-                sprite.destroy()
-        EngineGlobals.map_objects.clear()
+        # first, drop all sprites associated with the map that is unloading
+        LifeCycleManager.dropAllObjects('PER_MAP')
 
         # We are loading our pickled environment here for loading when the game starts. Chicken pot pie
         with open(filename, 'rb') as f:
-                
-            file_stuff = dill.load(f)
 
-            # we don't know what file stuff is, it could be just a matrix of blocks or could be a
-            # GameMap object. Check which one it is.
-            if isinstance(file_stuff, GameMap):
-
-                game_map = file_stuff
-                # I hate bill... sorry dill. bill aight... goitta be a better way we fix later
-                # when objects are loaded via dill their __init__ never gets called, so call it
-
-                game_map.__init__(platform=game_map.platform, filename=filename)
-                return game_map
-
-            else:
-
-                # Convert tiles to sprites. Early versions of the environment just contain 1 or 0 to
-                # represent a solid block or no block. If we see a 1, create a solid block at that
-                # location. Quote from john... 11/26/2023 "That will work I think. I committed code that I didnt remember writing... So cirle dependency" 
-                for y, row in enumerate(file_stuff):
-                    for x, tile in enumerate(row):
-                        if hasattr(tile, 'image'):
-                            file_stuff[y][x] = gamepieces.Block(0, True)
-                        elif isinstance(tile, int) and tile > 0:
-                            file_stuff[y][x] = gamepieces.Block(tile - 1, True)
-                # John claimed this would work
-                # Ma penso che lavoro troppo
-                # il vero modo  e essere intelligente ma...
-                # vorriste giocare kenny hoggins con la mia madre... Nein
-                new_map = GameMap(platform=file_stuff, filename=filename)
-                return new_map
+            game_map = dill.load(f)
+            game_map.__init__(platform=game_map.platform, filename=filename)
+            return game_map

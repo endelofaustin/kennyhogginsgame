@@ -7,6 +7,7 @@ from text import Text_Crawl
 from math import floor
 from menu import GameMenu
 from maploader import GameMap
+from lifecycle import LifeCycleManager
 
 # Most of the code in this file, other than the update callback, is executed
 # *BEFORE* the game starts and before the game window is shown. We set
@@ -23,6 +24,7 @@ getcontext().prec = 7
 
 # run the init function to set up the game engine
 EngineGlobals.init()
+LifeCycleManager.init()
 screen = physics.Screen()
 
 # create some debug text to be rendered
@@ -45,7 +47,7 @@ EngineGlobals.window.push_handlers(kenny)
 # receive mouse events with the push_handlers function
 editor = editor.Editor()
 EngineGlobals.window.push_handlers(editor)
-EngineGlobals.game_objects.add(editor)
+LifeCycleManager.ALL_SETS['UNDYING'].addGameObject(editor)
 menu = GameMenu()
 EngineGlobals.window.push_handlers(menu)
 
@@ -54,7 +56,7 @@ EngineGlobals.window.push_handlers(menu)
 # One of the objects that needs to have its update function called
 # is the screen object, so that it can update which part of the
 # map it is looking at based on Kenny's position
-EngineGlobals.game_objects.add(screen)
+LifeCycleManager.ALL_SETS['UNDYING'].addGameObject(screen)
 
 # this function will be set up for pyglet to call it every update cycle, 120 times per second
 # every game object has a specific updateloop function, this is the main update function that
@@ -71,31 +73,7 @@ def main_update_callback(dt):
     physics.PhysicsSprite.collision_lists.clear()
 
     # call the updateloop funcction for each game object
-    for obj in EngineGlobals.game_objects:
-        obj.updateloop(dt)
-    for obj in EngineGlobals.map_objects:
-        obj.updateloop(dt)
-
-    # This is the same as the deletion but for addition.
-    # You cant add to a set while iterating over it. 
-    for (add_me, is_map_object) in EngineGlobals.add_us:
-        if is_map_object:
-            EngineGlobals.map_objects.add(add_me)
-        else:
-            EngineGlobals.game_objects.add(add_me)
-    EngineGlobals.add_us.clear()
-
-    # some objects may have requested to be deleted during the update loop,
-    # by adding themselves to the delete_us list. Delete them now.
-    for delete_me in EngineGlobals.delete_us:
-        EngineGlobals.game_objects.discard(delete_me)
-        EngineGlobals.map_objects.discard(delete_me)
-        if hasattr(delete_me, 'sprite'):
-            delete_me.sprite.delete()
-    # every game object that requested it has now been deleted, so clear
-    # the list so that more objects can request deletion during the next
-    # update cycle
-    EngineGlobals.delete_us.clear()
+    LifeCycleManager.processUpdates(dt)
 
     ### BLOCK RENDERING CODE ###
     # This section of code is responsible for calculating the correct position of
@@ -159,7 +137,7 @@ EngineGlobals.our_screen = screen
 
 # Instaniate the text crawl object
 text_crawl = Text_Crawl()
-EngineGlobals.game_objects.add(text_crawl)
+LifeCycleManager.ALL_SETS['PER_MAP'].addGameObject(text_crawl)
 
 # this function renders all elements to the screen whenever requested by the pyglet engine
 # (typically every vsync event, 60 times per second)

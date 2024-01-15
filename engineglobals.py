@@ -46,11 +46,6 @@ class EngineGlobals:
         EngineGlobals.editor_group_mid = pyglet.graphics.Group(5)
         EngineGlobals.editor_group_front = pyglet.graphics.Group(6)
 
-        # this is a game object list that will auto populate when sprites are generated
-        EngineGlobals.game_objects = set()
-        EngineGlobals.map_objects = set()
-        EngineGlobals.delete_us = set()
-        EngineGlobals.add_us = set()
         EngineGlobals.render_fps = 0
         EngineGlobals.sim_fps = 0
         EngineGlobals.last_render = 0

@@ -182,6 +182,7 @@ class Player(PhysicsSprite):
             collided_object.destroy()
         elif collided_object and type(collided_object).__name__ == 'NirvanaFruit':
             collided_object.destroy()
+            pyglet.media.load('audio/kenny_sounds/munching_on_apple.mp3', streaming=False).play()
             self.activate_super_powers()
 
         super().on_PhysicsSprite_collided(collided_object=collided_object)

@@ -54,9 +54,9 @@ class GameMenu():
                 # Handle "Password" button click
                 self.password_label_visible = True
                 print("Password Clicked")
-            
+
             return pyglet.event.EVENT_HANDLED
-        
+
         else:
             return pyglet.event.EVENT_UNHANDLED
 

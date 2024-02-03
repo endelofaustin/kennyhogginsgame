@@ -36,9 +36,9 @@ class PearlyPaul(Enemy):
             self.dead_timer += 1
             if self.dead_timer == 60:
                 self.destroy()
-                Door(starting_position=[1000, 0])
-                Door(starting_position=[550, 0])
-                Door(starting_position=[770, 0])
+                Door(starting_position=[1000, 0], target_map='map.dill', player_position=[1350, 320])
+                Door(starting_position=[550, 0],  target_map='map.dill', player_position=[550, 32])
+                Door(starting_position=[770, 0],  target_map='map.dill', player_position=[670, 3456])
 
                 for sprite in LifeCycleManager.ALL_SETS['PER_MAP'].objects:
 

@@ -35,6 +35,7 @@ class Door(PhysicsSprite):
 
     def __init__(self,  init_params={'has_gravity': False, 'resource_images': {0: "door-1.png"}}, starting_position=None,
                                      target_map=None, player_position=None) -> None:
+
         if starting_position:
             init_params['spawn_coords'] = starting_position
         
@@ -43,7 +44,7 @@ class Door(PhysicsSprite):
 
         if player_position:
             init_params['player_position'] = player_position
-            
+
         super().__init__(init_params=init_params)
 
 class NirvanaFruit(PhysicsSprite):

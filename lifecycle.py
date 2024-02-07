@@ -13,9 +13,10 @@ class LifeCycleManager:
 
     # static method to init all lifecycle-managed sets of objects
     def init():
-        LifeCycleManager.ALL_SETS = {}
-        LifeCycleManager.ALL_SETS['UNDYING'] = LifeCycleManager()
-        LifeCycleManager.ALL_SETS['PER_MAP'] = LifeCycleManager()
+        LifeCycleManager.ALL_SETS = {
+            'UNDYING': LifeCycleManager(),
+            'PER_MAP': LifeCycleManager()
+        }
 
     # static method to add new objects requested to be added to
     # the event loop, drop and destroy old objects, and process
@@ -25,8 +26,8 @@ class LifeCycleManager:
         for manager in LifeCycleManager.ALL_SETS.values():
 
             # it's possible to see both an add request and
-            # a drop request for a given object at the same
-            # time in an update cycle. in that case we assume
+            # a drop request for the same object in one
+            # update cycle. in that case we assume
             # the drop request should have final say, so we
             # process the add and then the drop before ever
             # calling update, so the object that was added
@@ -49,6 +50,7 @@ class LifeCycleManager:
             for obj in manager.objects:
                 obj.updateloop(dt)
 
+    # static method to drop all the objects from a given set
     def dropAllObjects(set_name):
         if set_name in LifeCycleManager.ALL_SETS:
             for object in LifeCycleManager.ALL_SETS[set_name].objects:

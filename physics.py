@@ -19,7 +19,7 @@ class PhysicsSprite(GameObject):
     # constructor
     # Set has_gravity to False to create a sprite that hovers in defiance of all reason
     def __init__(self, init_params : dict, lifecycle_manager : str = 'PER_MAP'):
-        self.init_params = init_params
+        self.init_params = init_params.copy()
 
         self.landed = False
 

@@ -9,6 +9,7 @@ from enemies import Enemy, Doggy
 from gamepieces import Door, NirvanaFruit
 from text import RandomTalker
 from lifecycle import LifeCycleManager
+from sprite import makeSprite
 
 """ John is very cool """
 
@@ -23,39 +24,29 @@ from lifecycle import LifeCycleManager
 # already there then we don't add them again.
 def additional_map_definitions(map):
 
-    # delete old stuff
-    if hasattr(map, 'sprites') and isinstance(map.sprites, set):
-        for sprite in map.sprites:
-            sprite.destroy()
-        map.sprites.clear()
-
     # the main map that loads when the game starts
     if not hasattr(map, 'filename') or map.filename == "map.dill":
 
-        ONE_OFFS_VERSION = 5
+        ONE_OFFS_VERSION = 6
         if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
             return
         map.one_offs_version = ONE_OFFS_VERSION
 
-        map.sprites['door'].destroy()
-        map.sprites['door'] = Door(starting_position=[0,15], target_map="bossfight.dill", player_position=[250 ,250])
+        map.sprites = dict()
+        map.sprites['door'] = makeSprite(Door, starting_position=(0,15), group='BACK', target_map="bossfight.dill", player_position=(250 ,250))
 
     # the boss fight with pearly paul
     elif map.filename == "bossfight.dill":
 
-        ONE_OFFS_VERSION = 5
+        ONE_OFFS_VERSION = 6
         if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
             return
         map.one_offs_version = ONE_OFFS_VERSION
 
         # add some one-offs
-        
-        for sprite in map.sprites.values():
-            sprite.destroy()
-        
-        map.sprites = {}
         map.image = "lighthouse.png"
-        map.sprites['pearlypaul'] = PearlyPaul()
+        map.sprites = dict()
+        map.sprites['pearlypaul'] = makeSprite(PearlyPaul, (0, 0))
 
 
 # This is a class John said this while we were coding it out

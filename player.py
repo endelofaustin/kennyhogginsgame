@@ -1,10 +1,11 @@
 
-from physics import PhysicsSprite, SpriteBatch
+from physics import PhysicsSprite
 import pyglet
 from decimal import Decimal
 from engineglobals import EngineGlobals
 from bullet import Bullet
 from maploader import GameMap
+from sprite import makeSprite
 
 # the player object represents Kenny and responds to keyboard input
 class Player(PhysicsSprite):
@@ -19,22 +20,9 @@ class Player(PhysicsSprite):
     FIRST_JUMP = 2
     SECOND_JUMP = 3
 
-    def __init__(self):
-        PhysicsSprite.__init__(self, lifecycle_manager='UNDYING', init_params={
-            'has_gravity': True,
-            'resource_images': {
-                'right': "kennystance1-2.png.png",
-                'left': "kennystance-left.png",
-                'bloody': "bloodykenny-1.png",
-                'crouch_left': "kenny-crouch-left.png",
-                'crouch_right': "kenny-crouch-right.png",
-                'run_left': {'file': "kenny-run-left.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': True},
-                'run_right': {'file': "kenny-run-right.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': True},
-                'jump_left': {'file': "kenny-jump-left.png", 'rows': 1, 'columns': 2, 'duration': 1/10, 'loop': False},
-                'jump_right': {'file': "kenny-jump-right.png", 'rows': 1, 'columns': 2, 'duration': 1/10, 'loop': False}
-            },
-            'group': SpriteBatch.FRONT
-        })
+    def __init__(self, sprite_initializer : dict):
+
+        super().__init__(sprite_initializer)
 
         # Which direction is Kenny facing?
         self.direction = 'right'
@@ -51,6 +39,18 @@ class Player(PhysicsSprite):
         if not hasattr(Player, 'door_open_close'):
             Player.door_open_close = pyglet.media.load("audio/door_open_close.mp3", streaming=False)
 
+    def getResourceImages(self):
+        return {
+            'right': "kennystance1-2.png.png",
+            'left': "kennystance-left.png",
+            'bloody': "bloodykenny-1.png",
+            'crouch_left': "kenny-crouch-left.png",
+            'crouch_right': "kenny-crouch-right.png",
+            'run_left': {'file': "kenny-run-left.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': True},
+            'run_right': {'file': "kenny-run-right.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': True},
+            'jump_left': {'file': "kenny-jump-left.png", 'rows': 1, 'columns': 2, 'duration': 1/10, 'loop': False},
+            'jump_right': {'file': "kenny-jump-right.png", 'rows': 1, 'columns': 2, 'duration': 1/10, 'loop': False}
+        }
 
     def updateloop(self, dt):
 
@@ -138,8 +138,8 @@ class Player(PhysicsSprite):
             for collide_with in self.get_all_colliding_objects():
                 if type(collide_with).__name__ == 'Door':
                     Player.door_open_close.play()
-                    EngineGlobals.game_map = GameMap.load_map(collide_with.init_params["target_map"])
-                    self.x_position, self.y_position = collide_with.init_params["player_position"]                                                                          
+                    EngineGlobals.game_map = GameMap.load_map(collide_with.sprite_initializer['target_map'])
+                    self.x_position, self.y_position = collide_with.sprite_initializer['player_position']
     # this function is called by the physics simulator when it detects landing on a solid object
     def on_PhysicsSprite_landed(self):
         # set our jumpct back to zero to allow future jumps
@@ -148,13 +148,15 @@ class Player(PhysicsSprite):
     # Lets do some shooting
 
     def shoot_it(self):
-        bullet = Bullet()
+
+        bullet_speed = (Player.BULLET_INITIAL_VELOCITY, 0)
+        bullet_pos = (self.x_position + 5, self.y_position + 22)
         if self.direction == 'right':
-            bullet.x_speed -= Player.BULLET_INITIAL_VELOCITY
-            bullet.x_position,bullet.y_position = self.x_position - 5, self.y_position + 22
-        else:
-            bullet.x_speed += Player.BULLET_INITIAL_VELOCITY
-            bullet.x_position,bullet.y_position = self.x_position + 5, self.y_position + 22
+            bullet_speed = (0 - Player.BULLET_INITIAL_VELOCITY, 0)
+            bullet_pos = (self.x_position - 5, self.y_position + 22)
+
+        makeSprite(Bullet, bullet_pos, starting_speed=bullet_speed)
+
         # Play the bullet spit audio
         self.spit_bullet.play()
 

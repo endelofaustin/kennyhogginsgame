@@ -1,24 +1,22 @@
 import pyglet
 from decimal import Decimal
-from engineglobals import EngineGlobals
-from bullet import Bullet
 from physics import *
+from sprite import makeSprite
 import random
 
 class Enemy(PhysicsSprite):
     
-    def __init__(self, init_params={
-        'has_gravity': True,
-        'resource_images': {
-            '0': "mrspudl.png",
-            'dead': "deadspud.png"
-        }
-    }):
+    def __init__(self, sprite_initializer : dict):
 
-        PhysicsSprite.__init__(self, init_params=init_params)
+        super().__init__(sprite_initializer)
 
         self.moving_time = 0
 
+    def getResourceImages(self):
+        return {
+            '0': "mrspudl.png",
+            'dead': "deadspud.png"
+        }
 
     def updateloop(self, dt):
         
@@ -56,8 +54,11 @@ class Enemy(PhysicsSprite):
 
 class Doggy(Enemy):
 
-     def __init__(self, init_params={'has_gravity': True, 'resource_images': {0: "doggy.png"}}):
+    def __init__(self, sprite_initializer : dict):
 
-        PhysicsSprite.__init__(self, init_params=init_params)
+        super().__init__(sprite_initializer)
 
         self.moving_time = 0
+
+    def getResourceImages(self):
+        return {0: "doggy.png"}

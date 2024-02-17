@@ -1,7 +1,5 @@
 # This is where we will create game pieces to place on the board
 
-from pyglet.gl import GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA
-import pyglet.resource, pyglet.image
 from pyglet.sprite import Sprite
 from engineglobals import EngineGlobals
 from math import floor
@@ -33,35 +31,27 @@ class Block:
 
 class Door(PhysicsSprite):
 
-    def __init__(self,  init_params={'has_gravity': False, 'resource_images': {0: "door-1.png"}}, starting_position=None,
-                                     target_map=None, player_position=None) -> None:
+    def getResourceImages(self):
+        return {0: "door-1.png"}
 
-        if starting_position:
-            init_params['spawn_coords'] = starting_position
-        
-        if target_map:
-            init_params['target_map'] = target_map
-
-        if player_position:
-            init_params['player_position'] = player_position
-
-        super().__init__(init_params=init_params)
+    def hasGravity(self):
+        return False
 
 class NirvanaFruit(PhysicsSprite):
 
-    def __init__(self, init_params={
-        'has_gravity': False,
-        'resource_images': {
-            0: {"file": "nirvana-fruit.png", 'rows': 1, 'columns': 6, 'duration': 1/10, 'loop': True}
-        }
-    }, spawn_coords=None, destroy_after=None):
+    def __init__(self, sprite_initializer : dict, destroy_after=None):
 
-        if spawn_coords:
-            init_params['spawn_coords'] = spawn_coords
-
-        super().__init__(init_params=init_params)
+        super().__init__(sprite_initializer=sprite_initializer)
 
         self.destroy_after = destroy_after
+
+    def getResourceImages(self):
+        return {
+            0: {"file": "nirvana-fruit.png", 'rows': 1, 'columns': 6, 'duration': 1/10, 'loop': True}
+        }
+
+    def hasGravity(self):
+        return False
 
     def updateloop(self, dt):
         if self.destroy_after:

@@ -2,6 +2,7 @@ import pyglet, random
 from engineglobals import EngineGlobals
 from gamepieces import NirvanaFruit
 from lifecycle import GameObject
+from sprite import makeSprite
 
 class Text_Crawl():
 
@@ -84,12 +85,12 @@ class RandomTalker(GameObject):
             self.timer = random.randrange(100, 500)
 
     def make_a_fruit(self):
-        spawn_coords = [random.randrange(20, len(EngineGlobals.game_map.platform[0]) * 32 - 20), 50]
-        NirvanaFruit(spawn_coords=spawn_coords, destroy_after=800)
+        spawn_coords = (random.randrange(20, len(EngineGlobals.game_map.platform[0]) * 32 - 20), 50)
+        makeSprite(NirvanaFruit, spawn_coords, destroy_after=800)
 
     # pickler
     def __getstate__(self):
-        return self.__dict__.copy()
+        return {}
 
     def __setstate__(self, state):
         self.__init__()

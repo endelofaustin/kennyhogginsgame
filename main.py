@@ -8,6 +8,7 @@ from math import floor
 from menu import GameMenu
 from maploader import GameMap
 from lifecycle import LifeCycleManager
+from sprite import makeSprite
 
 # Most of the code in this file, other than the update callback, is executed
 # *BEFORE* the game starts and before the game window is shown. We set
@@ -40,7 +41,7 @@ EngineGlobals.game_map = GameMap.load_map("map.dill")
 
 # create the Kenny player sprite and assign it to receive
 # keyboard events with the push_handlers function
-kenny = player.Player()
+kenny = makeSprite(player.Player, (0, 0), lifecycle_manager='UNDYING', group='FRONT')
 EngineGlobals.window.push_handlers(kenny)
 
 # create the Editor function object and assign it to

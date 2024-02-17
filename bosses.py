@@ -8,40 +8,37 @@ import random
 from decimal import Decimal
 from gamepieces import Door
 from lifecycle import LifeCycleManager
+from sprite import makeSprite
 
 class PearlyPaul(Enemy):
 
-    def __init__(self, init_params={
-        'has_gravity': True,
-        'resource_images': {
-            'left': 'pearly_paul.png',
-            'dead': 'lucinda.png'
-            },
-    }, spawn_coords=None):
+    def __init__(self, sprite_initializer : dict):
 
-        if spawn_coords:
-            init_params['spawn_coords'] = spawn_coords
-        PhysicsSprite.__init__(self, init_params=init_params)
+        super().__init__(sprite_initializer)
 
         self.moving_time = 0
         self.pearl_dropping_time = 0 
+
         if not hasattr(PearlyPaul, 'poop_pearl'):
             PearlyPaul.poop_pearl = pyglet.media.load('audio/plop.mp3', streaming=False)
-        
+
         self.hit_count = 0
+
+    def getResourceImages(self):
+        return {
+            'left': 'pearly_paul.png',
+            'dead': 'lucinda.png'
+        }
 
     def updateloop(self, dt):
 
         if hasattr(self, 'dead_timer'):
-            self.dead_timer += 1
-            if self.dead_timer == 60:
-                self.destroy()
-                Door(starting_position=[1000, 0], target_map='map.dill', player_position=[1350, 320])
-                Door(starting_position=[550, 0],  target_map='map.dill', player_position=[550, 32])
-                Door(starting_position=[770, 0],  target_map='map.dill', player_position=[670, 3456])
+            if self.dead_timer >= 59:
+                makeSprite(Door, starting_position=(1000, 0), group='BACK', target_map='map.dill', player_position=(1350, 320))
+                makeSprite(Door, starting_position=(550, 0), group='BACK', target_map='map.dill', player_position=(550, 32))
+                makeSprite(Door, starting_position=(770, 0), group='BACK', target_map='map.dill', player_position=(670, 3456))
 
                 for sprite in LifeCycleManager.ALL_SETS['PER_MAP'].objects:
-
                     if type(sprite).__name__ == 'Pearl':
                         sprite.destroy()
 
@@ -50,33 +47,30 @@ class PearlyPaul(Enemy):
         else:
             self.pearl_dropping_time -= 1
 
-       
         self.moving_time += 1
         self.x_speed = Decimal(0)
-        
+
         if self.moving_time > 100 and self.y_speed <= 0:
             self.x_speed = Decimal(random.randrange(-10, 20))
             self.y_speed = Decimal(random.randrange(1, 10))
             self.moving_time = 0
 
-        PhysicsSprite.updateloop(self, dt)
+        super().updateloop(dt)
 
     def drop_pearl(self):
         # John thinks this is very interesting. and that this sucks why would we have to do that...
         # that is what we have to do. we need an add_list function in engineglobals, we cant create game objects on the fly in the update
         # Loop... hahaha pig candy.
-        pearl = Pearl()
-        pearl.y_speed = -12
-        pearl.x_position,pearl.y_position = self.x_position, self.y_position + 22
+        pearl = makeSprite(Pearl, (self.x_position, self.y_position + 22), starting_speed=(0, -12))
         self.pearl_dropping_time = random.randrange(50 , 500)
         PearlyPaul.poop_pearl.play()
 
     def getting_hit(self):
-        
+
         self.hit_count += 1
 
         if self.hit_count >= 4:
-       
+
             self.dead_timer = 0
             self.sprite.image = self.resource_images['dead']
             dead_dude = pyglet.media.load("audio/kenny_sounds/boss_beaten.mp3", streaming=False)
@@ -84,19 +78,17 @@ class PearlyPaul(Enemy):
 
 class Pearl(Enemy):
 
-    def __init__(self,):
-        Enemy.__init__(self, init_params={
-            'has_gravity': True,
-            'resource_images': {
-                'pearl_left': {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True},
-                'pearl_right': {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True},
-                'dead': 'sushiroll.png'
-            }
-        })
+    def __init__(self, sprite_initializer : dict):
+        super().__init__(sprite_initializer)
 
-    
+    def getResourceImages(self):
+        return {
+            'pearl_left': {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True},
+            'pearl_right': {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True},
+            'dead': 'sushiroll.png'
+        }
+
     def on_PhysicsSprite_collided(self, collided_object=None):
-        
+
         if collided_object and type(collided_object).__name__ == 'Player':
             collided_object.hit()
-

@@ -17,49 +17,43 @@ class PhysicsSprite(GameObject):
     collision_lists = {}
 
     # constructor
-    # Set has_gravity to False to create a sprite that hovers in defiance of all reason
-    def __init__(self, init_params : dict, lifecycle_manager : str = 'PER_MAP'):
-        self.init_params = init_params.copy()
+    def __init__(self, sprite_initializer : dict):
+        self.sprite_initializer = sprite_initializer
 
         self.landed = False
 
-        self.resource_images = {}
+        resource_images = self.getResourceImages()
+        self.resource_images = dict()
 
-        for k, resource_id in init_params['resource_images'].items():
+        for k, resource_id in resource_images.items():
             if isinstance(resource_id, dict):
                 self.resource_images[k] = pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image(resource_id['file']), rows=resource_id['rows'], columns=resource_id['columns']), duration=resource_id['duration'], loop=resource_id['loop'])
             else:
                 self.resource_images[k] = pyglet.resource.image(resource_id)
 
-        group = EngineGlobals.sprites_front_group if ('group' in init_params and init_params['group'] == SpriteBatch.FRONT) else EngineGlobals.sprites_back_group
+        group = EngineGlobals.sprites_front_group if sprite_initializer['group'] == 'FRONT' else EngineGlobals.sprites_back_group
         self.sprite = pyglet.sprite.Sprite(img=next(iter(self.resource_images.values())), batch=EngineGlobals.main_batch, group=group)
 
         # if collision_width and collision_height are not provided, calculate them from the width and height
         # of the provided image/animation
-        collision_width = init_params['collision_width'] if 'collision_width' in init_params else None
-        collision_height = init_params['collision_height'] if 'collision_height' in init_params else None
-        if (not collision_width or not collision_height) and len(self.resource_images) > 0:
-
+        if self.getStaticBoundingBox():
+            (self.collision_width, self.collision_height) = self.getStaticBoundingBox()
+        elif len(self.resource_images) > 0:
             if isinstance(self.resource_images[next(iter(self.resource_images))], pyglet.image.AbstractImage):
-
                 self.collision_width = self.resource_images[next(iter(self.resource_images))].width
                 self.collision_height = self.resource_images[next(iter(self.resource_images))].height
-
             elif isinstance(self.resource_images[next(iter(self.resource_images))], pyglet.image.Animation):
-
                 self.collision_width = self.resource_images[next(iter(self.resource_images))].get_max_width()
                 self.collision_height = self.resource_images[next(iter(self.resource_images))].get_max_height()
+        else:
+            (self.collision_width, self.collision_height) = (0, 0)
 
         # the 'x_speed' and 'y_speed' members are Decimal representations of the sprite's speed
         # at this moment; each time the game loop runs, the sprite will move by that amount;
         # self.x_speed is the left-to-right speed (negative is left, positive is right);
         # self.y_speed is the bottom-to-top speed (in defiance of convention, negative is down and
         # positive is up)
-        (self.x_speed, self.y_speed) = (Decimal('0'), Decimal('0'))
-
-        # the 'has_gravity' member is a true/false flag to indicate whether this sprite truly
-        # obeys Isaac Newton's decrees.
-        self.has_gravity = False if 'has_gravity' not in init_params else bool(init_params['has_gravity'])
+        (self.x_speed, self.y_speed) = sprite_initializer['starting_speed']
 
         # scale up the image
         self.sprite.update(scale=EngineGlobals.scale_factor)
@@ -67,19 +61,20 @@ class PhysicsSprite(GameObject):
         # initialize the x_position and y_position members as a Decimal representation of the
         # sprite's position in the environment - self.x_position is the 'x' or left-to-right
         # coordinate, self.y_position is the 'y' or bottom-to-top coordinate
-        if 'spawn_coords' in init_params:
-            (self.x_position, self.y_position) = init_params['spawn_coords']
-        else:
-            (self.x_position, self.y_position) = (Decimal(), Decimal())
+        (self.x_position, self.y_position) = sprite_initializer['starting_position']
 
-        super().__init__(lifecycle_manager=lifecycle_manager)
+        super().__init__(lifecycle_manager=sprite_initializer['lifecycle_manager'])
 
     # pickler
     def __getstate__(self):
-        return self.init_params.copy()
+        return self.sprite_initializer.copy()
 
+    # unpickler
     def __setstate__(self, state):
-        self.__init__(init_params=state)
+        if 'sprite_type' in state:
+            self.__init__(state)
+        else:
+            print("unable to unpickle from {}".format(str(state)))
 
     def get_collision_cell_hashes(self):
         for hashed_x in range(floor(self.x_position / EngineGlobals.collision_cell_size), floor((self.x_position + self.collision_width - 1) / EngineGlobals.collision_cell_size) + 1):
@@ -118,7 +113,7 @@ class PhysicsSprite(GameObject):
 
     # this function is called for each sprite during the main update loop
     def updateloop(self, dt):
-        if self.has_gravity:
+        if self.hasGravity():
             # accelerate downwards by a certain amount
             self.y_speed = Decimal(self.y_speed) - Decimal('.6')
             # terminal velocity is 20 for now, so we won't move any faster than that
@@ -192,6 +187,15 @@ class PhysicsSprite(GameObject):
 
         # finally, update the x and y coords so that pyglet will know where to draw the sprite
         self.sprite.x, self.sprite.y = int(self.x_position - EngineGlobals.our_screen.x), int(self.y_position - EngineGlobals.our_screen.y)
+
+    def getResourceImages(self):
+        return None
+
+    def getStaticBoundingBox(self):
+        return None
+
+    def hasGravity(self):
+        return True
 
     def on_finalDeletion(self):
         self.sprite.delete()

@@ -58,14 +58,14 @@ class Editor():
             return pyglet.event.EVENT_UNHANDLED
 
         x_coord = floor((x + EngineGlobals.our_screen.x)/32)
-        y_coord = len(EngineGlobals.game_map.platform) - 1 - floor((EngineGlobals.our_screen.y + y)/32)
-        if EngineGlobals.game_map.platform[floor(y_coord)][floor(x_coord)] == 0:
+        y_coord = len(EngineGlobals.game_map.chunks[0]) - 1 - floor((EngineGlobals.our_screen.y + y)/32)
+        if EngineGlobals.game_map.chunks[0][floor(y_coord)][floor(x_coord)] == 0:
             block = Block(self.selected_tile_idx, True)
-            EngineGlobals.game_map.platform[floor(y_coord)][floor(x_coord)] = block
+            EngineGlobals.game_map.chunks[0][floor(y_coord)][floor(x_coord)] = block
         else:
-            if hasattr(EngineGlobals.game_map.platform[floor(y_coord)][floor(x_coord)], 'sprite'):
-                EngineGlobals.game_map.platform[floor(y_coord)][floor(x_coord)].sprite.delete()
-            EngineGlobals.game_map.platform[floor(y_coord)][floor(x_coord)] = 0
+            if hasattr(EngineGlobals.game_map.chunks[0][floor(y_coord)][floor(x_coord)], 'sprite'):
+                EngineGlobals.game_map.chunks[0][floor(y_coord)][floor(x_coord)].sprite.delete()
+            EngineGlobals.game_map.chunks[0][floor(y_coord)][floor(x_coord)] = 0
         return pyglet.event.EVENT_HANDLED
 
     def on_mouse_motion(self, x, y, dx, dy):

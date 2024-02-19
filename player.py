@@ -20,9 +20,9 @@ class Player(PhysicsSprite):
     FIRST_JUMP = 2
     SECOND_JUMP = 3
 
-    def __init__(self, sprite_initializer : dict):
+    def __init__(self, sprite_initializer : dict, starting_chunk):
 
-        super().__init__(sprite_initializer)
+        super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
 
         # Which direction is Kenny facing?
         self.direction = 'right'
@@ -138,8 +138,9 @@ class Player(PhysicsSprite):
             for collide_with in self.get_all_colliding_objects():
                 if type(collide_with).__name__ == 'Door':
                     Player.door_open_close.play()
-                    EngineGlobals.game_map = GameMap.load_map(collide_with.sprite_initializer['target_map'])
+                    GameMap.load_map(collide_with.sprite_initializer['target_map'])
                     self.x_position, self.y_position = collide_with.sprite_initializer['player_position']
+
     # this function is called by the physics simulator when it detects landing on a solid object
     def on_PhysicsSprite_landed(self):
         # set our jumpct back to zero to allow future jumps
@@ -155,7 +156,7 @@ class Player(PhysicsSprite):
             bullet_speed = (0 - Player.BULLET_INITIAL_VELOCITY, 0)
             bullet_pos = (self.x_position - 5, self.y_position + 22)
 
-        makeSprite(Bullet, bullet_pos, starting_speed=bullet_speed)
+        makeSprite(Bullet, self.current_chunk, bullet_pos, starting_speed=bullet_speed)
 
         # Play the bullet spit audio
         self.spit_bullet.play()
@@ -175,7 +176,7 @@ class Player(PhysicsSprite):
     def activate_super_powers(self):
         pass
 
-    def on_PhysicsSprite_collided(self, collided_object=None):
+    def on_PhysicsSprite_collided(self, collided_object=None, collided_chunk=None, chunk_x=None, chunk_y=None):
         
         if collided_object and type(collided_object).__name__ == 'Spike':
             self.bloody = True

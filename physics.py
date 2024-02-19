@@ -5,6 +5,8 @@ from engineglobals import EngineGlobals
 from math import floor
 from enum import Enum
 from lifecycle import GameObject
+from magic_map import ChunkEdge
+from math import floor
 
 # PhysicsSprite represents a sprite that honors the laws of physics.
 # It contains an update method that will alter the sprite's position according
@@ -17,7 +19,7 @@ class PhysicsSprite(GameObject):
     collision_lists = {}
 
     # constructor
-    def __init__(self, sprite_initializer : dict):
+    def __init__(self, sprite_initializer : dict, starting_chunk):
         self.sprite_initializer = sprite_initializer
 
         self.landed = False
@@ -64,6 +66,8 @@ class PhysicsSprite(GameObject):
         (self.x_position, self.y_position) = sprite_initializer['starting_position']
 
         super().__init__(lifecycle_manager=sprite_initializer['lifecycle_manager'])
+        # every sprite must start out in a given chunk of the map (though it may be hidden)
+        self.current_chunk = starting_chunk
 
     # pickler
     def __getstate__(self):
@@ -72,7 +76,7 @@ class PhysicsSprite(GameObject):
     # unpickler
     def __setstate__(self, state):
         if 'sprite_type' in state:
-            self.__init__(state)
+            self.__init__(state, None)
         else:
             print("unable to unpickle from {}".format(str(state)))
 
@@ -100,7 +104,7 @@ class PhysicsSprite(GameObject):
         #    set of sprites at the end.
         found_objects = set()
         for (hashed_x, hashed_y) in self.get_collision_cell_hashes():
-            for collide_with in PhysicsSprite.collision_lists.setdefault(hashed_y * len(EngineGlobals.game_map.platform) + hashed_x, []):
+            for collide_with in PhysicsSprite.collision_lists.setdefault((hashed_x, hashed_y), []):
                 if not isinstance(collide_with, PhysicsSprite):
                     continue
                 if ( collide_with.x_position + collide_with.collision_width < self.x_position
@@ -111,8 +115,69 @@ class PhysicsSprite(GameObject):
                 found_objects.add(collide_with)
         return found_objects
 
+    def collide_with_chunk_tiles(self, x, y) -> bool:
+        # move upward or downward to the correct starting y-chunk if needed
+        y_chunk = self.current_chunk
+        y_check = y_chunk.height - floor((y - y_chunk.coalesced_y) / 32) - 1
+        while y_check < 0 and ChunkEdge.TOP in y_chunk.adjacencies:
+            y_chunk = y_chunk.adjacencies[ChunkEdge.TOP]
+            y_check = y_chunk.height - floor((y - y_chunk.coalesced_y) / 32) - 1
+        while y_check >= y_chunk.height and ChunkEdge.BOTTOM in y_chunk.adjacencies:
+            y_chunk = y_chunk.adjacencies[ChunkEdge.BOTTOM]
+            y_check = y_chunk.height - floor((y - y_chunk.coalesced_y) / 32) - 1
+
+        # loop over y-chunks
+        #print("starting at the bottom in tile {} which is foot position {}".format(y_check, y))
+        while y_chunk.coalesced_y + (y_chunk.height - 1 - y_check) * 32 < y + self.collision_height:
+            # move leftward or rightward to the correct starting x-chunk if needed
+            x_chunk = y_chunk
+            x_check = floor((x - x_chunk.coalesced_x) / 32)
+            while x_check < 0 and ChunkEdge.LEFT in x_chunk.adjacencies:
+                x_chunk = x_chunk.adjacencies[ChunkEdge.LEFT]
+                x_check = floor((x - x_chunk.coalesced_x) / 32)
+            while x_check >= x_chunk.width and ChunkEdge.RIGHT in x_chunk.adjacencies:
+                x_chunk = x_chunk.adjacencies[ChunkEdge.RIGHT]
+                x_check = floor((x - x_chunk.coalesced_x) / 32)
+
+            # loop over x-chunks
+            while x_check * 32 + x_chunk.coalesced_x < x + self.collision_width:
+                if x_check < 0 or x_check >= x_chunk.width or y_check < 0 or y_check >= x_chunk.height:
+                    #print("off-map collision")
+                    self.on_PhysicsSprite_collided()
+                    return True
+                else:
+                    block = x_chunk.platform[y_check][x_check]
+                    if block == 1:
+                        self.on_PhysicsSprite_collided()
+                        return True
+                    elif hasattr(block, "solid") and block.solid == True:
+                        self.on_PhysicsSprite_collided(block, x_chunk, x_check, y_check)
+                        return True
+                x_check += 1
+                if x_check >= x_chunk.width:
+                    #increment to the next x-chunk rightward
+                    if ChunkEdge.RIGHT not in x_chunk.adjacencies:
+                        break
+                    x_chunk = x_chunk.adjacencies[ChunkEdge.RIGHT]
+                    x_check = 0
+
+            y_check -= 1
+            if y_check < 0:
+                # increment to the next y-chunk upward
+                if ChunkEdge.TOP not in y_chunk.adjacencies:
+                    break
+                y_chunk = y_chunk.adjacencies[ChunkEdge.TOP]
+                y_check = y_chunk.height - floor((y - y_chunk.coalesced_y) / 32)
+
+        return False
+
     # this function is called for each sprite during the main update loop
     def updateloop(self, dt):
+        if not self.current_chunk:
+            return
+        if self.current_chunk.hidden:
+            return
+
         if self.hasGravity():
             # accelerate downwards by a certain amount
             self.y_speed = Decimal(self.y_speed) - Decimal('.6')
@@ -126,52 +191,27 @@ class PhysicsSprite(GameObject):
         new_y = self.y_position + self.y_speed
 
         # upward or downward collisions
-        if self.y_speed != 0:
-            # first, check if trying to move off the bottom or top of the screen
-            if new_y < 0 or new_y + self.collision_height >= len(EngineGlobals.game_map.platform) * 32:
-                # if so, check if we should trigger landing event (moving downward and not already grounded)
-                if self.y_speed < 0 and not self.landed:
-                    self.landed = True
-                    self.on_PhysicsSprite_landed()
-                # regardless, stop all downward or upward motion
-                self.y_speed = 0
-                self.on_PhysicsSprite_collided()
-            # otherwise, we are safe to see where we are in the environment and whether we are about to collide
-            # with a solid block
-            else:
-                # from the environment, retrieve the tiles at Kenny's lower left foot, lower right foot, upper left,
-                # and upper right
-                # since this is only checking for up/down collisions, it's important that we use the new y coordinates
-                # (new_y) but the original x coordinates (self.x_position)
-                left_foot_tile = EngineGlobals.game_map.platform[len(EngineGlobals.game_map.platform) - floor(new_y / 32) - 1][floor(self.x_position/32)]
-                right_foot_tile = EngineGlobals.game_map.platform[len(EngineGlobals.game_map.platform) - floor(new_y / 32) - 1][floor((self.x_position + self.collision_width - 1)/32)]
-                left_head_tile = EngineGlobals.game_map.platform[len(EngineGlobals.game_map.platform) - floor((new_y + self.collision_height - 1) / 32) - 1][floor(self.x_position/32)]
-                right_head_tile = EngineGlobals.game_map.platform[len(EngineGlobals.game_map.platform) - floor((new_y + self.collision_height - 1) / 32) - 1][floor((self.x_position + self.collision_width - 1)/32)]
-                # if one of those tiles is solid, time to cease all vertical movement!
-                if (self.if_solid(left_foot_tile) == True or self.if_solid(right_foot_tile) == True
-                        or self.if_solid(left_head_tile) == True or self.if_solid(right_head_tile) == True):
-                    if self.y_speed < 0 and not self.landed:
+        if Decimal(self.y_speed) != Decimal(0):
+            # if one of those tiles is solid, time to cease all vertical movement!
+            if self.collide_with_chunk_tiles(self.x_position, new_y):
+                if self.y_speed < 0:
+                    # vertically snap the sprite so its feet are at the pixel directly
+                    # above the tile
+                    self.y_position = floor((new_y + 32) / 32) * 32
+                    if not self.landed:
                         self.landed = True
                         self.on_PhysicsSprite_landed()
-                    self.y_speed = 0
-                    self.on_PhysicsSprite_collided()
-                else:
-                    self.landed = False
+                elif self.y_speed > 0:
+                    self.y_position = floor((new_y + self.collision_height - 1) / 32) * 32 - self.collision_height
+                self.y_speed = 0
+            else:
+                self.landed = False
 
         # left or right collisions
-        if self.x_speed != 0:
-            if new_x < 0 or new_x + self.collision_width >= len(EngineGlobals.game_map.platform[0]) * 32:
+        if Decimal(self.x_speed) != Decimal(0):
+            if self.collide_with_chunk_tiles(new_x, self.y_position):
                 self.x_speed = 0
                 self.on_PhysicsSprite_collided()
-            else:
-                left_foot_tile = EngineGlobals.game_map.platform[len(EngineGlobals.game_map.platform) - floor(self.y_position / 32) - 1][floor(new_x/32)]
-                right_foot_tile = EngineGlobals.game_map.platform[len(EngineGlobals.game_map.platform) - floor(self.y_position / 32) - 1][floor((new_x + self.collision_width - 1)/32)]
-                left_head_tile = EngineGlobals.game_map.platform[len(EngineGlobals.game_map.platform) - floor((self.y_position + self.collision_height - 1) / 32) - 1][floor(new_x/32)]
-                right_head_tile = EngineGlobals.game_map.platform[len(EngineGlobals.game_map.platform) - floor((self.y_position + self.collision_height - 1) / 32) - 1][floor((new_x + self.collision_width - 1)/32)]
-                if (self.if_solid(left_foot_tile) == True or self.if_solid(right_foot_tile) == True
-                        or self.if_solid(left_head_tile) == True or self.if_solid(right_head_tile) == True):
-                    self.x_speed = 0
-                    self.on_PhysicsSprite_collided()
 
         # check for collisions with other sprites
         for collide_with in self.get_all_colliding_objects():
@@ -179,14 +219,25 @@ class PhysicsSprite(GameObject):
             collide_with.on_PhysicsSprite_collided(self)
         # add this sprite to the cells it's touching
         for (hashed_x, hashed_y) in self.get_collision_cell_hashes():
-            PhysicsSprite.collision_lists[hashed_y * len(EngineGlobals.game_map.platform) + hashed_x].append(self)
+            PhysicsSprite.collision_lists[(hashed_x, hashed_y)].append(self)
 
         # update position according to current speed
         self.x_position = Decimal(self.x_position) + self.x_speed
         self.y_position = Decimal(self.y_position) + self.y_speed
 
+        # move to a new chunk?
+        while self.x_position - self.current_chunk.coalesced_x < 0 and ChunkEdge.LEFT in self.current_chunk.adjacencies:
+            self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.LEFT]
+        while self.x_position + self.collision_width >= self.current_chunk.coalesced_x + self.current_chunk.width * 32 and ChunkEdge.RIGHT in self.current_chunk.adjacencies:
+            self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.RIGHT]
+        while self.y_position - self.current_chunk.coalesced_y < 0 and ChunkEdge.BOTTOM in self.current_chunk.adjacencies:
+            self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.BOTTOM]
+        while self.y_position + self.collision_height >= self.current_chunk.coalesced_y + self.current_chunk.height * 32 and ChunkEdge.TOP in self.current_chunk.adjacencies:
+            self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.TOP]
+
         # finally, update the x and y coords so that pyglet will know where to draw the sprite
         self.sprite.x, self.sprite.y = int(self.x_position - EngineGlobals.our_screen.x), int(self.y_position - EngineGlobals.our_screen.y)
+        # TODO: do we need to set sprite.visible = False to improve performance, or does Pyglet take care of this on it's own?
 
     def getResourceImages(self):
         return None
@@ -203,15 +254,8 @@ class PhysicsSprite(GameObject):
     def on_PhysicsSprite_landed(self):
         pass
 
-    def on_PhysicsSprite_collided(self, collided_object=None):
+    def on_PhysicsSprite_collided(self, collided_object=None, collided_chunk=None, chunk_x=None, chunk_y=None):
         pass
-
-    def if_solid(self,block):
-        if block == 1:
-            return True
-        if  hasattr(block, "solid") and block.solid == True:
-            return True
-        return False
 
 # the Screen class tracks the positioning of the screen within the entire environment
 class Screen():

@@ -85,8 +85,9 @@ class RandomTalker(GameObject):
             self.timer = random.randrange(100, 500)
 
     def make_a_fruit(self):
-        spawn_coords = (random.randrange(20, len(EngineGlobals.game_map.platform[0]) * 32 - 20), 50)
-        makeSprite(NirvanaFruit, spawn_coords, destroy_after=800)
+        spawn_chunk = EngineGlobals.kenny.current_chunk
+        spawn_x_pos = random.randrange(30, spawn_chunk.width * 32 - 60)
+        makeSprite(NirvanaFruit, spawn_chunk, (spawn_x_pos, 50), destroy_after=800)
 
     # pickler
     def __getstate__(self):

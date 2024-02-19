@@ -6,10 +6,9 @@ import random
 
 class Enemy(PhysicsSprite):
     
-    def __init__(self, sprite_initializer : dict):
+    def __init__(self, sprite_initializer : dict, starting_chunk):
 
-        super().__init__(sprite_initializer)
-
+        super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
         self.moving_time = 0
 
     def getResourceImages(self):
@@ -26,7 +25,7 @@ class Enemy(PhysicsSprite):
                 self.destroy()
 
         self.moving_time += 1
-        
+
         if self.moving_time > 200 and self.y_speed <= 0:
            self.x_speed = Decimal(random.randrange(-10, 10))
            self.y_speed = Decimal(random.randrange(1, 10))
@@ -39,10 +38,10 @@ class Enemy(PhysicsSprite):
         self.y_speed = 10
         self.x_speed = Decimal(random.randrange(-10, 10))
 
-    def on_PhysicsSprite_collided(self, collided_object=None):
+    def on_PhysicsSprite_collided(self, collided_object=None, collided_chunk=None, chunk_x=None, chunk_y=None):
 
-        if collided_object == None:
-            self.make_it_jump()
+        if collided_object == None or type(collided_object).__name__ == 'Block':
+             self.make_it_jump()
 
     def die_hard(self,):
 
@@ -54,10 +53,9 @@ class Enemy(PhysicsSprite):
 
 class Doggy(Enemy):
 
-    def __init__(self, sprite_initializer : dict):
+    def __init__(self, sprite_initializer : dict, starting_chunk):
 
-        super().__init__(sprite_initializer)
-
+        super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
         self.moving_time = 0
 
     def getResourceImages(self):

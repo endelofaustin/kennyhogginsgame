@@ -3,6 +3,7 @@ from decimal import Decimal
 
 def makeSprite(
         sprite_type,
+        starting_chunk,
         starting_position : tuple[int, int],
         starting_speed : tuple[int, int] = (Decimal(0), Decimal(0)),
         lifecycle_manager : str = 'PER_MAP',
@@ -20,4 +21,4 @@ def makeSprite(
     for arg_name, arg_value in kwargs.items():
         sprite_initializer[arg_name] = arg_value
 
-    return sprite_type(sprite_initializer)
+    return sprite_type(sprite_initializer, starting_chunk)

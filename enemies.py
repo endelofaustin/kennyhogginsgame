@@ -11,6 +11,7 @@ class Enemy(PhysicsSprite):
         super().__init__(sprite_initializer)
 
         self.moving_time = 0
+        self.hit_count = 0
 
     def getResourceImages(self):
         return {
@@ -51,6 +52,13 @@ class Enemy(PhysicsSprite):
             self.sprite.image = self.resource_images['dead']
             dead_dude = pyglet.media.load('audio/glurk.wav', streaming=False)
             dead_dude.play()
+
+    def on_pokey(self):
+        
+        self.hit_count += 1
+         
+        if self.hit_count > 3:
+            self.die_hard()
 
 class Doggy(Enemy):
 

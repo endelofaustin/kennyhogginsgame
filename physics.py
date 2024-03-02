@@ -1,4 +1,3 @@
-
 import pyglet
 from decimal import Decimal
 from engineglobals import EngineGlobals

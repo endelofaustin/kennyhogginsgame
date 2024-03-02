@@ -1,4 +1,3 @@
-
 from physics import PhysicsSprite
 import pyglet
 from decimal import Decimal
@@ -26,14 +25,19 @@ class Player(PhysicsSprite):
 
         # Which direction is Kenny facing?
         self.direction = 'right'
+        
+        # Does he have a sword?
+        self.has_sword = False
+        self.slash_sword_counter = 0
 
         # jumpct counts the number of jumps to allow for double-jumping
         self.jumpct = 0
         self.jump_frames = 0
         self.spit_bullet = pyglet.media.StaticSource(pyglet.media.load("audio/spitbullets.wav"))
+        self.swipe_sword = pyglet.media.StaticSource(pyglet.media.load("audio/swordswipe.mp3"))
+
         # let's get that blood flowing
         self.bloody = False
-
         self.crouching = False
 
         if not hasattr(Player, 'door_open_close'):
@@ -49,16 +53,20 @@ class Player(PhysicsSprite):
             'run_left': {'file': "kenny-run-left.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': True},
             'run_right': {'file': "kenny-run-right.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': True},
             'jump_left': {'file': "kenny-jump-left.png", 'rows': 1, 'columns': 2, 'duration': 1/10, 'loop': False},
-            'jump_right': {'file': "kenny-jump-right.png", 'rows': 1, 'columns': 2, 'duration': 1/10, 'loop': False}
+            'jump_right': {'file': "kenny-jump-right.png", 'rows': 1, 'columns': 2, 'duration': 1/10, 'loop': False},
+            'kenny_sword_left': "kennysword-left.png",
+            'kenny_sword_right': "kennysword-right.png",
+            'kaboom': "kaboom.png"
         }
 
     def updateloop(self, dt):
 
-        # John has done 5 flight lessons as of nov 21 24..... corrections only 4
+        # John has done 5 flight lessons as of nov 21 23..... corrections only 4
+        # John has done 38 out of 40 hours flight lessons for private feb 2024 
         if hasattr(self, "blow_up_timer"):
 
             if self.blow_up_timer <= 20:
-                self.sprite.image = pyglet.resource.image("kaboom.png")
+                self.sprite.image = self.resource_images['kaboom']
                 
             self.blow_up_timer -= 1
             return 
@@ -115,6 +123,11 @@ class Player(PhysicsSprite):
             self.jumpct = Player.NOT_JUMPING
             self.jump_frames = 0
 
+            if self.direction == 'right':
+                self.sprite.image = self.resource_images['kenny_sword_right']
+            if self.direction == 'left':
+                self.sprite.image = self.resource_images['kenny_sword_left'] 
+
         # then, run normal physics algorithm
         PhysicsSprite.updateloop(self, dt)
 
@@ -133,6 +146,7 @@ class Player(PhysicsSprite):
         # Button press handeling for space bar to shoot
         if symbol == pyglet.window.key.SPACE:
             self.shoot_it()
+        
         # door entry
         if symbol == pyglet.window.key.D:
             for collide_with in self.get_all_colliding_objects():
@@ -140,13 +154,17 @@ class Player(PhysicsSprite):
                     Player.door_open_close.play()
                     EngineGlobals.game_map = GameMap.load_map(collide_with.sprite_initializer['target_map'])
                     self.x_position, self.y_position = collide_with.sprite_initializer['player_position']
+        
+        if symbol == pyglet.window.key.C:
+            self.slash_sword()
+
+
     # this function is called by the physics simulator when it detects landing on a solid object
     def on_PhysicsSprite_landed(self):
         # set our jumpct back to zero to allow future jumps
         self.jumpct = 0
 
     # Lets do some shooting
-
     def shoot_it(self):
 
         bullet_speed = (Player.BULLET_INITIAL_VELOCITY, 0)
@@ -167,6 +185,10 @@ class Player(PhysicsSprite):
         else:
             self.die_hard()
 
+    def slash_sword(self):
+
+         makeSprite(SwordHit, (self.x_position - 2000, self.y_position))
+
     def die_hard(self):
 
         self.sprite.image = pyglet.resource.image("lucinda.png")
@@ -179,12 +201,52 @@ class Player(PhysicsSprite):
         
         if collided_object and type(collided_object).__name__ == 'Spike':
             self.bloody = True
+        
         elif collided_object and type(collided_object).__name__ == 'Bandaid':
             self.bloody = False
             collided_object.destroy()
+        
         elif collided_object and type(collided_object).__name__ == 'NirvanaFruit':
             collided_object.destroy()
             pyglet.media.load('audio/kenny_sounds/munching_on_apple.mp3', streaming=False).play()
             self.activate_super_powers()
-
+        
         super().on_PhysicsSprite_collided(collided_object=collided_object)
+
+# expanding bouding box for sword hits cuase they super cool and gangsta
+# vorriste morire??? no non voglio morire
+class SwordHit(PhysicsSprite):
+
+    def __init__(self, sprite_initializer):
+        
+        super().__init__(sprite_initializer)
+        self.slash_sword_counter = 10
+
+    def getStaticBoundingBox(self):
+
+        return (4000, 3000)
+
+    def updateloop(self, dt):
+
+        if self.slash_sword_counter > 0:
+            self.slash_sword_counter -= 1
+
+        else:
+            self.destroy()
+
+    def on_PhysicsSprite_collided(self, collided_object):
+
+        print("Hi there")
+       
+        if collided_object and hasattr(collided_object, 'on_pokey'):
+
+           
+           if self.slash_sword_counter > 0:
+               self.slash_sword_counter = 0
+               collided_object.on_pokey()
+
+    def getResourceImages(self):
+         return {
+             'right': "pixel.png"
+                }
+

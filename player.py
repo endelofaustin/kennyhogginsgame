@@ -28,13 +28,10 @@ class Player(PhysicsSprite):
         
         # Does he have a sword?
         self.has_sword = False
-        self.slash_sword_counter = 0
 
         # jumpct counts the number of jumps to allow for double-jumping
         self.jumpct = 0
         self.jump_frames = 0
-        self.spit_bullet = pyglet.media.StaticSource(pyglet.media.load("audio/spitbullets.wav"))
-        self.swipe_sword = pyglet.media.StaticSource(pyglet.media.load("audio/swordswipe.mp3"))
 
         # let's get that blood flowing
         self.bloody = False
@@ -42,6 +39,10 @@ class Player(PhysicsSprite):
 
         if not hasattr(Player, 'door_open_close'):
             Player.door_open_close = pyglet.media.load("audio/door_open_close.mp3", streaming=False)
+        if not hasattr(Player, 'spit_bullet'):
+            Player.spit_bullet = pyglet.media.StaticSource(pyglet.media.load("audio/spitbullets.wav"))
+        if not hasattr(Player, 'swipe_sword'):
+            Player.swipe_sword = pyglet.media.StaticSource(pyglet.media.load("audio/swordswipe.mp3"))
 
     def getResourceImages(self):
         return {
@@ -123,6 +124,7 @@ class Player(PhysicsSprite):
             self.jumpct = Player.NOT_JUMPING
             self.jump_frames = 0
 
+        if self.has_sword:
             if self.direction == 'right':
                 self.sprite.image = self.resource_images['kenny_sword_right']
             if self.direction == 'left':
@@ -134,6 +136,8 @@ class Player(PhysicsSprite):
     # on_key_press is called by the pyglet engine when attached to a window
     # this lets us handle keyboard input events at the time they occur
     def on_key_press(self, symbol, modifiers):
+
+        # jumping
         if (symbol == pyglet.window.key.LCTRL or symbol == pyglet.window.key.RCTRL or symbol == pyglet.window.key.UP) and self.jumpct <= Player.FIRST_JUMP:
             # if on a solid object, crouch then jump
             if self.landed and self.jumpct == Player.NOT_JUMPING:
@@ -142,11 +146,11 @@ class Player(PhysicsSprite):
             elif self.jumpct == Player.FIRST_JUMP:
                 self.y_speed = Player.DOUBLE_JUMP_VELOCITY
                 self.jumpct = Player.SECOND_JUMP
-        
+
         # Button press handeling for space bar to shoot
         if symbol == pyglet.window.key.SPACE:
             self.shoot_it()
-        
+
         # door entry
         if symbol == pyglet.window.key.D:
             for collide_with in self.get_all_colliding_objects():
@@ -154,8 +158,9 @@ class Player(PhysicsSprite):
                     Player.door_open_close.play()
                     EngineGlobals.game_map = GameMap.load_map(collide_with.sprite_initializer['target_map'])
                     self.x_position, self.y_position = collide_with.sprite_initializer['player_position']
-        
-        if symbol == pyglet.window.key.C:
+
+        # sword slash
+        if symbol == pyglet.window.key.C and self.has_sword:
             self.slash_sword()
 
 
@@ -176,7 +181,7 @@ class Player(PhysicsSprite):
         makeSprite(Bullet, bullet_pos, starting_speed=bullet_speed)
 
         # Play the bullet spit audio
-        self.spit_bullet.play()
+        Player.spit_bullet.play()
 
     def hit(self):
 
@@ -187,7 +192,11 @@ class Player(PhysicsSprite):
 
     def slash_sword(self):
 
-         makeSprite(SwordHit, (self.x_position - 2000, self.y_position))
+        x_position = self.x_position
+        if self.direction == 'left':
+            x_position = self.x_position - 15
+        makeSprite(SwordHit, (x_position, self.y_position + 9))
+        Player.swipe_sword.play()
 
     def die_hard(self):
 
@@ -198,19 +207,19 @@ class Player(PhysicsSprite):
         pass
 
     def on_PhysicsSprite_collided(self, collided_object=None):
-        
+
         if collided_object and type(collided_object).__name__ == 'Spike':
             self.bloody = True
-        
+
         elif collided_object and type(collided_object).__name__ == 'Bandaid':
             self.bloody = False
             collided_object.destroy()
-        
+
         elif collided_object and type(collided_object).__name__ == 'NirvanaFruit':
             collided_object.destroy()
             pyglet.media.load('audio/kenny_sounds/munching_on_apple.mp3', streaming=False).play()
             self.activate_super_powers()
-        
+
         super().on_PhysicsSprite_collided(collided_object=collided_object)
 
 # expanding bouding box for sword hits cuase they super cool and gangsta
@@ -218,15 +227,17 @@ class Player(PhysicsSprite):
 class SwordHit(PhysicsSprite):
 
     def __init__(self, sprite_initializer):
-        
+
         super().__init__(sprite_initializer)
         self.slash_sword_counter = 10
 
     def getStaticBoundingBox(self):
 
-        return (4000, 3000)
+        return (34, 15)
 
     def updateloop(self, dt):
+
+        super().updateloop(dt)
 
         if self.slash_sword_counter > 0:
             self.slash_sword_counter -= 1
@@ -234,13 +245,9 @@ class SwordHit(PhysicsSprite):
         else:
             self.destroy()
 
-    def on_PhysicsSprite_collided(self, collided_object):
+    def on_PhysicsSprite_collided(self, collided_object=None):
 
-        print("Hi there")
-       
         if collided_object and hasattr(collided_object, 'on_pokey'):
-
-           
            if self.slash_sword_counter > 0:
                self.slash_sword_counter = 0
                collided_object.on_pokey()
@@ -249,4 +256,3 @@ class SwordHit(PhysicsSprite):
          return {
              'right': "pixel.png"
                 }
-

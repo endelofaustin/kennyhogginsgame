@@ -59,3 +59,21 @@ class NirvanaFruit(PhysicsSprite):
             if self.destroy_after <= 0:
                 self.destroy()
         return super().updateloop(dt)
+
+class Sword(PhysicsSprite):
+
+    def __init__(self, sprite_initializer: dict):
+        super().__init__(sprite_initializer)
+
+    def getResourceImages(self):
+        return {
+            0: "sword.png"
+        }
+
+    def hasGravity(self):
+        return False
+
+    def on_PhysicsSprite_collided(self, collided_object=None):
+        if collided_object and type(collided_object).__name__ == 'Player':
+            collided_object.has_sword = True
+            self.destroy()

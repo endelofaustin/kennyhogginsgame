@@ -54,9 +54,9 @@ class Enemy(PhysicsSprite):
             dead_dude.play()
 
     def on_pokey(self):
-        
+
         self.hit_count += 1
-         
+
         if self.hit_count > 3:
             self.die_hard()
 

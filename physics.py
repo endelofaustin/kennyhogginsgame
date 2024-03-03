@@ -112,6 +112,7 @@ class PhysicsSprite(GameObject):
 
     # this function is called for each sprite during the main update loop
     def updateloop(self, dt):
+
         if self.hasGravity():
             # accelerate downwards by a certain amount
             self.y_speed = Decimal(self.y_speed) - Decimal('.6')

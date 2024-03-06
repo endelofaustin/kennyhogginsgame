@@ -77,3 +77,21 @@ class Sword(PhysicsSprite):
         if collided_object and type(collided_object).__name__ == 'Player':
             collided_object.has_sword = True
             self.destroy()
+
+class Scythe(PhysicsSprite):
+
+    def __init__(self, sprite_initializer: dict):
+        super().__init__(sprite_initializer)
+
+    def getResourceImages(self):
+        return {
+            0: "scythe_thingy.png"
+        }
+
+    def hasGravity(self):
+        return False
+
+    def on_PhysicsSprite_collided(self, collided_object=None):
+        if collided_object and type(collided_object).__name__ == 'Player':
+            collided_object.has_scythe = True
+            self.destroy()

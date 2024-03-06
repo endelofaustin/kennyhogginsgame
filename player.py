@@ -28,6 +28,7 @@ class Player(PhysicsSprite):
         
         # Does he have a sword?
         self.has_sword = False
+        self.has_scythe = False
 
         # jumpct counts the number of jumps to allow for double-jumping
         self.jumpct = 0
@@ -43,7 +44,9 @@ class Player(PhysicsSprite):
             Player.spit_bullet = pyglet.media.StaticSource(pyglet.media.load("audio/spitbullets.wav"))
         if not hasattr(Player, 'swipe_sword'):
             Player.swipe_sword = pyglet.media.StaticSource(pyglet.media.load("audio/swordswipe.mp3"))
-
+        if not hasattr(Player, 'schimmy_scythe'):
+            Player.schimmy_scythe = pyglet.media.StaticSource(pyglet.media.load("audio/schimmyscythe.mp3"))
+            
     def getResourceImages(self):
         return {
             'right': "kennystance1-2.png.png",
@@ -160,7 +163,7 @@ class Player(PhysicsSprite):
                     self.x_position, self.y_position = collide_with.sprite_initializer['player_position']
 
         # sword slash
-        if symbol == pyglet.window.key.C and self.has_sword:
+        if symbol == pyglet.window.key.C and (self.has_sword or self.has_scythe):
             self.slash_sword()
 
 
@@ -196,7 +199,13 @@ class Player(PhysicsSprite):
         if self.direction == 'left':
             x_position = self.x_position - 15
         makeSprite(SwordHit, (x_position, self.y_position + 9))
-        Player.swipe_sword.play()
+        
+        if self.has_sword:
+            Player.swipe_sword.play()
+        
+        if self.has_scythe:
+            Player.schimmy_scythe.play()
+
 
     def die_hard(self):
 

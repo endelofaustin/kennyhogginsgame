@@ -27,7 +27,7 @@ def additional_map_definitions(map):
     # the main map that loads when the game starts
     if not hasattr(map, 'filename') or map.filename == "map.dill":
 
-        ONE_OFFS_VERSION = 7
+        ONE_OFFS_VERSION = 8
         if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
             return
         map.one_offs_version = ONE_OFFS_VERSION
@@ -35,6 +35,7 @@ def additional_map_definitions(map):
         map.sprites = dict()
         map.sprites['door'] = makeSprite(Door, starting_position=(0,15), group='BACK', target_map="bossfight.dill", player_position=(250 ,250))
         map.sprites['sword-1'] = makeSprite(gamepieces.Sword, (2500, 90))
+        map.sprites['scythe'] = makeSprite(gamepieces.Scythe, (200, 41))
 
     # the boss fight with pearly paul
     elif map.filename == "bossfight.dill":

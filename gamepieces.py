@@ -39,9 +39,9 @@ class Door(PhysicsSprite):
 
 class NirvanaFruit(PhysicsSprite):
 
-    def __init__(self, sprite_initializer : dict, destroy_after=None):
+    def __init__(self, sprite_initializer : dict, starting_chunk, destroy_after=None):
 
-        super().__init__(sprite_initializer=sprite_initializer)
+        super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
 
         self.destroy_after = destroy_after
 
@@ -62,8 +62,8 @@ class NirvanaFruit(PhysicsSprite):
 
 class Sword(PhysicsSprite):
 
-    def __init__(self, sprite_initializer: dict):
-        super().__init__(sprite_initializer)
+    def __init__(self, sprite_initializer: dict, starting_chunk):
+        super().__init__(sprite_initializer, starting_chunk)
 
     def getResourceImages(self):
         return {
@@ -80,8 +80,8 @@ class Sword(PhysicsSprite):
 
 class Scythe(PhysicsSprite):
 
-    def __init__(self, sprite_initializer: dict):
-        super().__init__(sprite_initializer)
+    def __init__(self, sprite_initializer: dict, starting_chunk):
+        super().__init__(sprite_initializer, starting_chunk)
 
     def getResourceImages(self):
         return {

@@ -19,9 +19,9 @@ class Player(PhysicsSprite):
     FIRST_JUMP = 2
     SECOND_JUMP = 3
 
-    def __init__(self, sprite_initializer : dict):
+    def __init__(self, sprite_initializer : dict, starting_chunk):
 
-        super().__init__(sprite_initializer)
+        super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
 
         # Which direction is Kenny facing?
         self.direction = 'right'
@@ -159,7 +159,7 @@ class Player(PhysicsSprite):
             for collide_with in self.get_all_colliding_objects():
                 if type(collide_with).__name__ == 'Door':
                     Player.door_open_close.play()
-                    EngineGlobals.game_map = GameMap.load_map(collide_with.sprite_initializer['target_map'])
+                    GameMap.load_map(collide_with.sprite_initializer['target_map'])
                     self.x_position, self.y_position = collide_with.sprite_initializer['player_position']
 
         # sword slash
@@ -181,7 +181,7 @@ class Player(PhysicsSprite):
             bullet_speed = (0 - Player.BULLET_INITIAL_VELOCITY, 0)
             bullet_pos = (self.x_position - 5, self.y_position + 22)
 
-        makeSprite(Bullet, bullet_pos, starting_speed=bullet_speed)
+        makeSprite(Bullet, self.current_chunk, bullet_pos, starting_speed=bullet_speed)
 
         # Play the bullet spit audio
         Player.spit_bullet.play()
@@ -198,7 +198,7 @@ class Player(PhysicsSprite):
         x_position = self.x_position
         if self.direction == 'left':
             x_position = self.x_position - 15
-        makeSprite(SwordHit, (x_position, self.y_position + 9))
+        makeSprite(SwordHit, self.current_chunk, (x_position, self.y_position + 9))
         
         if self.has_sword:
             Player.swipe_sword.play()
@@ -215,8 +215,8 @@ class Player(PhysicsSprite):
     def activate_super_powers(self):
         pass
 
-    def on_PhysicsSprite_collided(self, collided_object=None):
-
+    def on_PhysicsSprite_collided(self, collided_object=None, collided_chunk=None, chunk_x=None, chunk_y=None):
+        
         if collided_object and type(collided_object).__name__ == 'Spike':
             self.bloody = True
 
@@ -235,9 +235,9 @@ class Player(PhysicsSprite):
 # vorriste morire??? no non voglio morire
 class SwordHit(PhysicsSprite):
 
-    def __init__(self, sprite_initializer):
+    def __init__(self, sprite_initializer, current_chunk):
 
-        super().__init__(sprite_initializer)
+        super().__init__(sprite_initializer, current_chunk)
         self.slash_sword_counter = 10
 
     def getStaticBoundingBox(self):
@@ -254,7 +254,7 @@ class SwordHit(PhysicsSprite):
         else:
             self.destroy()
 
-    def on_PhysicsSprite_collided(self, collided_object=None):
+    def on_PhysicsSprite_collided(self, collided_object=None, collided_chunk=None, chunk_x=None, chunk_y=None):
 
         if collided_object and hasattr(collided_object, 'on_pokey'):
            if self.slash_sword_counter > 0:

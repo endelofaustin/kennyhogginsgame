@@ -45,6 +45,7 @@ def additional_map_definitions(map):
         map.chunks[0].contained_sprites['door'] = makeSprite(Door, map.chunks[0], starting_position=(0,15), group='BACK', target_map="bossfight.dill", player_position=(250 ,250))
         map.chunks[0].contained_sprites['sword-1'] = makeSprite(gamepieces.Sword, map.chunks[0], (2500, 90))
         map.chunks[0].contained_sprites['scythe'] = makeSprite(gamepieces.Scythe, map.chunks[0], (200, 41))
+        map.chunks[0].contained_sprites['spudguy'] = makeSprite(Enemy, map.chunks[0], (300 , 250))
 
     # the boss fight with pearly paul
     elif map.filename == "bossfight.dill":

@@ -202,13 +202,26 @@ class PhysicsSprite(GameObject):
                         self.on_PhysicsSprite_landed()
                 elif self.y_speed > 0:
                     self.y_position = floor((new_y + self.collision_height - 1) / 32) * 32 - self.collision_height
-                self.y_speed = 0
+                if self.y_position < self.current_chunk.coalesced_y \
+                        and ChunkEdge.BOTTOM not in self.current_chunk.adjacencies:
+                    self.y_position = self.current_chunk.coalesced_y
+                elif self.y_position + self.collision_height > self.current_chunk.coalesced_y + (self.current_chunk.height * 32) \
+                        and ChunkEdge.TOP not in self.current_chunk.adjacencies:
+                    self.y_position = self.current_chunk.coalesced_y + (self.current_chunk.height * 32) - self.collision_height
+                self.y_speed = Decimal(0)
+                self.on_PhysicsSprite_collided()
             else:
                 self.landed = False
 
         # left or right collisions
         if Decimal(self.x_speed) != Decimal(0):
             if self.collide_with_chunk_tiles(new_x, self.y_position):
+                if self.x_position < self.current_chunk.coalesced_x \
+                        and ChunkEdge.LEFT not in self.current_chunk.adjacencies:
+                    self.x_position = self.current_chunk.coalesced_x
+                elif self.x_position + self.collision_width > self.current_chunk.coalesced_x + (self.current_chunk.width * 32) \
+                        and ChunkEdge.RIGHT not in self.current_chunk.adjacencies:
+                    self.x_position = self.current_chunk.coalesced_x + (self.current_chunk.width * 32) - self.collision_width
                 self.x_speed = 0
                 self.on_PhysicsSprite_collided()
 

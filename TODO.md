@@ -30,10 +30,10 @@ TODO LIST:
    * Jumping should be tweaked a bit, needs more frames of animation and positioning moved a bit
    * Other actions Kenny can perform
    * Other sprites
-* Make a door that leads to a new part of the map
-   * We already have code to load the "platform" from a file -> extend this so that sprites/bosses/etc are loaded at the same time
-   * Make a new MapLoader class that we will use to swap to the new map when going through a door
-* Make a start menu with New game, Load game
+* ~~Make a door that leads to a new part of the map~~
+   * ~~We already have code to load the "platform" from a file -> extend this so that sprites/bosses/etc are loaded at the same time~~
+   * ~~Make a new MapLoader class that we will use to swap to the new map when going through a door~~
+* ~~Make a start menu with New game, Load game~~
 
 VILLAIN ROSTER:
 * Pippi Longstocking, vegan animal hater

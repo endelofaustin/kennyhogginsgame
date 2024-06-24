@@ -2,16 +2,28 @@ TODO LIST:
 * Maps
    * ~~Be able to use different 32-pixel-square tiles in the maps~~
    * ~~When we save the map we get a ValueError because pickle cannot pickle pointers~~
-   * We now have the ability to build out different types of Blocks upon which to jump!
-   * But do we really. We need some sort of selector mechanism for the editor so we can select which block
-       to place when we click in the map.
+   * ~~We now have the ability to build out different types of Blocks upon which to jump!~~
+   * ~~But do we really. We need some sort of selector mechanism for the editor so we can select which block~~
+       ~~to place when we click in the map.~~
    * Build out dem blocks
+   * Be able to clear the map and start from a blank slate
 * ~~Projectiles~~
    * ~~Create a projectile class that subclasses a Pyglet Sprite, but with different mechanics than the PhysicsSprite~~
    * ~~We now can shoot! (in two directions) with a spitting noise~~
    * ~~When the bullet hits the enemy then the enemy gets bloody and eventually dies.~~
    * Make it so when the bullet hits the enemy there is a blood spurt and the enemy dies more quickly
 * ~~Kenny should be able to face left as well~~
+* Gameplay mechanics
+   * Collect keys to unlock blocks leading to the boss fight
+   * Tutorials for when you collect the sword on how to use it
+   * Autoscroller where the screen moves on its own and you have to keep up with it and avoid obstacles and shoot things
+   * Solve a jigsaw puzzle
+* Themes
+   1. Escape from the farm (abusive ex Lucinda)
+   * Van down by the river
+   * Karate dojo where you fight Jackie Flan
+   * Outer space dogfight, escape exploding spaceship, boss is Levod Burtim and his Writing Rainbomb
+   * Escaping Vesuvius lava through the streets of Pompeii
 * Enemies & sprite movement
    * The enemy movement is pretty weird, we should make it move back and forth and/or chase the player
 * Crawling text intro

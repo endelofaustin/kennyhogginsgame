@@ -195,11 +195,11 @@ class Player(PhysicsSprite):
 
     def slash_sword(self):
 
-        x_position = self.x_position
         if self.direction == 'left':
-            x_position = self.x_position - 15
-        makeSprite(SwordHit, self.current_chunk, (x_position, self.y_position + 9))
-        
+            makeSprite(SwordHit, self.current_chunk, (self.x_position - 15, self.y_position + 20), direction='left')
+        else:
+            makeSprite(SwordHit, self.current_chunk, (self.x_position + 41, self.y_position + 20), direction='right')
+
         if self.has_sword:
             Player.swipe_sword.play()
         
@@ -239,10 +239,10 @@ class SwordHit(PhysicsSprite):
 
         super().__init__(sprite_initializer, current_chunk)
         self.slash_sword_counter = 10
+        self.sprite.image = self.resource_images[sprite_initializer['direction']]
 
-    def getStaticBoundingBox(self):
-
-        return (34, 15)
+    def hasGravity(self):
+        return False
 
     def updateloop(self, dt):
 
@@ -259,9 +259,11 @@ class SwordHit(PhysicsSprite):
         if collided_object and hasattr(collided_object, 'on_pokey'):
            if self.slash_sword_counter > 0:
                self.slash_sword_counter = 0
+               self.destroy()
                collided_object.on_pokey()
 
     def getResourceImages(self):
          return {
-             'right': "pixel.png"
+             'left': {'file': "swordswish.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': False},
+             'right': {'file': "swordswish.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': False, 'flip_x': True},
                 }

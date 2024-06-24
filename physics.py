@@ -28,7 +28,7 @@ class PhysicsSprite(GameObject):
 
         for k, resource_id in resource_images.items():
             if isinstance(resource_id, dict):
-                self.resource_images[k] = pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image(resource_id['file']), rows=resource_id['rows'], columns=resource_id['columns']), duration=resource_id['duration'], loop=resource_id['loop'])
+                self.resource_images[k] = pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image(resource_id['file'], flip_x=resource_id.get('flip_x')), rows=resource_id['rows'], columns=resource_id['columns']), duration=resource_id['duration'], loop=resource_id['loop'])
             else:
                 self.resource_images[k] = pyglet.resource.image(resource_id)
 
@@ -41,11 +41,11 @@ class PhysicsSprite(GameObject):
             (self.collision_width, self.collision_height) = self.getStaticBoundingBox()
         elif len(self.resource_images) > 0:
             if isinstance(self.resource_images[next(iter(self.resource_images))], pyglet.image.AbstractImage):
-                self.collision_width = self.resource_images[next(iter(self.resource_images))].width
-                self.collision_height = self.resource_images[next(iter(self.resource_images))].height
+                self.collision_width = self.resource_images[next(iter(self.resource_images))].width * EngineGlobals.scale_factor
+                self.collision_height = self.resource_images[next(iter(self.resource_images))].height * EngineGlobals.scale_factor
             elif isinstance(self.resource_images[next(iter(self.resource_images))], pyglet.image.Animation):
-                self.collision_width = self.resource_images[next(iter(self.resource_images))].get_max_width()
-                self.collision_height = self.resource_images[next(iter(self.resource_images))].get_max_height()
+                self.collision_width = self.resource_images[next(iter(self.resource_images))].get_max_width() * EngineGlobals.scale_factor
+                self.collision_height = self.resource_images[next(iter(self.resource_images))].get_max_height() * EngineGlobals.scale_factor
         else:
             (self.collision_width, self.collision_height) = (0, 0)
 

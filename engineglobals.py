@@ -10,7 +10,7 @@ class EngineGlobals:
     scale_factor = 2
 
     # width/height of each cell in the collision grid
-    collision_cell_size = 32
+    collision_cell_size = 64
 
     TILESHEET_WIDTH = 160
     TILESHEET_HEIGHT = 176

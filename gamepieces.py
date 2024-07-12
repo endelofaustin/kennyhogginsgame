@@ -1,6 +1,7 @@
 # This is where we will create game pieces to place on the board
 
 from pyglet.sprite import Sprite
+import random
 from engineglobals import EngineGlobals
 from math import floor
 from physics import PhysicsSprite
@@ -44,6 +45,7 @@ class NirvanaFruit(PhysicsSprite):
         super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
 
         self.destroy_after = destroy_after
+        self.jump_timer = 0
 
     def getResourceImages(self):
         return {
@@ -51,14 +53,25 @@ class NirvanaFruit(PhysicsSprite):
         }
 
     def hasGravity(self):
-        return False
+        return True
 
     def updateloop(self, dt):
+        if self.jump_timer <= 0:
+            self.y_speed = 7
+            self.x_speed = -5 if bool(random.getrandbits(1)) else 5
+            self.jump_timer = 250
+        else:
+            self.jump_timer -= 1
+
         if self.destroy_after:
             self.destroy_after -= 1
             if self.destroy_after <= 0:
                 self.destroy()
+
         return super().updateloop(dt)
+    
+    def on_PhysicsSprite_landed(self):
+        self.x_speed = 0
 
 class Sword(PhysicsSprite):
 

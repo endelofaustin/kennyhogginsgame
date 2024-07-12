@@ -87,7 +87,7 @@ class PhysicsSprite(GameObject):
     def get_all_colliding_objects(self):
         # Collisions with other sprites. So what's going on here actually?
         # 1. At the start of each update loop, we initialize an empty dict, PhysicsSprite.collision_lists.
-        #    The dict will represent a grid in game space, with each cell 32 pixels square, about the
+        #    The dict will represent a grid in game space, with each cell 64 pixels square, about the
         #    average size of a sprite.
         # 2. Here in the update function, we are calculating the hashed_x and hashed_y of all possible
         #    cells that the sprite might be touching at this moment.

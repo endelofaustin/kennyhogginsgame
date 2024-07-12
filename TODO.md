@@ -64,7 +64,6 @@ TO REFACTOR:
  * main.py cleanup
  * map loader -> convert to JSON? or something
  * move stuff out of EngineGlobals that belong as separate concerns
- * make game object lifecycle manager to help with adding/deleting objects when loading maps
  * use decorators or pub/sub or better model for event handling instead of random callback functions
  * state machines for player and other sprites
  * fix discrepancies in how sprites are instantiated and make it consistent

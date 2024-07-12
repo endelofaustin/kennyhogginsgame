@@ -33,7 +33,7 @@ def additional_map_definitions(map):
     # the main map that loads when the game starts
     if not hasattr(map, 'filename') or map.filename == "map.dill":
 
-        ONE_OFFS_VERSION = 11
+        ONE_OFFS_VERSION = 12
         if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
             return
         map.one_offs_version = ONE_OFFS_VERSION
@@ -46,6 +46,7 @@ def additional_map_definitions(map):
         map.chunks[0].contained_sprites['sword-1'] = makeSprite(gamepieces.Sword, map.chunks[0], (1000, 90))
         map.chunks[0].contained_sprites['scythe'] = makeSprite(gamepieces.Scythe, map.chunks[0], (300, 41))
         map.chunks[0].contained_sprites['spudguy'] = makeSprite(Enemy, map.chunks[0], (300 , 250))
+        map.chunks[0].contained_sprites['testfruit1'] = makeSprite(NirvanaFruit, map.chunks[0], (260, 50))
 
     # the boss fight with pearly paul
     elif map.filename == "bossfight.dill":

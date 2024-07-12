@@ -66,4 +66,3 @@ TO REFACTOR:
  * move stuff out of EngineGlobals that belong as separate concerns
  * use decorators or pub/sub or better model for event handling instead of random callback functions
  * state machines for player and other sprites
- * fix discrepancies in how sprites are instantiated and make it consistent

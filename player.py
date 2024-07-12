@@ -8,7 +8,7 @@ from sprite import makeSprite
 
 # the player object represents Kenny and responds to keyboard input
 class Player(PhysicsSprite):
-    LEFT_RIGHT_RUN_SPEED = 5
+    LEFT_RIGHT_RUN_SPEED = Decimal(4.5)
     JUMP_INITIAL_VELOCITY = 12
     DOUBLE_JUMP_VELOCITY = 9
     BULLET_INITIAL_VELOCITY = Decimal('15.0')
@@ -224,8 +224,8 @@ class Player(PhysicsSprite):
             self.bloody = False
             collided_object.destroy()
 
-        elif collided_object and type(collided_object).__name__ == 'NirvanaFruit':
-            collided_object.destroy()
+        elif collided_object and type(collided_object).__name__ == 'NirvanaFruit' and not collided_object.collected:
+            collided_object.collect()
             pyglet.media.load('audio/kenny_sounds/munching_on_apple.mp3', streaming=False).play()
             self.activate_super_powers()
 

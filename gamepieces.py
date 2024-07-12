@@ -46,10 +46,12 @@ class NirvanaFruit(PhysicsSprite):
 
         self.destroy_after = destroy_after
         self.jump_timer = 0
+        self.collected = False
 
     def getResourceImages(self):
         return {
-            0: {"file": "nirvana-fruit.png", 'rows': 1, 'columns': 6, 'duration': 1/10, 'loop': True}
+            '0': {"file": "nirvana-fruit.png", 'rows': 1, 'columns': 6, 'duration': 1/10, 'loop': True},
+            'get': {"file": "nirvana-fruit-get.png", 'rows': 1, 'columns': 6, 'duration': 1/10, 'loop': False}
         }
 
     def hasGravity(self):
@@ -72,6 +74,11 @@ class NirvanaFruit(PhysicsSprite):
     
     def on_PhysicsSprite_landed(self):
         self.x_speed = 0
+
+    def collect(self):
+        self.destroy_after = 36
+        self.sprite.image = self.resource_images['get']
+        self.collected = True
 
 class Sword(PhysicsSprite):
 

@@ -271,7 +271,7 @@ class PhysicsSprite(GameObject):
 
 # the Screen class tracks the positioning of the screen within the entire environment
 class Screen():
-    left_right_margin = 200
+    left_right_margin = 250
     top_bottom_margin = 96
 
     def __init__(self):

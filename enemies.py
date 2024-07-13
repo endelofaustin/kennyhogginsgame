@@ -68,3 +68,14 @@ class Doggy(Enemy):
 
     def getResourceImages(self):
         return {0: "doggy.png"}
+
+class Cardi(PhysicsSprite):
+
+    def __init__(self, sprite_initializer: dict, starting_chunk):
+        super().__init__(sprite_initializer, starting_chunk)
+
+    def hasGravity(self):
+        return True
+
+    def getResourceImages(self):
+        return {0: "bosses/cardi_tree-1.png.png"}

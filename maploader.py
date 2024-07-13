@@ -5,12 +5,12 @@ from engineglobals import EngineGlobals
 from bosses import PearlyPaul
 from spike import Spike
 from bandaid import Bandaid
-from enemies import Enemy, Doggy
+from enemies import Enemy, Doggy, Cardi
 from gamepieces import Door, NirvanaFruit
-from text import RandomTalker
 from lifecycle import LifeCycleManager
 from sprite import makeSprite
 from magic_map import Chunk
+from mcswanson import McSwanson
 
 """ John is very cool """
 
@@ -33,7 +33,7 @@ def additional_map_definitions(map):
     # the main map that loads when the game starts
     if not hasattr(map, 'filename') or map.filename == "map.dill":
 
-        ONE_OFFS_VERSION = 12
+        ONE_OFFS_VERSION = 13
         if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
             return
         map.one_offs_version = ONE_OFFS_VERSION
@@ -41,12 +41,17 @@ def additional_map_definitions(map):
         if hasattr(map.chunks[0], 'contained_sprites'):
             for sprite in map.chunks[0].contained_sprites.values():
                 sprite.destroy()
+        if hasattr(map, 'talker'):
+            map.talker.destroy()
+
         map.chunks[0].contained_sprites = dict()
         map.chunks[0].contained_sprites['door'] = makeSprite(Door, map.chunks[0], starting_position=(500,10), group='BACK', target_map="bossfight.dill", player_position=(250 ,250))
         map.chunks[0].contained_sprites['sword-1'] = makeSprite(gamepieces.Sword, map.chunks[0], (1000, 90))
         map.chunks[0].contained_sprites['scythe'] = makeSprite(gamepieces.Scythe, map.chunks[0], (300, 41))
         map.chunks[0].contained_sprites['spudguy'] = makeSprite(Enemy, map.chunks[0], (300 , 250))
         map.chunks[0].contained_sprites['testfruit1'] = makeSprite(NirvanaFruit, map.chunks[0], (260, 50))
+        #map.chunks[0].contained_sprites['cardi1'] = makeSprite(Cardi, map.chunks[0], (500, 0))
+        map.chunks[0].contained_sprites['mcswanson1'] = makeSprite(McSwanson, map.chunks[0], (340, 10))
 
     # the boss fight with pearly paul
     elif map.filename == "bossfight.dill":

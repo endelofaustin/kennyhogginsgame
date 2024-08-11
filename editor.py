@@ -7,8 +7,6 @@ from engineglobals import EngineGlobals
 from math import floor
 
 class Editor():
-    TILESHEET_WIDTH = 160
-    TILESHEET_HEIGHT = 176
 
     def __init__(self,):
         self.editor_bg_sprite = pyglet.sprite.Sprite(img=pyglet.resource.image('editor_bg.png'),
@@ -36,20 +34,20 @@ class Editor():
         pass
 
     def update_selected_tile(self, tile_idx):
-        tile_x = EngineGlobals.width + 4 + tile_idx % floor(EngineGlobals.TILESHEET_WIDTH / 16) * 32
-        tile_y = floor(tile_idx / floor(EngineGlobals.TILESHEET_WIDTH / 16)) * 32
+        tile_x = EngineGlobals.width + 4 + tile_idx % floor(EngineGlobals.tilesheet.width / 16) * 32
+        tile_y = floor(tile_idx / floor(EngineGlobals.tilesheet.width / 16)) * 32
         self.selected_tile_overlay_sprite.x = tile_x
         self.selected_tile_overlay_sprite.y = tile_y
         self.selected_tile_idx = tile_idx
 
     def handle_tilesheet_click(self, x, y, button, modifiers):
-        if x < EngineGlobals.width + 2 or x >= EngineGlobals.width + 2 + Editor.TILESHEET_WIDTH * EngineGlobals.scale_factor:
+        if x < EngineGlobals.width + 2 or x >= EngineGlobals.width + 2 + EngineGlobals.tilesheet.width * EngineGlobals.scale_factor:
             return pyglet.event.EVENT_UNHANDLED
-        if y < 0 or y >= Editor.TILESHEET_HEIGHT * EngineGlobals.scale_factor:
+        if y < 0 or y >= EngineGlobals.tilesheet.height * EngineGlobals.scale_factor:
             return pyglet.event.EVENT_UNHANDLED
         tile_x = floor((x - EngineGlobals.width - 4) / 32)
         tile_y = floor(y / 32)
-        tile_idx = tile_y * floor(EngineGlobals.TILESHEET_WIDTH / 16) + tile_x
+        tile_idx = tile_y * floor(EngineGlobals.tilesheet.width / 16) + tile_x
         self.update_selected_tile(tile_idx)
         return pyglet.event.EVENT_HANDLED
 
@@ -57,15 +55,30 @@ class Editor():
         if x < 0 or x >= EngineGlobals.width or y < 0 or y > EngineGlobals.height:
             return pyglet.event.EVENT_UNHANDLED
 
-        x_coord = floor((x + EngineGlobals.our_screen.x)/32)
-        y_coord = len(EngineGlobals.game_map.chunks[0].platform) - 1 - floor((EngineGlobals.our_screen.y + y)/32)
-        if EngineGlobals.game_map.chunks[0].platform[floor(y_coord)][floor(x_coord)] == 0:
-            block = Block(self.selected_tile_idx, True)
-            EngineGlobals.game_map.chunks[0].platform[floor(y_coord)][floor(x_coord)] = block
+        # if a tile is already present, right-click moves it to background or clears it
+        # if already in background.
+        # if a tile is already present, left-click moves it to foreground or clears it
+        # if already in foreground.
+        # if no tile is present, right-clicking places a background non-colliding tile
+        # if no tile is present, left-clicking places a foreground solid tile
+        solid = True if button == pyglet.window.mouse.LEFT else False
+
+        x_tile = floor((x + EngineGlobals.our_screen.x)/32)
+        y_tile = len(EngineGlobals.game_map.chunks[0].platform) - 1 - floor((EngineGlobals.our_screen.y + y)/32)
+
+        if EngineGlobals.game_map.chunks[0].platform[y_tile][x_tile] == 0:
+            block = Block(self.selected_tile_idx, solid)
+            EngineGlobals.game_map.chunks[0].platform[y_tile][x_tile] = block
         else:
-            if hasattr(EngineGlobals.game_map.chunks[0].platform[floor(y_coord)][floor(x_coord)], 'sprite'):
-                EngineGlobals.game_map.chunks[0].platform[floor(y_coord)][floor(x_coord)].sprite.delete()
-            EngineGlobals.game_map.chunks[0].platform[floor(y_coord)][floor(x_coord)] = 0
+            if hasattr(EngineGlobals.game_map.chunks[0].platform[y_tile][x_tile], 'sprite'):
+                EngineGlobals.game_map.chunks[0].platform[y_tile][x_tile].sprite.delete()
+                if EngineGlobals.game_map.chunks[0].platform[y_tile][x_tile].solid != solid:
+                    EngineGlobals.game_map.chunks[0].platform[y_tile][x_tile] = Block(self.selected_tile_idx, solid)
+                else:
+                    EngineGlobals.game_map.chunks[0].platform[y_tile][x_tile] = 0
+            else:
+                EngineGlobals.game_map.chunks[0].platform[y_tile][x_tile] = 0
+
         return pyglet.event.EVENT_HANDLED
 
     def on_mouse_motion(self, x, y, dx, dy):

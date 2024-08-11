@@ -9,9 +9,8 @@ from physics import PhysicsSprite
 class Block:
 
     def __init__(self, tilesheet_idx, solid,):
-        tile_x = tilesheet_idx % floor(EngineGlobals.TILESHEET_WIDTH / 16) * 16
-        tile_y = floor(tilesheet_idx / floor(EngineGlobals.TILESHEET_WIDTH / 16)) * 16
-        self.sprite = Sprite(img=EngineGlobals.tilesheet.get_region(tile_x, tile_y, 16, 16), batch=EngineGlobals.main_batch, group=EngineGlobals.tiles_group)
+        group = EngineGlobals.tiles_front_group if solid else EngineGlobals.tiles_back_group
+        self.sprite = Sprite(img=EngineGlobals.get_tile(tilesheet_idx), batch=EngineGlobals.main_batch, group=group)
         self.sprite.update(scale=EngineGlobals.scale_factor)
         self.sprite.visible = False
         self.tilesheet_idx = tilesheet_idx
@@ -51,11 +50,11 @@ class NirvanaFruit(PhysicsSprite):
     def getResourceImages(self):
         return {
             '0': {"file": "nirvana-fruit.png", 'rows': 1, 'columns': 6, 'duration': 1/10, 'loop': True},
-            'get': {"file": "nirvana-fruit-get.png", 'rows': 1, 'columns': 6, 'duration': 1/10, 'loop': False}
+            'get': {"file": "nirvana-fruit-get.png", 'rows': 1, 'columns': 6, 'duration': 1/16, 'loop': False}
         }
 
     def hasGravity(self):
-        return True
+        return False if self.destroy_after else True
 
     def updateloop(self, dt):
         if self.jump_timer <= 0:
@@ -76,9 +75,10 @@ class NirvanaFruit(PhysicsSprite):
         self.x_speed = 0
 
     def collect(self):
-        self.destroy_after = 36
+        self.destroy_after = 23
         self.sprite.image = self.resource_images['get']
         self.collected = True
+        self.x_speed, self.y_speed = (0, 0)
 
 class Sword(PhysicsSprite):
 

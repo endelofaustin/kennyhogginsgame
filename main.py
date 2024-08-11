@@ -42,7 +42,7 @@ GameMap.load_map("map.dill")
 
 # create the Kenny player sprite and assign it to receive
 # keyboard events with the push_handlers function
-kenny = makeSprite(player.Player, EngineGlobals.game_map.chunks[0], (0, 0), lifecycle_manager='UNDYING', group='FRONT')
+kenny = makeSprite(player.Player, EngineGlobals.game_map.chunks[0], (0, 200), lifecycle_manager='UNDYING', group='FRONT')
 EngineGlobals.window.push_handlers(kenny)
 
 # create the Editor function object and assign it to

@@ -12,9 +12,6 @@ class EngineGlobals:
     # width/height of each cell in the collision grid
     collision_cell_size = 64
 
-    TILESHEET_WIDTH = 160
-    TILESHEET_HEIGHT = 176
-
     # do a bunch of engine initialization
     def init():
         # set the GL_NEAREST texture filter in order to create a precise pixelated look instead of blurring
@@ -39,12 +36,13 @@ class EngineGlobals:
         # for now, we will use one big graphics batch that every display element gets added to for efficiency
         EngineGlobals.main_batch = pyglet.graphics.Batch()
         EngineGlobals.bg_group = pyglet.graphics.Group(0)
-        EngineGlobals.tiles_group = pyglet.graphics.Group(1)
+        EngineGlobals.tiles_back_group = pyglet.graphics.Group(1)
         EngineGlobals.sprites_back_group = pyglet.graphics.Group(2)
         EngineGlobals.sprites_front_group = pyglet.graphics.Group(3)
-        EngineGlobals.editor_group_back = pyglet.graphics.Group(4)
-        EngineGlobals.editor_group_mid = pyglet.graphics.Group(5)
-        EngineGlobals.editor_group_front = pyglet.graphics.Group(6)
+        EngineGlobals.tiles_front_group = pyglet.graphics.Group(4)
+        EngineGlobals.editor_group_back = pyglet.graphics.Group(5)
+        EngineGlobals.editor_group_mid = pyglet.graphics.Group(6)
+        EngineGlobals.editor_group_front = pyglet.graphics.Group(7)
 
         EngineGlobals.render_fps = 0
         EngineGlobals.sim_fps = 0
@@ -54,12 +52,14 @@ class EngineGlobals:
         EngineGlobals.hay_block = pyglet.resource.image('firstblock.png')
         # John says that is the act of passing off the creative work of another as your own. such as farm work, art. 
         # cant plagiarize a farm or music. You can now all of a sudden
-        EngineGlobals.tilesheet = pyglet.resource.image('plagiarism.png')
+        EngineGlobals.tilesheet = pyglet.resource.image('steel_tiles.png')
         #EngineGlobals.tilesheet_as_grid = pyglet.image.TextureGrid(pyglet.image.ImageGrid(EngineGlobals.tilesheet, 11, 10, 16, 16))
         #EngineGlobals.tilesheet_as_anim = pyglet.image.Animation.from_image_sequence(EngineGlobals.tilesheet_as_grid, duration=1, loop=False)
         EngineGlobals.show_menu = True
 
     def get_tile(idx):
-        tile_x = idx % floor(EngineGlobals.TILESHEET_WIDTH / 32) * 32
-        tile_y = floor(idx / floor(EngineGlobals.TILESHEET_WIDTH / 32)) * 32
-        return EngineGlobals.tilesheet.get_region(tile_x, tile_y, 32, 32)
+        tile_x = idx % floor(EngineGlobals.tilesheet.width / 16) * 16
+        tile_y = floor(idx / floor(EngineGlobals.tilesheet.width / 16)) * 16
+        if tile_y >= EngineGlobals.tilesheet.height:
+            tile_x, tile_y = (0, 0)
+        return EngineGlobals.tilesheet.get_region(tile_x, tile_y, 16, 16)

@@ -33,7 +33,7 @@ def additional_map_definitions(map):
     # the main map that loads when the game starts
     if not hasattr(map, 'filename') or map.filename == "map.dill":
 
-        ONE_OFFS_VERSION = 13
+        ONE_OFFS_VERSION = 14
         if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
             return
         map.one_offs_version = ONE_OFFS_VERSION
@@ -43,15 +43,16 @@ def additional_map_definitions(map):
                 sprite.destroy()
         if hasattr(map, 'talker'):
             map.talker.destroy()
+            del map.talker
 
         map.chunks[0].contained_sprites = dict()
         map.chunks[0].contained_sprites['door'] = makeSprite(Door, map.chunks[0], starting_position=(500,10), group='BACK', target_map="bossfight.dill", player_position=(250 ,250))
-        map.chunks[0].contained_sprites['sword-1'] = makeSprite(gamepieces.Sword, map.chunks[0], (1000, 90))
-        map.chunks[0].contained_sprites['scythe'] = makeSprite(gamepieces.Scythe, map.chunks[0], (300, 41))
-        map.chunks[0].contained_sprites['spudguy'] = makeSprite(Enemy, map.chunks[0], (300 , 250))
-        map.chunks[0].contained_sprites['testfruit1'] = makeSprite(NirvanaFruit, map.chunks[0], (260, 50))
-        #map.chunks[0].contained_sprites['cardi1'] = makeSprite(Cardi, map.chunks[0], (500, 0))
-        map.chunks[0].contained_sprites['mcswanson1'] = makeSprite(McSwanson, map.chunks[0], (340, 10))
+        map.chunks[0].contained_sprites['sword-1'] = makeSprite(gamepieces.Sword, map.chunks[0], starting_position=(1000, 90))
+        map.chunks[0].contained_sprites['scythe'] = makeSprite(gamepieces.Scythe, map.chunks[0], starting_position=(300, 41))
+        map.chunks[0].contained_sprites['spudguy'] = makeSprite(Enemy, map.chunks[0], starting_position=(300 , 250))
+        map.chunks[0].contained_sprites['testfruit1'] = makeSprite(NirvanaFruit, map.chunks[0], starting_position=(260, 50))
+        #map.chunks[0].contained_sprites['cardi1'] = makeSprite(Cardi, map.chunks[0], starting_position=(500, 0))
+        map.chunks[0].contained_sprites['mcswanson1'] = makeSprite(McSwanson, map.chunks[0], starting_position=(340, 200))
 
     # the boss fight with pearly paul
     elif map.filename == "bossfight.dill":
@@ -99,6 +100,12 @@ class GameMap():
 
         with open(self.filename + "-debug.txt", "w") as dumpf:
             dumpf.write(str(self.__dict__))
+            dumpf.write("\n")
+            for idx, chunk in enumerate(self.chunks):
+                chunk_to_dump = chunk.__dict__.copy()
+                del chunk_to_dump['platform']
+                dumpf.write("chunk{}:".format(idx) + str(chunk_to_dump))
+                dumpf.write("\n")
 
     def __setstate__(self, state):
         # This function is called when dill is unpickling from a file to create the object

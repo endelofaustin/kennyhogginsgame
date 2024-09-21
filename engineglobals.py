@@ -63,3 +63,6 @@ class EngineGlobals:
         if tile_y >= EngineGlobals.tilesheet.height:
             tile_x, tile_y = (0, 0)
         return EngineGlobals.tilesheet.get_region(tile_x, tile_y, 16, 16)
+
+    def pixel_coord(in_coord):
+        return int(in_coord / EngineGlobals.scale_factor) * EngineGlobals.scale_factor

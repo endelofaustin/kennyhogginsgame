@@ -108,8 +108,8 @@ def update_chunk_tile_coords(chunk):
                         chunk.platform[ycounter][xcounter].sprite.visible = False
                     else:
                         chunk.platform[ycounter][xcounter].sprite.visible = True
-                        chunk.platform[ycounter][xcounter].sprite.x = xrender_start
-                        chunk.platform[ycounter][xcounter].sprite.y = yrender_start
+                        chunk.platform[ycounter][xcounter].sprite.x = EngineGlobals.pixel_coord(xrender_start)
+                        chunk.platform[ycounter][xcounter].sprite.y = EngineGlobals.pixel_coord(yrender_start)
 
             # after each time through the y loop, update the y rendering location
             yrender_start += 32
@@ -122,6 +122,8 @@ def update_chunk_tile_coords(chunk):
 # every game object has a specific updateloop function, this is the main update function that
 # simply iterates through every game object and calls its specific update function
 def main_update_callback(dt):
+    dt = dt * 60 # dt is given in seconds by pyglet; multiply by seconds to get a 60hz
+                 # elapsed time value
 
     # see how much time has passed (in nanoseconds) since the last time the update function
     # happened. This is nanoseconds-per-frame; invert it and multiply by 1000000000 to get
@@ -162,7 +164,7 @@ def main_update_callback(dt):
             break
         update_chunk_tile_coords(chunk_to_update)
 
-# ask pyglet to call our main_update_callback 60 times per second
+# ask pyglet to call our main_update_callback 30 times per second
 pyglet.clock.schedule_interval(main_update_callback, 1/60.0)
 
 EngineGlobals.kenny = kenny

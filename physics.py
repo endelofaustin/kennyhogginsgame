@@ -34,6 +34,8 @@ class PhysicsSprite(GameObject):
 
         group = EngineGlobals.sprites_front_group if sprite_initializer['group'] == 'FRONT' else EngineGlobals.sprites_back_group
         self.sprite = pyglet.sprite.Sprite(img=next(iter(self.resource_images.values())), batch=EngineGlobals.main_batch, group=group)
+        if 'starting_position' in sprite_initializer:
+            self.sprite.x, self.sprite.y = sprite_initializer['starting_position']
 
         # if collision_width and collision_height are not provided, calculate them from the width and height
         # of the provided image/animation
@@ -186,8 +188,8 @@ class PhysicsSprite(GameObject):
 
         # x_position is x, y_position is y
         # position plus speed is equal to new potential location
-        new_x = self.x_position + self.x_speed
-        new_y = self.y_position + self.y_speed
+        new_x = self.x_position + self.x_speed * Decimal(dt)
+        new_y = self.y_position + self.y_speed * Decimal(dt)
 
         # upward or downward collisions
         if Decimal(self.y_speed) != Decimal(0):
@@ -234,8 +236,8 @@ class PhysicsSprite(GameObject):
             PhysicsSprite.collision_lists[(hashed_x, hashed_y)].append(self)
 
         # update position according to current speed
-        self.x_position = Decimal(self.x_position) + self.x_speed
-        self.y_position = Decimal(self.y_position) + self.y_speed
+        self.x_position = Decimal(self.x_position) + self.x_speed * Decimal(dt)
+        self.y_position = Decimal(self.y_position) + self.y_speed * Decimal(dt)
 
         # move to a new chunk?
         while self.x_position - self.current_chunk.coalesced_x < 0 and ChunkEdge.LEFT in self.current_chunk.adjacencies:
@@ -248,7 +250,9 @@ class PhysicsSprite(GameObject):
             self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.TOP]
 
         # finally, update the x and y coords so that pyglet will know where to draw the sprite
-        self.sprite.x, self.sprite.y = int(self.x_position - EngineGlobals.our_screen.x), int(self.y_position - EngineGlobals.our_screen.y)
+        self.sprite.x = EngineGlobals.pixel_coord(int(self.x_position - EngineGlobals.our_screen.x))
+        self.sprite.y = EngineGlobals.pixel_coord(int(self.y_position - EngineGlobals.our_screen.y))
+
         # TODO: do we need to set sprite.visible = False to improve performance, or does Pyglet take care of this on it's own?
 
     def getResourceImages(self):

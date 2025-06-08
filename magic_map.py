@@ -74,6 +74,14 @@ class Chunk:
         sprite.dpos[0] = self.coalesced_x + (sprite.dpos[0] - old_x)
         sprite.dpos[1] = self.coalesced_y + (sprite.dpos[1] - old_y)
 
+    def __getstate__(self):
+        s = self.__dict__.copy()
+        del s['contained_sprites']
+        return s
+
+    def __setstate__(self, state):
+        self.__init__(state['platform'])
+
 class Map:
     ''' change_adjacencies:
         Make some chunk pairs adjacent to each other along the given edges.

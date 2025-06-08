@@ -186,13 +186,13 @@ class PhysicsSprite(GameObject):
             if self.y_speed < -20:
                 self.y_speed = -20
 
-        # dt can be large enough to cause a sprite to move entirely through another sprite or block.
-        # only move up to 32 pixels (1 tile at a time, in a loop)
+        # dt could be large enough to cause a sprite to move entirely through another sprite or block.
+        # if so, cut it up into 32-pixel movements in a loop
         max_x_dt = Decimal(32) / abs(self.x_speed) if self.x_speed != Decimal(0) else 32
         max_y_dt = Decimal(32) / abs(self.y_speed) if self.y_speed != Decimal(0) else 32
         max_dt = min(max_x_dt, max_y_dt)
 
-        # cap it to at most 96 pixels of movement per update (3 tiles)
+        # cap it to at most 3 movement checks (3 tiles, 96 pixels)
         for update_count in range(3):
             this_dt = min(max_dt, Decimal(dt))
             dt = Decimal(dt) - max_dt
@@ -260,6 +260,7 @@ class PhysicsSprite(GameObject):
             while self.y_position + self.collision_height >= self.current_chunk.coalesced_y + self.current_chunk.height * 32 and ChunkEdge.TOP in self.current_chunk.adjacencies:
                 self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.TOP]
 
+            # exit the loop once we've processed all needed movements
             if dt <= 0:
                 break
 

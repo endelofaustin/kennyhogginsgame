@@ -186,68 +186,82 @@ class PhysicsSprite(GameObject):
             if self.y_speed < -20:
                 self.y_speed = -20
 
-        # x_position is x, y_position is y
-        # position plus speed is equal to new potential location
-        new_x = self.x_position + self.x_speed * Decimal(dt)
-        new_y = self.y_position + self.y_speed * Decimal(dt)
+        # dt can be large enough to cause a sprite to move entirely through another sprite or block.
+        # only move up to 32 pixels (1 tile at a time, in a loop)
+        max_x_dt = Decimal(32) / abs(self.x_speed) if self.x_speed != Decimal(0) else 32
+        max_y_dt = Decimal(32) / abs(self.y_speed) if self.y_speed != Decimal(0) else 32
+        max_dt = min(max_x_dt, max_y_dt)
 
-        # upward or downward collisions
-        if Decimal(self.y_speed) != Decimal(0):
-            # if one of those tiles is solid, time to cease all vertical movement!
-            if self.collide_with_chunk_tiles(self.x_position, new_y):
-                if self.y_speed < 0:
-                    # vertically snap the sprite so its feet are at the pixel directly
-                    # above the tile
-                    self.y_position = floor((new_y + 32) / 32) * 32
-                    if not self.landed:
-                        self.landed = True
-                        self.on_PhysicsSprite_landed()
-                elif self.y_speed > 0:
-                    self.y_position = floor((new_y + self.collision_height - 1) / 32) * 32 - self.collision_height
-                if self.y_position < self.current_chunk.coalesced_y \
-                        and ChunkEdge.BOTTOM not in self.current_chunk.adjacencies:
-                    self.y_position = self.current_chunk.coalesced_y
-                elif self.y_position + self.collision_height > self.current_chunk.coalesced_y + (self.current_chunk.height * 32) \
-                        and ChunkEdge.TOP not in self.current_chunk.adjacencies:
-                    self.y_position = self.current_chunk.coalesced_y + (self.current_chunk.height * 32) - self.collision_height
-                self.y_speed = Decimal(0)
-                self.on_PhysicsSprite_collided()
-            else:
-                self.landed = False
+        # cap it to at most 96 pixels of movement per update (3 tiles)
+        for update_count in range(3):
+            this_dt = min(max_dt, Decimal(dt))
+            dt = Decimal(dt) - max_dt
 
-        # left or right collisions
-        if Decimal(self.x_speed) != Decimal(0):
-            if self.collide_with_chunk_tiles(new_x, self.y_position):
-                if self.x_position < self.current_chunk.coalesced_x \
-                        and ChunkEdge.LEFT not in self.current_chunk.adjacencies:
-                    self.x_position = self.current_chunk.coalesced_x
-                elif self.x_position + self.collision_width > self.current_chunk.coalesced_x + (self.current_chunk.width * 32) \
-                        and ChunkEdge.RIGHT not in self.current_chunk.adjacencies:
-                    self.x_position = self.current_chunk.coalesced_x + (self.current_chunk.width * 32) - self.collision_width
-                self.x_speed = 0
-                self.on_PhysicsSprite_collided()
+            # x_position is x, y_position is y
+            # position plus speed is equal to new potential location
+            new_x = self.x_position + self.x_speed * this_dt
+            new_y = self.y_position + self.y_speed * this_dt
 
-        # check for collisions with other sprites
-        for collide_with in self.get_all_colliding_objects():
-            self.on_PhysicsSprite_collided(collide_with)
-            collide_with.on_PhysicsSprite_collided(self)
-        # add this sprite to the cells it's touching
-        for (hashed_x, hashed_y) in self.get_collision_cell_hashes():
-            PhysicsSprite.collision_lists[(hashed_x, hashed_y)].append(self)
+            # upward or downward collisions
+            if Decimal(self.y_speed) != Decimal(0):
+                # if one of those tiles is solid, time to cease all vertical movement!
+                if self.collide_with_chunk_tiles(self.x_position, new_y):
+                    if self.y_speed < 0:
+                        # vertically snap the sprite so its feet are at the pixel directly
+                        # above the tile
+                        self.y_position = floor((new_y + 32) / 32) * 32
+                        if not self.landed:
+                            self.landed = True
+                            self.on_PhysicsSprite_landed()
+                    elif self.y_speed > 0:
+                        self.y_position = floor((new_y + self.collision_height - 1) / 32) * 32 - self.collision_height
+                    if self.y_position < self.current_chunk.coalesced_y \
+                            and ChunkEdge.BOTTOM not in self.current_chunk.adjacencies:
+                        self.y_position = self.current_chunk.coalesced_y
+                    elif self.y_position + self.collision_height > self.current_chunk.coalesced_y + (self.current_chunk.height * 32) \
+                            and ChunkEdge.TOP not in self.current_chunk.adjacencies:
+                        self.y_position = self.current_chunk.coalesced_y + (self.current_chunk.height * 32) - self.collision_height
+                    self.y_speed = Decimal(0)
+                    self.on_PhysicsSprite_collided()
+                else:
+                    self.landed = False
 
-        # update position according to current speed
-        self.x_position = Decimal(self.x_position) + self.x_speed * Decimal(dt)
-        self.y_position = Decimal(self.y_position) + self.y_speed * Decimal(dt)
+            # left or right collisions
+            if Decimal(self.x_speed) != Decimal(0):
+                if self.collide_with_chunk_tiles(new_x, self.y_position):
+                    if self.x_position < self.current_chunk.coalesced_x \
+                            and ChunkEdge.LEFT not in self.current_chunk.adjacencies:
+                        self.x_position = self.current_chunk.coalesced_x
+                    elif self.x_position + self.collision_width > self.current_chunk.coalesced_x + (self.current_chunk.width * 32) \
+                            and ChunkEdge.RIGHT not in self.current_chunk.adjacencies:
+                        self.x_position = self.current_chunk.coalesced_x + (self.current_chunk.width * 32) - self.collision_width
+                    self.x_speed = 0
+                    self.on_PhysicsSprite_collided()
 
-        # move to a new chunk?
-        while self.x_position - self.current_chunk.coalesced_x < 0 and ChunkEdge.LEFT in self.current_chunk.adjacencies:
-            self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.LEFT]
-        while self.x_position + self.collision_width >= self.current_chunk.coalesced_x + self.current_chunk.width * 32 and ChunkEdge.RIGHT in self.current_chunk.adjacencies:
-            self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.RIGHT]
-        while self.y_position - self.current_chunk.coalesced_y < 0 and ChunkEdge.BOTTOM in self.current_chunk.adjacencies:
-            self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.BOTTOM]
-        while self.y_position + self.collision_height >= self.current_chunk.coalesced_y + self.current_chunk.height * 32 and ChunkEdge.TOP in self.current_chunk.adjacencies:
-            self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.TOP]
+            # check for collisions with other sprites
+            for collide_with in self.get_all_colliding_objects():
+                self.on_PhysicsSprite_collided(collide_with)
+                collide_with.on_PhysicsSprite_collided(self)
+            # add this sprite to the cells it's touching
+            for (hashed_x, hashed_y) in self.get_collision_cell_hashes():
+                PhysicsSprite.collision_lists[(hashed_x, hashed_y)].append(self)
+
+            # update position according to current speed
+            self.x_position = Decimal(self.x_position) + self.x_speed * this_dt
+            self.y_position = Decimal(self.y_position) + self.y_speed * this_dt
+
+            # move to a new chunk?
+            while self.x_position - self.current_chunk.coalesced_x < 0 and ChunkEdge.LEFT in self.current_chunk.adjacencies:
+                self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.LEFT]
+            while self.x_position + self.collision_width >= self.current_chunk.coalesced_x + self.current_chunk.width * 32 and ChunkEdge.RIGHT in self.current_chunk.adjacencies:
+                self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.RIGHT]
+            while self.y_position - self.current_chunk.coalesced_y < 0 and ChunkEdge.BOTTOM in self.current_chunk.adjacencies:
+                self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.BOTTOM]
+            while self.y_position + self.collision_height >= self.current_chunk.coalesced_y + self.current_chunk.height * 32 and ChunkEdge.TOP in self.current_chunk.adjacencies:
+                self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.TOP]
+
+            if dt <= 0:
+                break
 
         # finally, update the x and y coords so that pyglet will know where to draw the sprite
         self.sprite.x = EngineGlobals.pixel_coord(int(self.x_position - EngineGlobals.our_screen.x))

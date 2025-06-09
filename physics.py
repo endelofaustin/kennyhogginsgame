@@ -1,6 +1,7 @@
 import pyglet
 from decimal import Decimal
 from engineglobals import EngineGlobals
+from functools import partial
 from math import floor
 from enum import Enum
 from lifecycle import GameObject
@@ -143,7 +144,6 @@ class PhysicsSprite(GameObject):
             # loop over x-chunks
             while x_check * 32 + x_chunk.coalesced_x < x + self.collision_width:
                 if x_check < 0 or x_check >= x_chunk.width or y_check < 0 or y_check >= x_chunk.height:
-                    #print("off-map collision")
                     self.on_PhysicsSprite_collided()
                     return True
                 else:
@@ -179,6 +179,8 @@ class PhysicsSprite(GameObject):
         if self.current_chunk.hidden:
             return
 
+        callbacks = []
+
         if self.hasGravity():
             # accelerate downwards by a certain amount
             self.y_speed = Decimal(self.y_speed) - Decimal('.6')
@@ -188,8 +190,8 @@ class PhysicsSprite(GameObject):
 
         # dt could be large enough to cause a sprite to move entirely through another sprite or block.
         # if so, cut it up into 32-pixel movements in a loop
-        max_x_dt = Decimal(32) / abs(self.x_speed) if self.x_speed != Decimal(0) else 32
-        max_y_dt = Decimal(32) / abs(self.y_speed) if self.y_speed != Decimal(0) else 32
+        max_x_dt = Decimal(31) / abs(self.x_speed) if self.x_speed != Decimal(0) else 32
+        max_y_dt = Decimal(31) / abs(self.y_speed) if self.y_speed != Decimal(0) else 32
         max_dt = min(max_x_dt, max_y_dt)
 
         # cap it to at most 3 movement checks (3 tiles, 96 pixels)
@@ -212,23 +214,31 @@ class PhysicsSprite(GameObject):
                         self.y_position = floor((new_y + 32) / 32) * 32
                         if not self.landed:
                             self.landed = True
-                            self.on_PhysicsSprite_landed()
+                            callbacks.append(self.on_PhysicsSprite_landed)
                     elif self.y_speed > 0:
-                        self.y_position = floor((new_y + self.collision_height - 1) / 32) * 32 - self.collision_height
+                        self.y_position = floor((new_y + self.collision_height - 1) / 32) * 32 - self.collision_height - 1
                     if self.y_position < self.current_chunk.coalesced_y \
                             and ChunkEdge.BOTTOM not in self.current_chunk.adjacencies:
                         self.y_position = self.current_chunk.coalesced_y
+                        if not self.landed:
+                            self.landed = True
+                            callbacks.append(self.on_PhysicsSprite_landed)
                     elif self.y_position + self.collision_height > self.current_chunk.coalesced_y + (self.current_chunk.height * 32) \
                             and ChunkEdge.TOP not in self.current_chunk.adjacencies:
                         self.y_position = self.current_chunk.coalesced_y + (self.current_chunk.height * 32) - self.collision_height
                     self.y_speed = Decimal(0)
-                    self.on_PhysicsSprite_collided()
+                    callbacks.append(self.on_PhysicsSprite_collided)
                 else:
                     self.landed = False
 
             # left or right collisions
             if Decimal(self.x_speed) != Decimal(0):
                 if self.collide_with_chunk_tiles(new_x, self.y_position):
+                    # horizontally snap the sprite so it's not embedded in a block
+                    if self.x_speed < 0:
+                        self.x_position = floor((new_x + 32) / 32) * 32
+                    elif self.x_speed > 0:
+                        self.x_position = floor((new_x + self.collision_width) / 32) * 32 - self.collision_width - 1
                     if self.x_position < self.current_chunk.coalesced_x \
                             and ChunkEdge.LEFT not in self.current_chunk.adjacencies:
                         self.x_position = self.current_chunk.coalesced_x
@@ -236,12 +246,12 @@ class PhysicsSprite(GameObject):
                             and ChunkEdge.RIGHT not in self.current_chunk.adjacencies:
                         self.x_position = self.current_chunk.coalesced_x + (self.current_chunk.width * 32) - self.collision_width
                     self.x_speed = 0
-                    self.on_PhysicsSprite_collided()
+                    callbacks.append(self.on_PhysicsSprite_collided)
 
             # check for collisions with other sprites
             for collide_with in self.get_all_colliding_objects():
-                self.on_PhysicsSprite_collided(collide_with)
-                collide_with.on_PhysicsSprite_collided(self)
+                callbacks.append(partial(self.on_PhysicsSprite_collided, collide_with))
+                callbacks.append(partial(collide_with.on_PhysicsSprite_collided, self))
             # add this sprite to the cells it's touching
             for (hashed_x, hashed_y) in self.get_collision_cell_hashes():
                 PhysicsSprite.collision_lists[(hashed_x, hashed_y)].append(self)
@@ -263,6 +273,10 @@ class PhysicsSprite(GameObject):
             # exit the loop once we've processed all needed movements
             if dt <= 0:
                 break
+
+        # process callbacks
+        for cb in callbacks:
+            cb()
 
         # finally, update the x and y coords so that pyglet will know where to draw the sprite
         self.sprite.x = EngineGlobals.pixel_coord(int(self.x_position - EngineGlobals.our_screen.x))

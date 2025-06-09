@@ -8,7 +8,7 @@ from sprite import makeSprite
 
 # the player object represents Kenny and responds to keyboard input
 class Player(PhysicsSprite):
-    LEFT_RIGHT_RUN_SPEED = Decimal(4.5)
+    LEFT_RIGHT_RUN_SPEED = Decimal(4.3)
     JUMP_INITIAL_VELOCITY = 12
     DOUBLE_JUMP_VELOCITY = 9
     BULLET_INITIAL_VELOCITY = Decimal('15.0')

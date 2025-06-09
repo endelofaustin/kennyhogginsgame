@@ -47,7 +47,7 @@ def additional_map_definitions(map):
 
         map.chunks[0].contained_sprites = dict()
         map.chunks[0].contained_sprites['door'] = makeSprite(Door, map.chunks[0], starting_position=(500,10), group='BACK', target_map="bossfight.dill", player_position=(250 ,250))
-        map.chunks[0].contained_sprites['sword-1'] = makeSprite(gamepieces.Sword, map.chunks[0], starting_position=(1000, 90))
+        #map.chunks[0].contained_sprites['sword-1'] = makeSprite(gamepieces.Sword, map.chunks[0], starting_position=(1000, 90))
         map.chunks[0].contained_sprites['scythe'] = makeSprite(gamepieces.Scythe, map.chunks[0], starting_position=(300, 41))
         map.chunks[0].contained_sprites['spudguy'] = makeSprite(Enemy, map.chunks[0], starting_position=(300 , 250))
         map.chunks[0].contained_sprites['testfruit1'] = makeSprite(NirvanaFruit, map.chunks[0], starting_position=(260, 50))

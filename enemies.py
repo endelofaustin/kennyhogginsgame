@@ -25,11 +25,11 @@ class Enemy(PhysicsSprite):
             if self.dead_timer == 60:
                 self.destroy()
 
-        self.moving_time += 1
+        self.moving_time += dt
 
-        if self.moving_time > 200 and self.y_speed <= 0:
+        if self.moving_time > 100 and self.y_speed <= 0:
            self.x_speed = Decimal(random.randrange(-10, 10))
-           self.y_speed = Decimal(random.randrange(1, 10))
+           self.y_speed = Decimal(random.randrange(0, 10))
            self.moving_time = 0
 
         PhysicsSprite.updateloop(self, dt)
@@ -41,8 +41,12 @@ class Enemy(PhysicsSprite):
 
     def on_PhysicsSprite_collided(self, collided_object=None, collided_chunk=None, chunk_x=None, chunk_y=None):
 
-        if collided_object == None or type(collided_object).__name__ == 'Block':
-             self.make_it_jump()
+        # if collided_object == None or type(collided_object).__name__ == 'Block':
+        #      self.make_it_jump()
+        pass
+
+    def on_PhysicsSprite_landed(self):
+        self.make_it_jump()
 
     def die_hard(self,):
 

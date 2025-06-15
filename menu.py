@@ -14,7 +14,7 @@ class GameMenu():
         self.label_style = {
             'font_name': 'Arial',
             'font_size': 36,
-            'bold': True,
+            'weight': pyglet.text.Weight.BOLD,
             'color': (255, 255, 255, 255)
         }
         

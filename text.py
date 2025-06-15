@@ -14,7 +14,8 @@ class Text_Crawl():
         self.layout.y = -EngineGlobals.height
 
     def on_draw(self,):
-        self.layout.draw()
+        # self.layout.draw()
+        pass
 
     def updateloop(self, dt):
 
@@ -86,7 +87,7 @@ class RandomTalker(GameObject):
 
     def make_a_fruit(self):
         spawn_chunk = EngineGlobals.kenny.current_chunk
-        spawn_x_pos = random.randrange(30, spawn_chunk.width * 32 - 60)
+        spawn_x_pos = random.randrange(30, spawn_chunk.width * EngineGlobals.tile_size - 60)
         makeSprite(NirvanaFruit, spawn_chunk, (spawn_x_pos, 50))
 
     # pickler

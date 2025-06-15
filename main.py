@@ -83,16 +83,16 @@ LifeCycleManager.ALL_SETS['UNDYING'].addGameObject(screen)
 # The end result of this is that all blocks that are supposed to be on-screen get their X and Y adjusted
 # as the viewport moves, and all blocks that are offscreen get hidden.
 def update_chunk_tile_coords(chunk):
-    xstart = int(max(screen.x - chunk.coalesced_x, 0) / 32) - 1
-    xend = int(min(screen.x + EngineGlobals.width, screen.x + chunk.width * 32) / 32) + 2
+    xstart = int(max(screen.x - chunk.coalesced_x, 0) / EngineGlobals.tile_size) - 1
+    xend = int(min(screen.x + EngineGlobals.width, screen.x + chunk.width * EngineGlobals.tile_size) / EngineGlobals.tile_size) + 2
 
-    ystart = chunk.height - int(max(screen.y - chunk.coalesced_y, 0) / 32)
-    yend = chunk.height - int(min(screen.y + EngineGlobals.height, screen.y + chunk.height * 32) / 32) - 3
+    ystart = chunk.height - int(max(screen.y - chunk.coalesced_y, 0) / EngineGlobals.tile_size)
+    yend = chunk.height - int(min(screen.y + EngineGlobals.height, screen.y + chunk.height * EngineGlobals.tile_size) / EngineGlobals.tile_size) - 3
 
     # xrender_start and yrender_start represent the offset of where to start drawing a given block on the screen - this origin
     # could be offscreen for blocks that are only partially onscreen at a given time
-    xrender_start = int((chunk.coalesced_x + xstart * 32) - screen.x)
-    yrender_start = int((chunk.coalesced_y + (chunk.height - ystart - 1) * 32) - screen.y)
+    xrender_start = int((chunk.coalesced_x + xstart * EngineGlobals.tile_size) - screen.x)
+    yrender_start = int((chunk.coalesced_y + (chunk.height - ystart - 1) * EngineGlobals.tile_size) - screen.y)
 
     # iterate through the environment horizontally from blocks on the left side of the screen to blocks on the right
     for xcounter in range(xstart, xend):
@@ -104,7 +104,7 @@ def update_chunk_tile_coords(chunk):
             # grab the block from the environment and see if we should render it or not
             if xcounter >= 0 and xcounter < len(chunk.platform[0]) and ycounter >= 0 and ycounter < len(chunk.platform):
                 if isinstance(chunk.platform[ycounter][xcounter], gamepieces.Block):
-                    if xrender_start + 32 <= 0 or xrender_start >= EngineGlobals.width or yrender_start + 32 <= 0 or yrender_start >= EngineGlobals.height:
+                    if xrender_start + EngineGlobals.tile_size <= 0 or xrender_start >= EngineGlobals.width or yrender_start + EngineGlobals.tile_size <= 0 or yrender_start >= EngineGlobals.height:
                         chunk.platform[ycounter][xcounter].sprite.visible = False
                     else:
                         chunk.platform[ycounter][xcounter].sprite.visible = True
@@ -112,11 +112,11 @@ def update_chunk_tile_coords(chunk):
                         chunk.platform[ycounter][xcounter].sprite.y = EngineGlobals.pixel_coord(yrender_start)
 
             # after each time through the y loop, update the y rendering location
-            yrender_start += 32
+            yrender_start += EngineGlobals.tile_size
 
         # after each time through the x loop, update the x rendering location and reset y to the bottom of the column
-        xrender_start += 32
-        yrender_start = int((chunk.coalesced_y + (chunk.height - ystart - 1) * 32) - screen.y)
+        xrender_start += EngineGlobals.tile_size
+        yrender_start = int((chunk.coalesced_y + (chunk.height - ystart - 1) * EngineGlobals.tile_size) - screen.y)
 
 # this function will be set up for pyglet to call it every update cycle, 120 times per second
 # every game object has a specific updateloop function, this is the main update function that
@@ -142,7 +142,7 @@ def main_update_callback(dt):
     chunk_to_update = kenny.current_chunk
     while ChunkEdge.LEFT in chunk_to_update.adjacencies:
         chunk_to_update = chunk_to_update.adjacencies[ChunkEdge.LEFT]
-        if chunk_to_update.hidden or chunk_to_update.coalesced_x + chunk_to_update.width * 32 < screen.x:
+        if chunk_to_update.hidden or chunk_to_update.coalesced_x + chunk_to_update.width * EngineGlobals.tile_size < screen.x:
             break
         update_chunk_tile_coords(chunk_to_update)
     chunk_to_update = kenny.current_chunk
@@ -160,7 +160,7 @@ def main_update_callback(dt):
     chunk_to_update = kenny.current_chunk
     while ChunkEdge.BOTTOM in chunk_to_update.adjacencies:
         chunk_to_update = chunk_to_update.adjacencies[ChunkEdge.BOTTOM]
-        if chunk_to_update.hidden or chunk_to_update.coalesced_y + chunk_to_update.height * 32 < screen.y:
+        if chunk_to_update.hidden or chunk_to_update.coalesced_y + chunk_to_update.height * EngineGlobals.tile_size < screen.y:
             break
         update_chunk_tile_coords(chunk_to_update)
 

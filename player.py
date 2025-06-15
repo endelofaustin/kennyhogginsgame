@@ -46,7 +46,7 @@ class Player(PhysicsSprite):
             Player.swipe_sword = pyglet.media.StaticSource(pyglet.media.load("audio/swordswipe.mp3"))
         if not hasattr(Player, 'schimmy_scythe'):
             Player.schimmy_scythe = pyglet.media.StaticSource(pyglet.media.load("audio/schimmyscythe.mp3"))
-            
+
     def getResourceImages(self):
         return {
             'right': "kennystance1-2.png.png",

@@ -2,22 +2,24 @@ import pyglet
 from math import floor
 
 class EngineGlobals:
-    # the window width and height in pixels
-    width, height = 800, 600
-    editor_addl_width = 164
-
     # scale up all pixel art by this amount
     scale_factor = 2
+    tile_size = 16 * scale_factor
+
+    # the window width and height in pixels
+    width, height = 400 * scale_factor, 300 * scale_factor
+    editor_addl_width = 164
 
     # width/height of each cell in the collision grid
     collision_cell_size = 64
 
     # do a bunch of engine initialization
     def init():
+        pyglet.options.dpi_scaling = 'stretch'
         # set the GL_NEAREST texture filter in order to create a precise pixelated look instead of blurring
         # pixels together when they get upscaled
-        pyglet.image.Texture.default_min_filter = pyglet.image.GL_NEAREST
-        pyglet.image.Texture.default_mag_filter = pyglet.image.GL_NEAREST
+        pyglet.image.Texture.default_min_filter = pyglet.gl.GL_NEAREST
+        pyglet.image.Texture.default_mag_filter = pyglet.gl.GL_NEAREST
 
         # add some folders to the resource module so that it knows where files live
         pyglet.resource.path = ['./artwork', './audio']
@@ -66,3 +68,9 @@ class EngineGlobals:
 
     def pixel_coord(in_coord):
         return int(in_coord / EngineGlobals.scale_factor) * EngineGlobals.scale_factor
+
+    def screen_x(in_x):
+        return in_x - EngineGlobals.our_screen.x if hasattr(EngineGlobals, 'our_screen') else in_x
+
+    def screen_y(in_y):
+        return in_y - EngineGlobals.our_screen.y if hasattr(EngineGlobals, 'our_screen') else in_y

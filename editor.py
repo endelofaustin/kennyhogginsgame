@@ -34,8 +34,8 @@ class Editor():
         pass
 
     def update_selected_tile(self, tile_idx):
-        tile_x = EngineGlobals.width + 4 + tile_idx % floor(EngineGlobals.tilesheet.width / 16) * 32
-        tile_y = floor(tile_idx / floor(EngineGlobals.tilesheet.width / 16)) * 32
+        tile_x = EngineGlobals.width + 4 + tile_idx % floor(EngineGlobals.tilesheet.width / 16) * EngineGlobals.tile_size
+        tile_y = floor(tile_idx / floor(EngineGlobals.tilesheet.width / 16)) * EngineGlobals.tile_size
         self.selected_tile_overlay_sprite.x = tile_x
         self.selected_tile_overlay_sprite.y = tile_y
         self.selected_tile_idx = tile_idx
@@ -45,8 +45,8 @@ class Editor():
             return pyglet.event.EVENT_UNHANDLED
         if y < 0 or y >= EngineGlobals.tilesheet.height * EngineGlobals.scale_factor:
             return pyglet.event.EVENT_UNHANDLED
-        tile_x = floor((x - EngineGlobals.width - 4) / 32)
-        tile_y = floor(y / 32)
+        tile_x = floor((x - EngineGlobals.width - 4) / EngineGlobals.tile_size)
+        tile_y = floor(y / EngineGlobals.tile_size)
         tile_idx = tile_y * floor(EngineGlobals.tilesheet.width / 16) + tile_x
         self.update_selected_tile(tile_idx)
         return pyglet.event.EVENT_HANDLED
@@ -63,8 +63,8 @@ class Editor():
         # if no tile is present, left-clicking places a foreground solid tile
         solid = True if button == pyglet.window.mouse.LEFT else False
 
-        x_tile = floor((x + EngineGlobals.our_screen.x)/32)
-        y_tile = len(EngineGlobals.game_map.chunks[0].platform) - 1 - floor((EngineGlobals.our_screen.y + y)/32)
+        x_tile = floor((x + EngineGlobals.our_screen.x)/EngineGlobals.tile_size)
+        y_tile = len(EngineGlobals.game_map.chunks[0].platform) - 1 - floor((EngineGlobals.our_screen.y + y)/EngineGlobals.tile_size)
 
         if EngineGlobals.game_map.chunks[0].platform[y_tile][x_tile] == 0:
             block = Block(self.selected_tile_idx, solid)

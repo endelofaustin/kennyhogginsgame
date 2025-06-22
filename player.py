@@ -253,6 +253,12 @@ class Player(PhysicsSprite):
 
         super().on_PhysicsSprite_collided(collided_object=collided_object)
 
+    def getCollisionBox(self):
+        if isinstance(self.sprite.image, pyglet.image.Animation):
+            return (self.sprite.image.get_max_width(), self.sprite.image.get_max_height())
+        else:
+            return (self.sprite.image.width, self.sprite.image.height)
+
 # expanding bouding box for sword hits cuase they super cool and gangsta
 # vorriste morire??? no non voglio morire
 class SwordHit(PhysicsSprite):

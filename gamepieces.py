@@ -10,7 +10,7 @@ class Block:
 
     def __init__(self, tilesheet_idx, solid,):
         group = EngineGlobals.tiles_front_group if solid else EngineGlobals.tiles_back_group
-        self.sprite = Sprite(img=EngineGlobals.get_tile(tilesheet_idx), batch=EngineGlobals.main_batch, group=group)
+        self.sprite = Sprite(img=EngineGlobals.get_tile(tilesheet_idx), batch=EngineGlobals.main_batch, group=group, program=EngineGlobals.hintable_shader)
         self.sprite.update(scale=EngineGlobals.scale_factor)
         self.sprite.visible = False
         self.tilesheet_idx = tilesheet_idx

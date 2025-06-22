@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import sys, pyglet, physics, player, editor, pickle, dill, enemies, time, gamepieces
+import pyglet, physics, player, editor, time, gamepieces
 from engineglobals import EngineGlobals
 from decimal import getcontext, Decimal
 from text import Text_Crawl

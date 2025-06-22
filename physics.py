@@ -61,19 +61,17 @@ class PhysicsSprite(GameObject):
             self.sprite.x = EngineGlobals.screen_x(sprite_initializer['starting_position'][0])
             self.sprite.y = EngineGlobals.screen_y(sprite_initializer['starting_position'][1])
 
-        # if collision_width and collision_height are not provided, calculate them from the width and height
+        # Calculate default collision width and height from the width and height
         # of the provided image/animation
-        if self.getStaticBoundingBox():
-            (self.collision_width, self.collision_height) = self.getStaticBoundingBox()
-        elif len(self.resource_images) > 0:
+        if len(self.resource_images) > 0:
             if isinstance(self.resource_images[next(iter(self.resource_images))], pyglet.image.AbstractImage):
-                self.collision_width = self.resource_images[next(iter(self.resource_images))].width * EngineGlobals.scale_factor
-                self.collision_height = self.resource_images[next(iter(self.resource_images))].height * EngineGlobals.scale_factor
+                self.default_collision_width = self.resource_images[next(iter(self.resource_images))].width * EngineGlobals.scale_factor
+                self.default_collision_height = self.resource_images[next(iter(self.resource_images))].height * EngineGlobals.scale_factor
             elif isinstance(self.resource_images[next(iter(self.resource_images))], pyglet.image.Animation):
-                self.collision_width = self.resource_images[next(iter(self.resource_images))].get_max_width() * EngineGlobals.scale_factor
-                self.collision_height = self.resource_images[next(iter(self.resource_images))].get_max_height() * EngineGlobals.scale_factor
+                self.default_collision_width = self.resource_images[next(iter(self.resource_images))].get_max_width() * EngineGlobals.scale_factor
+                self.default_collision_height = self.resource_images[next(iter(self.resource_images))].get_max_height() * EngineGlobals.scale_factor
         else:
-            (self.collision_width, self.collision_height) = (0, 0)
+            (self.default_collision_width, self.default_collision_height) = (0, 0)
 
         # the 'x_speed' and 'y_speed' members are Decimal representations of the sprite's speed
         # at this moment; each time the game loop runs, the sprite will move by that amount;
@@ -94,15 +92,15 @@ class PhysicsSprite(GameObject):
         # every sprite must start out in a given chunk of the map (though it may be hidden)
         self.current_chunk = starting_chunk
 
-        # self.show_bbox = pyglet.shapes.MultiLine(
-        #     (float(EngineGlobals.screen_x(self.x_position)), float(EngineGlobals.screen_y(self.y_position))),
-        #     (float(EngineGlobals.screen_x(self.x_position + self.collision_width)), float(EngineGlobals.screen_y(self.y_position))),
-        #     (float(EngineGlobals.screen_x(self.x_position + self.collision_width)), float(EngineGlobals.screen_y(self.y_position + self.collision_height))),
-        #     (float(EngineGlobals.screen_x(self.x_position)), float(EngineGlobals.screen_y(self.y_position + self.collision_height))),
-        #     closed=True,
-        #     color=(255, 255, 255, 255),
-        #     batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_front
-        # )
+        self.show_bbox = pyglet.shapes.MultiLine(
+            (float(EngineGlobals.screen_x(self.x_position)), float(EngineGlobals.screen_y(self.y_position))),
+            (float(EngineGlobals.screen_x(self.x_position + self.default_collision_width)), float(EngineGlobals.screen_y(self.y_position))),
+            (float(EngineGlobals.screen_x(self.x_position + self.default_collision_width)), float(EngineGlobals.screen_y(self.y_position + self.default_collision_height))),
+            (float(EngineGlobals.screen_x(self.x_position)), float(EngineGlobals.screen_y(self.y_position + self.default_collision_height))),
+            closed=True,
+            color=(255, 255, 255, 255),
+            batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_front
+        )
 
     # pickler
     def __getstate__(self):
@@ -116,8 +114,9 @@ class PhysicsSprite(GameObject):
             print("unable to unpickle from {}".format(str(state)))
 
     def get_collision_cell_hashes(self):
-        for hashed_x in range(floor(self.x_position / EngineGlobals.collision_cell_size), floor((self.x_position + self.collision_width - 1) / EngineGlobals.collision_cell_size) + 1):
-            for hashed_y in range(floor(self.y_position / EngineGlobals.collision_cell_size), floor((self.y_position + self.collision_height - 1) / EngineGlobals.collision_cell_size) + 1):
+        (collision_width, collision_height) = self.getCollisionBox()
+        for hashed_x in range(floor(self.x_position / EngineGlobals.collision_cell_size), floor((self.x_position + collision_width - 1) / EngineGlobals.collision_cell_size) + 1):
+            for hashed_y in range(floor(self.y_position / EngineGlobals.collision_cell_size), floor((self.y_position + collision_height - 1) / EngineGlobals.collision_cell_size) + 1):
                 yield (hashed_x, hashed_y)
 
     def get_all_colliding_objects(self):
@@ -138,14 +137,16 @@ class PhysicsSprite(GameObject):
         #    them to the set multiple times, it will ignore the later times and return just the unique
         #    set of sprites at the end.
         found_objects = set()
+        (collision_width, collision_height) = self.getCollisionBox()
         for (hashed_x, hashed_y) in self.get_collision_cell_hashes():
             for collide_with in PhysicsSprite.collision_lists.setdefault((hashed_x, hashed_y), []):
+                (c_collision_width, c_collision_height) = collide_with.getCollisionBox()
                 if not isinstance(collide_with, PhysicsSprite):
                     continue
-                if ( collide_with.x_position + collide_with.collision_width < self.x_position
-                or collide_with.y_position + collide_with.collision_height < self.y_position
-                or collide_with.x_position > self.x_position + self.collision_width
-                or collide_with.y_position > self.y_position + self.collision_height ):
+                if ( collide_with.x_position + c_collision_width < self.x_position
+                or collide_with.y_position + c_collision_height < self.y_position
+                or collide_with.x_position > self.x_position + collision_width
+                or collide_with.y_position > self.y_position + collision_height ):
                     continue
                 found_objects.add(collide_with)
         return found_objects
@@ -161,9 +162,11 @@ class PhysicsSprite(GameObject):
             y_chunk = y_chunk.adjacencies[ChunkEdge.BOTTOM]
             y_check = y_chunk.height - floor((y - y_chunk.coalesced_y) / EngineGlobals.tile_size) - 1
 
+        (collision_width, collision_height) = self.getCollisionBox()
+
         # loop over y-chunks
         #print("starting at the bottom in tile {} which is foot position {}".format(y_check, y))
-        while y_chunk.coalesced_y + (y_chunk.height - 1 - y_check) * EngineGlobals.tile_size < y + self.collision_height:
+        while y_chunk.coalesced_y + (y_chunk.height - 1 - y_check) * EngineGlobals.tile_size < y + collision_height:
             # move leftward or rightward to the correct starting x-chunk if needed
             x_chunk = y_chunk
             x_check = floor((x - x_chunk.coalesced_x) / EngineGlobals.tile_size)
@@ -175,7 +178,7 @@ class PhysicsSprite(GameObject):
                 x_check = floor((x - x_chunk.coalesced_x) / EngineGlobals.tile_size)
 
             # loop over x-chunks
-            while x_check * EngineGlobals.tile_size + x_chunk.coalesced_x < x + self.collision_width:
+            while x_check * EngineGlobals.tile_size + x_chunk.coalesced_x < x + collision_width:
                 if x_check < 0 or x_check >= x_chunk.width or y_check < 0 or y_check >= x_chunk.height:
                     self.on_PhysicsSprite_collided()
                     return True
@@ -214,6 +217,8 @@ class PhysicsSprite(GameObject):
 
         callbacks = []
 
+        (collision_width, collision_height) = self.getCollisionBox()
+
         if self.hasGravity():
             # accelerate downwards by a certain amount
             self.y_speed = Decimal(self.y_speed) - Decimal('.6')
@@ -249,16 +254,16 @@ class PhysicsSprite(GameObject):
                             self.landed = True
                             callbacks.append(self.on_PhysicsSprite_landed)
                     elif self.y_speed > 0:
-                        self.y_position = floor((new_y + self.collision_height - 1) / EngineGlobals.tile_size) * EngineGlobals.tile_size - self.collision_height - 1
+                        self.y_position = floor((new_y + collision_height - 1) / EngineGlobals.tile_size) * EngineGlobals.tile_size - collision_height - 1
                     if self.y_position < self.current_chunk.coalesced_y \
                             and ChunkEdge.BOTTOM not in self.current_chunk.adjacencies:
                         self.y_position = self.current_chunk.coalesced_y
                         if not self.landed:
                             self.landed = True
                             callbacks.append(self.on_PhysicsSprite_landed)
-                    elif self.y_position + self.collision_height > self.current_chunk.coalesced_y + (self.current_chunk.height * EngineGlobals.tile_size) \
+                    elif self.y_position + collision_height > self.current_chunk.coalesced_y + (self.current_chunk.height * EngineGlobals.tile_size) \
                             and ChunkEdge.TOP not in self.current_chunk.adjacencies:
-                        self.y_position = self.current_chunk.coalesced_y + (self.current_chunk.height * EngineGlobals.tile_size) - self.collision_height
+                        self.y_position = self.current_chunk.coalesced_y + (self.current_chunk.height * EngineGlobals.tile_size) - collision_height
                     self.y_speed = Decimal(0)
                     callbacks.append(self.on_PhysicsSprite_collided)
                 else:
@@ -271,13 +276,13 @@ class PhysicsSprite(GameObject):
                     if self.x_speed < 0:
                         self.x_position = floor((new_x + EngineGlobals.tile_size) / EngineGlobals.tile_size) * EngineGlobals.tile_size
                     elif self.x_speed > 0:
-                        self.x_position = floor((new_x + self.collision_width) / EngineGlobals.tile_size) * EngineGlobals.tile_size - self.collision_width - 1
+                        self.x_position = floor((new_x + collision_width) / EngineGlobals.tile_size) * EngineGlobals.tile_size - collision_width - 1
                     if self.x_position < self.current_chunk.coalesced_x \
                             and ChunkEdge.LEFT not in self.current_chunk.adjacencies:
                         self.x_position = self.current_chunk.coalesced_x
-                    elif self.x_position + self.collision_width > self.current_chunk.coalesced_x + (self.current_chunk.width * EngineGlobals.tile_size) \
+                    elif self.x_position + collision_width > self.current_chunk.coalesced_x + (self.current_chunk.width * EngineGlobals.tile_size) \
                             and ChunkEdge.RIGHT not in self.current_chunk.adjacencies:
-                        self.x_position = self.current_chunk.coalesced_x + (self.current_chunk.width * EngineGlobals.tile_size) - self.collision_width
+                        self.x_position = self.current_chunk.coalesced_x + (self.current_chunk.width * EngineGlobals.tile_size) - collision_width
                     self.x_speed = 0
                     callbacks.append(self.on_PhysicsSprite_collided)
 
@@ -296,11 +301,11 @@ class PhysicsSprite(GameObject):
             # move to a new chunk?
             while self.x_position - self.current_chunk.coalesced_x < 0 and ChunkEdge.LEFT in self.current_chunk.adjacencies:
                 self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.LEFT]
-            while self.x_position + self.collision_width >= self.current_chunk.coalesced_x + self.current_chunk.width * EngineGlobals.tile_size and ChunkEdge.RIGHT in self.current_chunk.adjacencies:
+            while self.x_position + collision_width >= self.current_chunk.coalesced_x + self.current_chunk.width * EngineGlobals.tile_size and ChunkEdge.RIGHT in self.current_chunk.adjacencies:
                 self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.RIGHT]
             while self.y_position - self.current_chunk.coalesced_y < 0 and ChunkEdge.BOTTOM in self.current_chunk.adjacencies:
                 self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.BOTTOM]
-            while self.y_position + self.collision_height >= self.current_chunk.coalesced_y + self.current_chunk.height * EngineGlobals.tile_size and ChunkEdge.TOP in self.current_chunk.adjacencies:
+            while self.y_position + collision_height >= self.current_chunk.coalesced_y + self.current_chunk.height * EngineGlobals.tile_size and ChunkEdge.TOP in self.current_chunk.adjacencies:
                 self.current_chunk = self.current_chunk.adjacencies[ChunkEdge.TOP]
 
             # exit the loop once we've processed all needed movements
@@ -315,16 +320,18 @@ class PhysicsSprite(GameObject):
         self.sprite.x = float(EngineGlobals.screen_x(self.x_position))
         self.sprite.y = float(EngineGlobals.screen_y(self.y_position))
         if hasattr(self, 'show_bbox'):
-            self.show_bbox.x = float(EngineGlobals.screen_x(self.x_position))
-            self.show_bbox.y = float(EngineGlobals.screen_y(self.y_position))
+            self.show_bbox.position = (float(EngineGlobals.screen_x(self.x_position)), float(EngineGlobals.screen_y(self.y_position)))
 
         # TODO: do we need to set sprite.visible = False to improve performance, or does Pyglet take care of this on it's own?
 
     def getResourceImages(self):
         return None
 
-    def getStaticBoundingBox(self):
-        return None
+    def getCollisionBox(self):
+        return (self.default_collision_width, self.default_collision_height)
+
+    def getDefaultBox(self):
+        return (self.default_collision_width, self.default_collision_height)
 
     def hasGravity(self):
         return True
@@ -351,10 +358,12 @@ class Screen():
 
     # self.x, self.y is screen position
     def updateloop(self, dt):
+        (kenny_width, kenny_height) = EngineGlobals.kenny.getDefaultBox()
+
         if (EngineGlobals.kenny.x_position - self.x) < Screen.left_right_margin:
             self.x = int(EngineGlobals.kenny.x_position) - Screen.left_right_margin
 
-        kennys_belly = int(EngineGlobals.kenny.x_position) + EngineGlobals.kenny.collision_width
+        kennys_belly = int(EngineGlobals.kenny.x_position) + kenny_width
         screen_redge = self.x + EngineGlobals.width
 
         if kennys_belly >= screen_redge - Screen.left_right_margin:
@@ -363,7 +372,7 @@ class Screen():
         if (EngineGlobals.kenny.y_position) - self.y < Screen.top_bottom_margin:
             self.y = int(EngineGlobals.kenny.y_position) - Screen.top_bottom_margin
 
-        kennys_head = int(EngineGlobals.kenny.y_position) + EngineGlobals.kenny.collision_height
+        kennys_head = int(EngineGlobals.kenny.y_position) + kenny_height
         screen_top = self.y + EngineGlobals.height
         if kennys_head >= screen_top - Screen.top_bottom_margin:
             self.y = kennys_head - EngineGlobals.height + Screen.top_bottom_margin

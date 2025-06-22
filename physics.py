@@ -29,10 +29,31 @@ class PhysicsSprite(GameObject):
         self.resource_images = dict()
 
         for k, resource_id in resource_images.items():
-            if isinstance(resource_id, dict):
-                self.resource_images[k] = pyglet.image.Animation.from_image_sequence(pyglet.image.ImageGrid(pyglet.resource.image(resource_id['file'], flip_x=resource_id.get('flip_x')), rows=resource_id['rows'], columns=resource_id['columns']), duration=resource_id['duration'], loop=resource_id['loop'])
+            if isinstance(resource_id, dict) and 'rows' in resource_id and 'columns' in resource_id:
+                self.resource_images[k] = pyglet.image.Animation.from_image_sequence(
+                    pyglet.image.ImageGrid(
+                        pyglet.resource.image(
+                            resource_id['file'],
+                            flip_x=resource_id.get('flip_x')
+                        ),
+                        rows=resource_id['rows'],
+                        columns=resource_id['columns']
+                    ),
+                    duration=resource_id['duration'],
+                    loop=resource_id['loop']
+                )
+            elif isinstance(resource_id, dict) and 'file' in resource_id:
+                self.resource_images[k] = pyglet.resource.image(resource_id['file'])
             else:
                 self.resource_images[k] = pyglet.resource.image(resource_id)
+            if isinstance(resource_id, dict) and 'anchors' in resource_id:
+                if isinstance(self.resource_images[k], pyglet.image.Animation):
+                    for anchor_item in zip(self.resource_images[k].frames, resource_id['anchors']):
+                        anchor_item[0].image.anchor_x = anchor_item[1][0]
+                        anchor_item[0].image.anchor_y = anchor_item[1][1]
+                else:
+                    self.resource_images[k].anchor_x = resource_id['anchors'][0]
+                    self.resource_images[k].anchor_y = resource_id['anchors'][1]
 
         group = EngineGlobals.sprites_front_group if sprite_initializer['group'] == 'FRONT' else EngineGlobals.sprites_back_group
         self.sprite = pyglet.sprite.Sprite(img=next(iter(self.resource_images.values())), batch=EngineGlobals.main_batch, group=group)
@@ -73,15 +94,15 @@ class PhysicsSprite(GameObject):
         # every sprite must start out in a given chunk of the map (though it may be hidden)
         self.current_chunk = starting_chunk
 
-        self.show_bbox = pyglet.shapes.MultiLine(
-            (float(EngineGlobals.screen_x(self.x_position)), float(EngineGlobals.screen_y(self.y_position))),
-            (float(EngineGlobals.screen_x(self.x_position + self.collision_width)), float(EngineGlobals.screen_y(self.y_position))),
-            (float(EngineGlobals.screen_x(self.x_position + self.collision_width)), float(EngineGlobals.screen_y(self.y_position + self.collision_height))),
-            (float(EngineGlobals.screen_x(self.x_position)), float(EngineGlobals.screen_y(self.y_position + self.collision_height))),
-            closed=True,
-            color=(255, 255, 255, 255),
-            batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_front
-        )
+        # self.show_bbox = pyglet.shapes.MultiLine(
+        #     (float(EngineGlobals.screen_x(self.x_position)), float(EngineGlobals.screen_y(self.y_position))),
+        #     (float(EngineGlobals.screen_x(self.x_position + self.collision_width)), float(EngineGlobals.screen_y(self.y_position))),
+        #     (float(EngineGlobals.screen_x(self.x_position + self.collision_width)), float(EngineGlobals.screen_y(self.y_position + self.collision_height))),
+        #     (float(EngineGlobals.screen_x(self.x_position)), float(EngineGlobals.screen_y(self.y_position + self.collision_height))),
+        #     closed=True,
+        #     color=(255, 255, 255, 255),
+        #     batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_front
+        # )
 
     # pickler
     def __getstate__(self):

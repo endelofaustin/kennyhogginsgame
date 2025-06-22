@@ -49,15 +49,37 @@ class Player(PhysicsSprite):
 
     def getResourceImages(self):
         return {
-            'right': "kennystance1-2.png.png",
-            'left': "kennystance-left.png",
-            'bloody': "bloodykenny-1.png",
-            'crouch_left': "kenny-crouch-left.png",
-            'crouch_right': "kenny-crouch-right.png",
-            'run_left': {'file': "kenny-run-left.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': True},
-            'run_right': {'file': "kenny-run-right.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': True},
-            'jump_left': {'file': "kenny-jump-left.png", 'rows': 1, 'columns': 2, 'duration': 1/10, 'loop': False},
-            'jump_right': {'file': "kenny-jump-right.png", 'rows': 1, 'columns': 2, 'duration': 1/10, 'loop': False},
+            'right': {'file': "kennystance1-2.png.png"},
+            'left': {'file': "kennystance-left.png"},
+            'bloody': {'file': "bloodykenny-1.png"},
+            'crouch_left': {'file': "kenny-crouch-left.png"},
+            'crouch_right': {'file': "kenny-crouch-right.png"},
+            'run_left': {
+                'file': "kenny-run-left.png",
+                'rows': 1, 'columns': 4,
+                'duration': 1/10,
+                'loop': True
+            },
+            'run_right': {
+                'file': "kenny-run-right.png",
+                'rows': 1, 'columns': 4,
+                'duration': 1/10,
+                'loop': True
+            },
+            'jump_left': {
+                'file': "kenny-jump-left.png",
+                'rows': 1, 'columns': 2,
+                'duration': 1/10,
+                'loop': False,
+                'anchors': [(10, 0), (10, 0)]
+            },
+            'jump_right': {
+                'file': "kenny-jump-right.png",
+                'rows': 1, 'columns': 2,
+                'duration': 1/10,
+                'loop': False,
+                'anchors': [(3, 0), (3, 0)]
+            },
             'kenny_sword_left': "kennysword-left.png",
             'kenny_sword_right': "kennysword-right.png",
             'kaboom': "kaboom.png"

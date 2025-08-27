@@ -46,12 +46,30 @@ def additional_map_definitions(map):
             del map.talker
 
         map.chunks[0].contained_sprites = dict()
-        map.chunks[0].contained_sprites['door'] = makeSprite(Door, map.chunks[0], starting_position=(500,10), group='BACK', target_map="bossfight.dill", player_position=(250 ,250))
-        #map.chunks[0].contained_sprites['sword-1'] = makeSprite(gamepieces.Sword, map.chunks[0], starting_position=(1000, 90))
+
+        # existing door to Pearly Paul arena
+        map.chunks[0].contained_sprites['door'] = makeSprite(
+            Door, map.chunks[0],
+            starting_position=(500, 10),
+            group='BACK',
+            target_map="bossfight.dill",
+            player_position=(250, 250)
+        )
+
+        # NEW: door to Mr. Omen arena
+        map.chunks[0].contained_sprites['door_mr_omen'] = makeSprite(
+            Door, map.chunks[0],
+            starting_position=(1500, 40),   # adjust coords as desired
+            group='BACK',
+            target_map="boss_mr_omen.dill",
+            player_position=(250, 250)
+        )
+
+        # other main-map pickups/npcs
         map.chunks[0].contained_sprites['scythe'] = makeSprite(gamepieces.Scythe, map.chunks[0], starting_position=(300, 41))
-        map.chunks[0].contained_sprites['spudguy'] = makeSprite(Enemy, map.chunks[0], starting_position=(300 , 250))
+        map.chunks[0].contained_sprites['spudguy'] = makeSprite(Enemy, map.chunks[0], starting_position=(300, 250))
         map.chunks[0].contained_sprites['testfruit1'] = makeSprite(NirvanaFruit, map.chunks[0], starting_position=(260, 50))
-        #map.chunks[0].contained_sprites['cardi1'] = makeSprite(Cardi, map.chunks[0], starting_position=(500, 0))
+        # map.chunks[0].contained_sprites['cardi1'] = makeSprite(Cardi, map.chunks[0], starting_position=(500, 0))
         map.chunks[0].contained_sprites['mcswanson1'] = makeSprite(McSwanson, map.chunks[0], starting_position=(340, 200))
 
     # the boss fight with pearly paul
@@ -70,13 +88,29 @@ def additional_map_definitions(map):
         map.chunks[0].contained_sprites = dict()
         map.chunks[0].contained_sprites['pearlypaul'] = makeSprite(PearlyPaul, map.chunks[0], (0, 0))
 
+    elif map.filename == "boss_mr_omen.dill":
+
+        map.image = "tonic_overwater.png"
+
+        if hasattr(map.chunks[0], 'contained_sprites'):
+            for sprite in map.chunks[0].contained_sprites.values():
+                sprite.destroy()
+        map.chunks[0].contained_sprites = dict()
+
+        # import here to avoid top-level dependency issues if class not present yet
+        from bosses import MrOmen
+
+        # spawn the boss in chunk 0
+        map.chunks[0].contained_sprites['mr_omen'] = makeSprite(
+            MrOmen, map.chunks[0], (0, 0)
+        )
 
 # This is a class John said this while we were coding it out
 class GameMap():
 
     # save the playform as an engleberry
     # Voglio bere un caffe e daverro abbiamo scrivere piu codice. 
-    def __init__(self, chunks = None, filename = 'map.dill'):
+    def __init__(self, chunks=None, filename='map.dill'):
 
         # This can of worms has been opened. Goes bad July 2025
         # # self.image = "lighthouse.png"
@@ -84,10 +118,6 @@ class GameMap():
         # which is great. When it goes to the load the class from the dill file  
         # it will __init__ the class and create the background as normal Pie Throw #legit
         # John doesnt like this it is incomprehensible, "i wonder what the elegant solution is" <--- John 11/16
-        if hasattr(self, "image"):
-            EngineGlobals.background_sprite = pyglet.sprite.Sprite(img=pyglet.resource.image(self.image), 
-                                     batch=EngineGlobals.main_batch, 
-                                     group=EngineGlobals.bg_group)
 
         if not hasattr(self, 'chunks') or not self.chunks:
             self.chunks = chunks
@@ -96,8 +126,25 @@ class GameMap():
         # Austin was not getting his pilot license in 11/2023
         # print("maybe I should write better code")
 
+        # IMPORTANT: run map definitions first so that map.image can be set
         additional_map_definitions(self)
 
+        # Now rebuild the background sprite based on the (possibly new) self.image
+        # Delete the old background sprite if it exists to avoid overlap
+        if hasattr(EngineGlobals, 'background_sprite') and EngineGlobals.background_sprite:
+            try:
+                EngineGlobals.background_sprite.delete()
+            except Exception:
+                pass
+
+        if hasattr(self, "image"):
+            EngineGlobals.background_sprite = pyglet.sprite.Sprite(
+                img=pyglet.resource.image(self.image),
+                batch=EngineGlobals.main_batch,
+                group=EngineGlobals.bg_group
+            )
+
+        # Debug dump of map state after initialization
         with open(self.filename + "-debug.txt", "w") as dumpf:
             dumpf.write(str(self.__dict__))
             dumpf.write("\n")

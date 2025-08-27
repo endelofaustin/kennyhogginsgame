@@ -21,7 +21,6 @@ class Bullet(PhysicsSprite):
             return
 
         else:
-
             # otherwise if the bullet hits anything else we will destroy the bullet
             self.destroy()
 
@@ -29,6 +28,9 @@ class Bullet(PhysicsSprite):
             if type(collided_object).__name__ == 'Enemy' or type(collided_object).__name__ == 'Pearl':
                 collided_object.die_hard()
 
-            # if the bullet hits Pearly Paul (the boss), call Pearly Paul's getting_hit function
             if type(collided_object).__name__ == 'PearlyPaul':
                 collided_object.getting_hit()
+
+            if type(collided_object).__name__ == 'MrOmen':
+                collided_object.getting_hit()
+

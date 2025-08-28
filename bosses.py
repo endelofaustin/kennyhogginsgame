@@ -11,76 +11,14 @@ from lifecycle import LifeCycleManager
 from sprite import makeSprite
 
 
-class DeathThatBoss(Enemy):
-    def __init__(self, sprite_initializer: dict, starting_chunk):
-        super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
-        self.is_dying = False
-        self.death_done = False
-        self.death_timer = -1
-
-    def start_death(self, delay_frames=15, dead_key='dead'):
-        if self.is_dying or self.death_done:
-            return
-        self.is_dying = True
-        try:
-            self.sprite.image = self.resource_images[dead_key]
-        except Exception:
-            pass
-        self.death_timer = delay_frames
-
-    def finish_death(self):
-        if self.death_done:
-            return
-        self.death_done = True
-
-        # allow subclass to spawn doors, cleanup, etc.
-        try:
-            self.on_finish_death()
-        except Exception:
-            pass
-
-        # IMPORTANT:
-        # Do NOT delete the sprite here. Let the engine lifecycle handle that.
-        # Just mark for removal via die_hard()/destroy().
-        try:
-            self.die_hard()   # triggers lifecycle -> on_finalDeletion -> sprite.delete()
-        except Exception:
-            try:
-                self.destroy()
-            except Exception:
-                pass
-
-    def updateloop(self, dt):
-        # While dying or after we've finished death, do not call parent update
-        if self.is_dying or self.death_done:
-            self.x_speed = Decimal(0)
-            self.y_speed = Decimal(0)
-
-            # run death countdown only while in dying state
-            if self.is_dying and self.death_timer >= 0:
-                self.death_timer -= 1
-                if self.death_timer <= 0 and not self.death_done:
-                    self.finish_death()
-
-            return  # <-- critical: don't fall through to PhysicsSprite.updateloop
-        return super().updateloop(dt)
-
-    def on_finish_death(self):
-        pass
-
-    def on_PhysicsSprite_collided(self, collided_object=None, collided_chunk=None, chunk_x=None, chunk_y=None):
-        if self.is_dying or self.death_done:
-            return
-        return super().on_PhysicsSprite_collided(collided_object, collided_chunk, chunk_x, chunk_y)
-
-
+# Shiny and adorable little pearls 
 class Pearl(Enemy):
     def __init__(self, sprite_initializer : dict, starting_chunk):
         super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
 
     def getResourceImages(self):
         return {
-            'pearl_left': {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True},
+            'pearl_left':  {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True},
             'pearl_right': {'file': "pearled_out.png", 'rows': 3, 'columns': 2, 'duration': 1/10, 'loop': True},
             'dead': 'sushiroll.png'
         }
@@ -90,7 +28,8 @@ class Pearl(Enemy):
             collided_object.hit()
 
 
-class PearlyPaul(DeathThatBoss):
+# A crazy coffee shop owner turned professional pearl producer
+class PearlyPaul(Enemy):
 
     def __init__(self, sprite_initializer : dict, starting_chunk):
         super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
@@ -109,6 +48,7 @@ class PearlyPaul(DeathThatBoss):
         }
 
     def updateloop(self, dt):
+        # if we’re busy being dead,
         if not self.is_dying:
             if self.pearl_dropping_time <= 0:
                 self.drop_pearl()
@@ -144,12 +84,16 @@ class PearlyPaul(DeathThatBoss):
                 dead_dude.play()
             except Exception:
                 pass
+            """switch to dead thing and then countdown. enemies.py handles
+               probably John not like this. but I like the quirkyness that comes with dead things becoming other things. 
+                we can like eat them if they are like sushi or something.""" 
             self.start_death(delay_frames=15, dead_key='dead')
 
     def on_pokey(self):
         self.getting_hit()
 
     def on_finish_death(self):
+        # open the gates, clean the mess
         try:
             makeSprite(Door, self.current_chunk, starting_position=(1000, 0), group='BACK', target_map='map.dill', player_position=(1350, 320))
             makeSprite(Door, self.current_chunk, starting_position=(550, 0), group='BACK', target_map='map.dill', player_position=(550, 32))
@@ -164,9 +108,10 @@ class PearlyPaul(DeathThatBoss):
             pass
 
 
-class MrOmen(DeathThatBoss):
+# Crazy doll turned pro murder giver. Scary and efficient. deficient in kindness. 
+class MrOmen(Enemy):
 
-    MAX_HP = 8
+    MAX_HP = 8  # crank for spicy boss vibes
 
     def __init__(self, sprite_initializer: dict, starting_chunk):
         super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
@@ -212,6 +157,7 @@ class MrOmen(DeathThatBoss):
         self.getting_hit()
 
     def on_finish_death(self):
+        # leave a door where the omen fell, poetic
         try:
             makeSprite(
                 Door,

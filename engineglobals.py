@@ -73,7 +73,7 @@ class EngineGlobals:
     collision_cell_size = 64
 
     # hint tiles
-    hint_tiles = [True]
+    hint_tiles = [False]
 
     # do a bunch of engine initialization
     def init():

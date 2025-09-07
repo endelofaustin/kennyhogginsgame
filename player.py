@@ -14,10 +14,10 @@ class Player(PhysicsSprite):
     BULLET_INITIAL_VELOCITY = Decimal('15.0')
 
     JUMP_CROUCH_FRAMES = 6
-    NOT_JUMPING = 0
-    CROUCHING_FOR_JUMP = 1
-    FIRST_JUMP = 2
-    SECOND_JUMP = 3
+    JC0_NOT_JUMPING = 0
+    JC1_CROUCHING_FOR_JUMP = 1
+    JC2_FIRST_JUMP = 2
+    JC3_SECOND_JUMP = 3
 
     def __init__(self, sprite_initializer : dict, starting_chunk):
 
@@ -114,10 +114,10 @@ class Player(PhysicsSprite):
                 self.sprite.image = self.resource_images['crouch_left']
             else:
                 self.sprite.image = self.resource_images['crouch_right']
-        elif self.jumpct > Player.NOT_JUMPING:
+        elif self.jumpct > Player.JC0_NOT_JUMPING:
             self.jump_frames += 1
-            if self.jumpct == Player.CROUCHING_FOR_JUMP and self.jump_frames >= Player.JUMP_CROUCH_FRAMES:
-                self.jumpct = Player.FIRST_JUMP
+            if self.jumpct == Player.JC1_CROUCHING_FOR_JUMP and self.jump_frames >= Player.JUMP_CROUCH_FRAMES:
+                self.jumpct = Player.JC2_FIRST_JUMP
                 self.y_speed = Decimal(max(self.y_speed, 0) + Player.JUMP_INITIAL_VELOCITY)
                 self.landed = False
             if self.direction == 'left':
@@ -145,8 +145,8 @@ class Player(PhysicsSprite):
         if self.bloody == True:
            self.sprite.image = self.resource_images['bloody']
 
-        if self.landed and self.jumpct != Player.CROUCHING_FOR_JUMP:
-            self.jumpct = Player.NOT_JUMPING
+        if self.landed and self.jumpct != Player.JC1_CROUCHING_FOR_JUMP:
+            self.jumpct = Player.JC0_NOT_JUMPING
             self.jump_frames = 0
 
         if self.has_sword:
@@ -163,14 +163,14 @@ class Player(PhysicsSprite):
     def on_key_press(self, symbol, modifiers):
 
         # jumping
-        if (symbol == pyglet.window.key.LCTRL or symbol == pyglet.window.key.RCTRL or symbol == pyglet.window.key.UP) and self.jumpct <= Player.FIRST_JUMP:
+        if (symbol == pyglet.window.key.LCTRL or symbol == pyglet.window.key.RCTRL or symbol == pyglet.window.key.UP) and self.jumpct <= Player.JC2_FIRST_JUMP:
             # if on a solid object, crouch then jump
-            if self.landed and self.jumpct == Player.NOT_JUMPING:
-                self.jumpct = Player.CROUCHING_FOR_JUMP
+            if self.landed and self.jumpct == Player.JC0_NOT_JUMPING:
+                self.jumpct = Player.JC1_CROUCHING_FOR_JUMP
             # if already in the air, allow one more smaller jump
-            elif self.jumpct == Player.FIRST_JUMP:
+            elif self.jumpct == Player.JC2_FIRST_JUMP:
                 self.y_speed = Player.DOUBLE_JUMP_VELOCITY
-                self.jumpct = Player.SECOND_JUMP
+                self.jumpct = Player.JC3_SECOND_JUMP
 
         # Button press handeling for space bar to shoot
         if symbol == pyglet.window.key.SPACE:
@@ -255,9 +255,15 @@ class Player(PhysicsSprite):
 
     def getCollisionBox(self):
         if isinstance(self.sprite.image, pyglet.image.Animation):
-            return (self.sprite.image.get_max_width(), self.sprite.image.get_max_height())
+            return (
+                self.sprite.image.get_max_width() * EngineGlobals.scale_factor,
+                self.sprite.image.get_max_height() * EngineGlobals.scale_factor
+            )
         else:
-            return (self.sprite.image.width, self.sprite.image.height)
+            return (
+                self.sprite.image.width * EngineGlobals.scale_factor,
+                self.sprite.image.height * EngineGlobals.scale_factor
+            )
 
 # expanding bouding box for sword hits cuase they super cool and gangsta
 # vorriste morire??? no non voglio morire

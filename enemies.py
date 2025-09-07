@@ -16,6 +16,9 @@ class Enemy(PhysicsSprite):
         self.death_done = False
         self.death_timer = -1  # countdown clock o’ doom
 
+        if not hasattr(Enemy, 'hit_snd'):
+            Enemy.hit_snd = pyglet.resource.media('glurk.wav', streaming=False)
+
     def getResourceImages(self):
         return {
             '0': "mrspudl.png",
@@ -38,18 +41,9 @@ class Enemy(PhysicsSprite):
         if self.death_done:
             return
         self.death_done = True
-        try:
-            self.on_finish_death()
-        except Exception:
-            pass
+        self.on_finish_death()
         # don’t use sprite.delete() lifecycle will like clean it up and stuff
-        try:
-            self.destroy()
-        except Exception:
-            try:
-                self.die_hard()
-            except Exception:
-                pass
+        self.destroy()
 
     # bosses can override this to like spawn other stuff like doors or bombs or lavad burtim or timburtim whateverrrr. 
     def on_finish_death(self):
@@ -91,11 +85,7 @@ class Enemy(PhysicsSprite):
         # keep but now debounced like a pro
         if self.is_dying or self.death_done:
             return
-        try:
-            dead_dude = pyglet.media.load('audio/glurk.wav', streaming=False)
-            dead_dude.play()
-        except Exception:
-            pass
+        Enemy.hit_snd.play()
         self.start_death(delay_frames=15, dead_key='dead')
 
     def on_pokey(self):

@@ -39,13 +39,15 @@ class Player(PhysicsSprite):
         self.crouching = False
 
         if not hasattr(Player, 'door_open_close'):
-            Player.door_open_close = pyglet.media.load("audio/door_open_close.mp3", streaming=False)
+            Player.door_open_close = pyglet.resource.media("door_open_close.mp3", streaming=False)
         if not hasattr(Player, 'spit_bullet'):
-            Player.spit_bullet = pyglet.media.StaticSource(pyglet.media.load("audio/spitbullets.wav"))
+            Player.spit_bullet = pyglet.resource.media("spitbullets.wav", streaming=False)
         if not hasattr(Player, 'swipe_sword'):
-            Player.swipe_sword = pyglet.media.StaticSource(pyglet.media.load("audio/swordswipe.mp3"))
+            Player.swipe_sword = pyglet.resource.media("swordswipe.mp3", streaming=False)
         if not hasattr(Player, 'schimmy_scythe'):
-            Player.schimmy_scythe = pyglet.media.StaticSource(pyglet.media.load("audio/schimmyscythe.mp3"))
+            Player.schimmy_scythe = pyglet.resource.media("schimmyscythe.mp3", streaming=False)
+        if not hasattr(Player, 'munching_on_apple'):
+            Player.munching_on_apple = pyglet.resource.media("kenny_sounds/munching_on_apple.mp3", streaming=False)
 
     def getResourceImages(self):
         return {
@@ -248,7 +250,7 @@ class Player(PhysicsSprite):
 
         elif collided_object and type(collided_object).__name__ == 'NirvanaFruit' and not collided_object.collected:
             collided_object.collect()
-            pyglet.media.load('audio/kenny_sounds/munching_on_apple.mp3', streaming=False).play()
+            Player.munching_on_apple.play()
             self.activate_super_powers()
 
         super().on_PhysicsSprite_collided(collided_object=collided_object)

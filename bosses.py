@@ -39,7 +39,9 @@ class PearlyPaul(Enemy):
         self.hit_count = 0
 
         if not hasattr(PearlyPaul, 'poop_pearl'):
-            PearlyPaul.poop_pearl = pyglet.media.load('audio/plop.mp3', streaming=False)
+            PearlyPaul.poop_pearl = pyglet.resource.media('plop.mp3', streaming=False)
+        if not hasattr(PearlyPaul, 'dead_dude'):
+            PearlyPaul.dead_dude = pyglet.resource.media('kenny_sounds/boss_beaten.mp3', streaming=False)
 
     def getResourceImages(self):
         return {
@@ -79,11 +81,7 @@ class PearlyPaul(Enemy):
         self.hit_count += 1
 
         if self.hit_count >= 4:
-            try:
-                dead_dude = pyglet.media.load("audio/kenny_sounds/boss_beaten.mp3", streaming=False)
-                dead_dude.play()
-            except Exception:
-                pass
+            PearlyPaul.dead_dude.play()
             """switch to dead thing and then countdown. enemies.py handles
                probably John not like this. but I like the quirkyness that comes with dead things becoming other things. 
                 we can like eat them if they are like sushi or something.""" 
@@ -94,21 +92,14 @@ class PearlyPaul(Enemy):
 
     def on_finish_death(self):
         # open the gates, clean the mess
-        try:
-            makeSprite(Door, self.current_chunk, starting_position=(1000, 0), group='BACK', target_map='map.dill', player_position=(1350, 320))
-            makeSprite(Door, self.current_chunk, starting_position=(550, 0), group='BACK', target_map='map.dill', player_position=(550, 32))
-            makeSprite(Door, self.current_chunk, starting_position=(770, 0), group='BACK', target_map='map.dill', player_position=(670, 3456))
-        except Exception:
-            pass
-        try:
-            for sprite_obj in LifeCycleManager.ALL_SETS['PER_MAP'].objects:
-                if type(sprite_obj).__name__ == 'Pearl':
-                    sprite_obj.destroy()
-        except Exception:
-            pass
+        makeSprite(Door, self.current_chunk, starting_position=(1000, 0), group='BACK', target_map='map.dill', player_position=(1350, 320))
+        makeSprite(Door, self.current_chunk, starting_position=(550, 0), group='BACK', target_map='map.dill', player_position=(550, 32))
+        makeSprite(Door, self.current_chunk, starting_position=(770, 0), group='BACK', target_map='map.dill', player_position=(670, 3456))
+        for sprite_obj in LifeCycleManager.ALL_SETS['PER_MAP'].objects:
+            if type(sprite_obj).__name__ == 'Pearl':
+                sprite_obj.destroy()
 
-
-# Crazy doll turned pro murder giver. Scary and efficient. deficient in kindness. 
+# Crazy doll turned pro murder giver. Scary and efficient. deficient in kindness.
 class MrOmen(Enemy):
 
     MAX_HP = 8  # crank for spicy boss vibes
@@ -119,10 +110,7 @@ class MrOmen(Enemy):
         self.timer = 0
         self.direction = 'right'
         if not hasattr(MrOmen, 'hit_snd'):
-            try:
-                MrOmen.hit_snd = pyglet.media.load('audio/glurk.wav', streaming=False)
-            except Exception:
-                MrOmen.hit_snd = None
+            MrOmen.hit_snd = pyglet.resource.media('glurk.wav', streaming=False)
 
     def getResourceImages(self):
         return {
@@ -148,8 +136,7 @@ class MrOmen(Enemy):
         if self.is_dying or self.death_done:
             return
         self.hp -= 1
-        if getattr(MrOmen, 'hit_snd', None):
-            MrOmen.hit_snd.play()
+        MrOmen.hit_snd.play()
         if self.hp <= 0:
             self.start_death(delay_frames=15, dead_key='dead')
 
@@ -158,15 +145,11 @@ class MrOmen(Enemy):
 
     def on_finish_death(self):
         # leave a door where the omen fell, poetic
-        try:
-            makeSprite(
-                Door,
-                self.current_chunk,
-                starting_position=(int(self.x_position), int(self.y_position)),
-                group='BACK',
-                target_map='map.dill',
-                player_position=(300, 200)
-            )
-        except Exception:
-            pass
-
+        makeSprite(
+            Door,
+            self.current_chunk,
+            starting_position=(int(self.x_position), int(self.y_position)),
+            group='BACK',
+            target_map='map.dill',
+            player_position=(300, 200)
+        )

@@ -1,13 +1,11 @@
-import dill, pickle
+import dill
 import gamepieces
 import pyglet
 from engineglobals import EngineGlobals
-from bosses import PearlyPaul
-from spike import Spike
-from bandaid import Bandaid
-from enemies import Enemy, Doggy, Cardi
+from bosses import PearlyPaul, MrOmen
+from enemies import Enemy, Cardi
 from gamepieces import Door, NirvanaFruit
-from lifecycle import LifeCycleManager
+from lifecycle import LifeCycleManager, GameObject
 from sprite import makeSprite
 from magic_map import Chunk
 from mcswanson import McSwanson
@@ -97,9 +95,6 @@ def additional_map_definitions(map):
                 sprite.destroy()
         map.chunks[0].contained_sprites = dict()
 
-        # import here to avoid top-level dependency issues if class not present yet
-        from bosses import MrOmen
-
         # spawn the boss in chunk 0
         map.chunks[0].contained_sprites['mr_omen'] = makeSprite(
             MrOmen, map.chunks[0], (0, 0)
@@ -129,20 +124,17 @@ class GameMap():
         # IMPORTANT: run map definitions first so that map.image can be set
         additional_map_definitions(self)
 
-        # Now rebuild the background sprite based on the (possibly new) self.image
-        # Delete the old background sprite if it exists to avoid overlap
-        if hasattr(EngineGlobals, 'background_sprite') and EngineGlobals.background_sprite:
-            try:
-                EngineGlobals.background_sprite.delete()
-            except Exception:
-                pass
-
+        # then, if there is a background image, create a GameObject for it
+        # and make it per-map so it gets cleaned up properly when the map unloads
         if hasattr(self, "image"):
-            EngineGlobals.background_sprite = pyglet.sprite.Sprite(
+            bgimg = GameObject(lifecycle_manager='PER_MAP')
+            bgimg.sprite = pyglet.sprite.Sprite(
                 img=pyglet.resource.image(self.image),
                 batch=EngineGlobals.main_batch,
                 group=EngineGlobals.bg_group
             )
+            bgimg.on_finalDeletion = lambda: bgimg.sprite.delete()
+            bgimg.updateloop = lambda dt: None
 
         # Debug dump of map state after initialization
         with open(self.filename + "-debug.txt", "w") as dumpf:

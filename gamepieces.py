@@ -57,20 +57,21 @@ class NirvanaFruit(PhysicsSprite):
         return False if self.destroy_after else True
 
     def updateloop(self, dt):
-        if self.jump_timer <= 0:
-            self.y_speed = 7
-            self.x_speed = -5 if bool(random.getrandbits(1)) else 5
-            self.jump_timer = 250
-        else:
-            self.jump_timer -= 1
-
         if self.destroy_after:
             self.destroy_after -= 1
             if self.destroy_after <= 0:
                 self.destroy()
 
+        elif self.jump_timer <= 0:
+            self.y_speed = 7
+            self.x_speed = -5 if bool(random.getrandbits(1)) else 5
+            self.jump_timer = 250
+
+        else:
+            self.jump_timer -= 1
+
         return super().updateloop(dt)
-    
+
     def on_PhysicsSprite_landed(self):
         self.x_speed = 0
 

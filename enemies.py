@@ -30,10 +30,7 @@ class Enemy(PhysicsSprite):
         if self.is_dying or self.death_done:
             return
         self.is_dying = True
-        try:
-            self.sprite.image = self.resource_images[dead_key]
-        except Exception:
-            pass
+        self.sprite.image = self.resource_images[dead_key]
         self.death_timer = delay_frames
 
     # finish him! (Mortal Kombat voice)

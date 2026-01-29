@@ -1,5 +1,33 @@
 #!/usr/bin/python3
 
+
+## debug
+
+import os
+import pyglet
+
+# Absolute path to project root (where main.py lives)
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+
+# Tell pyglet where to look for resources
+pyglet.resource.path = [
+    PROJECT_ROOT,                              # allows "audio/..."
+    os.path.join(PROJECT_ROOT, "audio"),       # allows "kenny_sounds/..."
+    os.path.join(PROJECT_ROOT, "artwork"),
+]
+
+pyglet.resource.reindex()
+
+# Debug (keep for now)
+print("RESOURCE PATH:", pyglet.resource.path)
+print("CWD:", os.getcwd())
+print(
+    "Exists:",
+    os.path.exists(
+        os.path.join(PROJECT_ROOT, "audio/kenny_sounds/munching_on_apple.wav")
+    ),
+)
+####
 import pyglet, physics, player, editor, time, gamepieces
 from engineglobals import EngineGlobals
 from decimal import getcontext, Decimal
@@ -10,6 +38,7 @@ from maploader import GameMap
 from lifecycle import LifeCycleManager
 from sprite import makeSprite
 from magic_map import Chunk, ChunkEdge
+
 
 # Most of the code in this file, other than the update callback, is executed
 # *BEFORE* the game starts and before the game window is shown. We set
@@ -205,7 +234,7 @@ EngineGlobals.audio_player = pyglet.media.Player()
 # riffwav = pyglet.resource.media('kenny_riff1.wav', streaming=False)
 # EngineGlobals.audio_player.queue(riffwav)
 
-music_list = ['rap1.mp3', 'sleeponit.wav', 'stronglengthypunkbrawl.wav', 'takingahike.wav', 'downrightbirthright.wav', 'workingwithmagic.wav']
+music_list = ['rap1.wav', 'sleeponit.wav', 'stronglengthypunkbrawl.wav', 'takingahike.wav', 'downrightbirthright.wav', 'workingwithmagic.wav']
 
 
 for music in music_list:

@@ -6,6 +6,7 @@ from bullet import Bullet
 from maploader import GameMap
 from sprite import makeSprite
 
+
 # the player object represents Kenny and responds to keyboard input
 class Player(PhysicsSprite):
     LEFT_RIGHT_RUN_SPEED = Decimal(4.3)
@@ -19,13 +20,41 @@ class Player(PhysicsSprite):
     JC2_FIRST_JUMP = 2
     JC3_SECOND_JUMP = 3
 
-    def __init__(self, sprite_initializer : dict, starting_chunk):
+    # Keep returned pyglet.media.Player objects alive while audio plays.
+    # On Linux, if these get garbage-collected mid-decode, pyglet's ffmpeg cleanup can segfault.
+    _active_audio_players = []
 
+    @classmethod
+    def _play_sound(cls, sound):
+        """
+        Play a pyglet media Source and retain the returned Player until EOS.
+        This avoids GC races in pyglet/media/ffmpeg on Linux (your exact crash).
+        """
+        try:
+            p = sound.play()  # IMPORTANT: returns a pyglet.media.Player
+        except Exception:
+            # If something goes wrong, fail loudly but without taking down the process.
+            raise
+
+        cls._active_audio_players.append(p)
+
+        # When playback ends, remove the player so the list doesn't grow forever.
+        def _cleanup(_player):
+            try:
+                cls._active_audio_players.remove(_player)
+            except ValueError:
+                pass
+
+        # pyglet calls this when the queued source finishes
+        p.on_player_eos = _cleanup
+        return p
+
+    def __init__(self, sprite_initializer: dict, starting_chunk):
         super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
 
         # Which direction is Kenny facing?
         self.direction = 'right'
-        
+
         # Does he have a sword?
         self.has_sword = False
         self.has_scythe = False
@@ -38,16 +67,19 @@ class Player(PhysicsSprite):
         self.bloody = False
         self.crouching = False
 
+        # Preload shared audio once.
+        # streaming=False is good for SFX (avoid background decode threads when possible).
         if not hasattr(Player, 'door_open_close'):
-            Player.door_open_close = pyglet.resource.media("door_open_close.mp3", streaming=False)
+            Player.door_open_close = pyglet.resource.media("door_open_close.wav", streaming=False)
         if not hasattr(Player, 'spit_bullet'):
             Player.spit_bullet = pyglet.resource.media("spitbullets.wav", streaming=False)
         if not hasattr(Player, 'swipe_sword'):
-            Player.swipe_sword = pyglet.resource.media("swordswipe.mp3", streaming=False)
+            Player.swipe_sword = pyglet.resource.media("swordswipe.wav", streaming=False)
         if not hasattr(Player, 'schimmy_scythe'):
-            Player.schimmy_scythe = pyglet.resource.media("schimmyscythe.mp3", streaming=False)
+            Player.schimmy_scythe = pyglet.resource.media("schimmyscythe.wav", streaming=False)
         if not hasattr(Player, 'munching_on_apple'):
-            Player.munching_on_apple = pyglet.resource.media("kenny_sounds/munching_on_apple.mp3", streaming=False)
+            pyglet.resource.media("kenny_sounds/munching_on_apple.wav", streaming=False)
+
 
     def getResourceImages(self):
         return {
@@ -88,19 +120,17 @@ class Player(PhysicsSprite):
         }
 
     def updateloop(self, dt):
-
         # John has done 5 flight lessons as of nov 21 23..... corrections only 4
-        # John has done 38 out of 40 hours flight lessons for private feb 2024 
+        # John has done 38 out of 40 hours flight lessons for private feb 2024
         if hasattr(self, "blow_up_timer"):
-
             if self.blow_up_timer <= 20:
                 self.sprite.image = self.resource_images['kaboom']
-                
+
             self.blow_up_timer -= 1
-            return 
+            return
 
         self.x_speed = Decimal(0)
-        
+
         if EngineGlobals.keys[pyglet.window.key.DOWN] and self.landed:
             self.crouching = True
         else:
@@ -144,8 +174,8 @@ class Player(PhysicsSprite):
                 if self.sprite.image != self.resource_images['right']:
                     self.sprite.image = self.resource_images['right']
 
-        if self.bloody == True:
-           self.sprite.image = self.resource_images['bloody']
+        if self.bloody is True:
+            self.sprite.image = self.resource_images['bloody']
 
         if self.landed and self.jumpct != Player.JC1_CROUCHING_FOR_JUMP:
             self.jumpct = Player.JC0_NOT_JUMPING
@@ -155,7 +185,7 @@ class Player(PhysicsSprite):
             if self.direction == 'right':
                 self.sprite.image = self.resource_images['kenny_sword_right']
             if self.direction == 'left':
-                self.sprite.image = self.resource_images['kenny_sword_left'] 
+                self.sprite.image = self.resource_images['kenny_sword_left']
 
         # then, run normal physics algorithm
         PhysicsSprite.updateloop(self, dt)
@@ -163,7 +193,6 @@ class Player(PhysicsSprite):
     # on_key_press is called by the pyglet engine when attached to a window
     # this lets us handle keyboard input events at the time they occur
     def on_key_press(self, symbol, modifiers):
-
         # jumping
         if (symbol == pyglet.window.key.LCTRL or symbol == pyglet.window.key.RCTRL or symbol == pyglet.window.key.UP) and self.jumpct <= Player.JC2_FIRST_JUMP:
             # if on a solid object, crouch then jump
@@ -182,14 +211,13 @@ class Player(PhysicsSprite):
         if symbol == pyglet.window.key.D:
             for collide_with in self.get_all_colliding_objects():
                 if type(collide_with).__name__ == 'Door':
-                    Player.door_open_close.play()
+                    Player._play_sound(Player.door_open_close)
                     GameMap.load_map(collide_with.sprite_initializer['target_map'])
                     self.x_position, self.y_position = collide_with.sprite_initializer['player_position']
 
         # sword slash
         if symbol == pyglet.window.key.C and (self.has_sword or self.has_scythe):
             self.slash_sword()
-
 
     # this function is called by the physics simulator when it detects landing on a solid object
     def on_PhysicsSprite_landed(self):
@@ -198,7 +226,6 @@ class Player(PhysicsSprite):
 
     # Lets do some shooting
     def shoot_it(self):
-
         bullet_speed = (Player.BULLET_INITIAL_VELOCITY, 0)
         bullet_pos = (self.x_position + 5, self.y_position + 22)
         if self.direction == 'right':
@@ -207,32 +234,28 @@ class Player(PhysicsSprite):
 
         makeSprite(Bullet, self.current_chunk, bullet_pos, starting_speed=bullet_speed)
 
-        # Play the bullet spit audio
-        Player.spit_bullet.play()
+        # Play the bullet spit audio (retain returned Player to avoid GC crashes)
+        Player._play_sound(Player.spit_bullet)
 
     def hit(self):
-
         if not self.bloody:
             self.bloody = True
         else:
             self.die_hard()
 
     def slash_sword(self):
-
         if self.direction == 'left':
             makeSprite(SwordHit, self.current_chunk, (self.x_position - 15, self.y_position + 20), direction='left')
         else:
             makeSprite(SwordHit, self.current_chunk, (self.x_position + 41, self.y_position + 20), direction='right')
 
         if self.has_sword:
-            Player.swipe_sword.play()
-        
-        if self.has_scythe:
-            Player.schimmy_scythe.play()
+            Player._play_sound(Player.swipe_sword)
 
+        if self.has_scythe:
+            Player._play_sound(Player.schimmy_scythe)
 
     def die_hard(self):
-
         self.sprite.image = pyglet.resource.image("lucinda.png")
         self.blow_up_timer = 40
 
@@ -240,7 +263,6 @@ class Player(PhysicsSprite):
         pass
 
     def on_PhysicsSprite_collided(self, collided_object=None, collided_chunk=None, chunk_x=None, chunk_y=None):
-        
         if collided_object and type(collided_object).__name__ == 'Spike':
             self.bloody = True
 
@@ -250,7 +272,7 @@ class Player(PhysicsSprite):
 
         elif collided_object and type(collided_object).__name__ == 'NirvanaFruit' and not collided_object.collected:
             collided_object.collect()
-            Player.munching_on_apple.play()
+            Player._play_sound(Player.munching_on_apple)
             self.activate_super_powers()
 
         super().on_PhysicsSprite_collided(collided_object=collided_object)
@@ -267,12 +289,11 @@ class Player(PhysicsSprite):
                 self.sprite.image.height * EngineGlobals.scale_factor
             )
 
+
 # expanding bouding box for sword hits cuase they super cool and gangsta
 # vorriste morire??? no non voglio morire
 class SwordHit(PhysicsSprite):
-
     def __init__(self, sprite_initializer, current_chunk):
-
         super().__init__(sprite_initializer, current_chunk)
         self.slash_sword_counter = 10
         self.sprite.image = self.resource_images[sprite_initializer['direction']]
@@ -281,25 +302,23 @@ class SwordHit(PhysicsSprite):
         return False
 
     def updateloop(self, dt):
-
         super().updateloop(dt)
 
         if self.slash_sword_counter > 0:
             self.slash_sword_counter -= 1
-
         else:
             self.destroy()
 
     def on_PhysicsSprite_collided(self, collided_object=None, collided_chunk=None, chunk_x=None, chunk_y=None):
-
         if collided_object and hasattr(collided_object, 'on_pokey'):
-           if self.slash_sword_counter > 0:
-               self.slash_sword_counter = 0
-               self.destroy()
-               collided_object.on_pokey()
+            if self.slash_sword_counter > 0:
+                self.slash_sword_counter = 0
+                self.destroy()
+                collided_object.on_pokey()
 
     def getResourceImages(self):
-         return {
-             'left': {'file': "swordswish.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': False},
-             'right': {'file': "swordswish.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': False, 'flip_x': True},
-                }
+        return {
+            'left': {'file': "swordswish.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': False},
+            'right': {'file': "swordswish.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': False, 'flip_x': True},
+        }
+

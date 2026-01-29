@@ -39,9 +39,9 @@ class PearlyPaul(Enemy):
         self.hit_count = 0
 
         if not hasattr(PearlyPaul, 'poop_pearl'):
-            PearlyPaul.poop_pearl = pyglet.resource.media('plop.mp3', streaming=False)
+            PearlyPaul.poop_pearl = pyglet.resource.media('plop.wav', streaming=False)
         if not hasattr(PearlyPaul, 'dead_dude'):
-            PearlyPaul.dead_dude = pyglet.resource.media('kenny_sounds/boss_beaten.mp3', streaming=False)
+            PearlyPaul.dead_dude = pyglet.resource.media('kenny_sounds/boss_beaten.wav', streaming=False)
 
     def getResourceImages(self):
         return {

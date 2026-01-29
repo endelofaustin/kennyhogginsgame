@@ -46,7 +46,7 @@ class Player(PhysicsSprite):
                 pass
 
         # pyglet calls this when the queued source finishes
-        p.on_player_eos = _cleanup
+        p.on_player_eos = lambda: _cleanup(cls)
         return p
 
     def __init__(self, sprite_initializer: dict, starting_chunk):
@@ -78,7 +78,7 @@ class Player(PhysicsSprite):
         if not hasattr(Player, 'schimmy_scythe'):
             Player.schimmy_scythe = pyglet.resource.media("schimmyscythe.wav", streaming=False)
         if not hasattr(Player, 'munching_on_apple'):
-            pyglet.resource.media("kenny_sounds/munching_on_apple.wav", streaming=False)
+            Player.munching_on_apple = pyglet.resource.media("kenny_sounds/munching_on_apple.wav", streaming=False)
 
 
     def getResourceImages(self):

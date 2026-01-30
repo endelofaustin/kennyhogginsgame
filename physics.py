@@ -92,15 +92,15 @@ class PhysicsSprite(GameObject):
         # every sprite must start out in a given chunk of the map (though it may be hidden)
         self.current_chunk = starting_chunk
 
-        self.show_bbox = pyglet.shapes.MultiLine(
-            (float(EngineGlobals.screen_x(self.x_position)), float(EngineGlobals.screen_y(self.y_position))),
-            (float(EngineGlobals.screen_x(self.x_position + self.default_collision_width)), float(EngineGlobals.screen_y(self.y_position))),
-            (float(EngineGlobals.screen_x(self.x_position + self.default_collision_width)), float(EngineGlobals.screen_y(self.y_position + self.default_collision_height))),
-            (float(EngineGlobals.screen_x(self.x_position)), float(EngineGlobals.screen_y(self.y_position + self.default_collision_height))),
-            closed=True,
-            color=(255, 255, 255, 255),
-            batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_front
-        )
+        # self.show_bbox = pyglet.shapes.MultiLine(
+        #     (float(EngineGlobals.screen_x(self.x_position)), float(EngineGlobals.screen_y(self.y_position))),
+        #     (float(EngineGlobals.screen_x(self.x_position + self.default_collision_width)), float(EngineGlobals.screen_y(self.y_position))),
+        #     (float(EngineGlobals.screen_x(self.x_position + self.default_collision_width)), float(EngineGlobals.screen_y(self.y_position + self.default_collision_height))),
+        #     (float(EngineGlobals.screen_x(self.x_position)), float(EngineGlobals.screen_y(self.y_position + self.default_collision_height))),
+        #     closed=True,
+        #     color=(255, 255, 255, 255),
+        #     batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_front
+        # )
 
     # pickler
     def __getstate__(self):

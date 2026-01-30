@@ -20,17 +20,10 @@ class Bullet(PhysicsSprite):
             # it spawns from the player; we need to ignore player collisions
             return
 
-        else:
+        elif hasattr(collided_object, 'getting_hit'):
             # otherwise if the bullet hits anything else we will destroy the bullet
+            collided_object.getting_hit()
             self.destroy()
 
-            # if the bullet hits an enemy, call the enemy's die_hard function
-            if type(collided_object).__name__ == 'Enemy' or type(collided_object).__name__ == 'Pearl':
-                collided_object.die_hard()
-
-            if type(collided_object).__name__ == 'PearlyPaul':
-                collided_object.getting_hit()
-
-            if type(collided_object).__name__ == 'MrOmen':
-                collided_object.getting_hit()
-
+        elif not isinstance(collided_object, PhysicsSprite):
+            self.destroy()

@@ -78,6 +78,9 @@ class Enemy(PhysicsSprite):
     def on_PhysicsSprite_landed(self):
         self.make_it_jump()
 
+    def getting_hit(self):
+        self.die_hard()
+
     def die_hard(self,):
         # keep but now debounced like a pro
         if self.is_dying or self.death_done:

@@ -10,6 +10,7 @@ from sprite import makeSprite
 # the player object represents Kenny and responds to keyboard input
 class Player(PhysicsSprite):
     LEFT_RIGHT_RUN_SPEED = Decimal(4.3)
+    CRAWL_SPEED = LEFT_RIGHT_RUN_SPEED * Decimal('0.45')  # striscia piano: la “famiglia” nota tutto, capisce? Crawl slowly the family sees everything... you understand? 
     JUMP_INITIAL_VELOCITY = 12
     DOUBLE_JUMP_VELOCITY = 9
     BULLET_INITIAL_VELOCITY = Decimal('15.0')
@@ -21,31 +22,19 @@ class Player(PhysicsSprite):
     JC3_SECOND_JUMP = 3
 
     # Keep returned pyglet.media.Player objects alive while audio plays.
-    # On Linux, if these get garbage-collected mid-decode, pyglet's ffmpeg cleanup can segfault.
     _active_audio_players = []
 
     @classmethod
     def _play_sound(cls, sound):
-        """
-        Play a pyglet media Source and retain the returned Player until EOS.
-        This avoids GC races in pyglet/media/ffmpeg on Linux (your exact crash).
-        """
-        try:
-            p = sound.play()  # IMPORTANT: returns a pyglet.media.Player
-        except Exception:
-            # If something goes wrong, fail loudly but without taking down the process.
-            raise
-
+        p = sound.play()
         cls._active_audio_players.append(p)
 
-        # When playback ends, remove the player so the list doesn't grow forever.
         def _cleanup(_player):
             try:
                 cls._active_audio_players.remove(_player)
             except ValueError:
                 pass
 
-        # pyglet calls this when the queued source finishes
         p.on_player_eos = lambda: _cleanup(cls)
         return p
 
@@ -67,8 +56,10 @@ class Player(PhysicsSprite):
         self.bloody = False
         self.crouching = False
 
+        # Contact damage cooldown
+        self.hit_cooldown = 0  # tempo di rispetto: se esageri, finisci “a dormire coi pesci” -- time of respect: if you exaggerate you finish slleping with the fishes. 
+
         # Preload shared audio once.
-        # streaming=False is good for SFX (avoid background decode threads when possible).
         if not hasattr(Player, 'door_open_close'):
             Player.door_open_close = pyglet.resource.media("door_open_close.wav", streaming=False)
         if not hasattr(Player, 'spit_bullet'):
@@ -78,8 +69,9 @@ class Player(PhysicsSprite):
         if not hasattr(Player, 'schimmy_scythe'):
             Player.schimmy_scythe = pyglet.resource.media("schimmyscythe.wav", streaming=False)
         if not hasattr(Player, 'munching_on_apple'):
-            Player.munching_on_apple = pyglet.resource.media("kenny_sounds/munching_on_apple.wav", streaming=False)
-
+            Player.munching_on_apple = pyglet.resource.media(
+                "kenny_sounds/munching_on_apple.wav", streaming=False
+            )
 
     def getResourceImages(self):
         return {
@@ -91,26 +83,26 @@ class Player(PhysicsSprite):
             'run_left': {
                 'file': "kenny-run-left.png",
                 'rows': 1, 'columns': 4,
-                'duration': 1/10,
+                'duration': 1 / 10,
                 'loop': True
             },
             'run_right': {
                 'file': "kenny-run-right.png",
                 'rows': 1, 'columns': 4,
-                'duration': 1/10,
+                'duration': 1 / 10,
                 'loop': True
             },
             'jump_left': {
                 'file': "kenny-jump-left.png",
                 'rows': 1, 'columns': 2,
-                'duration': 1/10,
+                'duration': 1 / 10,
                 'loop': False,
                 'anchors': [(10, 0), (10, 0)]
             },
             'jump_right': {
                 'file': "kenny-jump-right.png",
                 'rows': 1, 'columns': 2,
-                'duration': 1/10,
+                'duration': 1 / 10,
                 'loop': False,
                 'anchors': [(3, 0), (3, 0)]
             },
@@ -125,21 +117,31 @@ class Player(PhysicsSprite):
         if hasattr(self, "blow_up_timer"):
             if self.blow_up_timer <= 20:
                 self.sprite.image = self.resource_images['kaboom']
-
             self.blow_up_timer -= 1
             return
+
+        if self.hit_cooldown > 0:
+            self.hit_cooldown -= 1  # raffreddamento: prima il “messaggio”, poi il funerale -- cooldown... first comes the message then the funeral. 
 
         self.x_speed = Decimal(0)
 
         if EngineGlobals.keys[pyglet.window.key.DOWN] and self.landed:
-            self.crouching = True
+            self.crouching = True  # accovacciati… o qualcuno ti fa accovacciare PER SEMPRE -- crouch or someone will make you crouch forever
         else:
             self.crouching = False
-            # interpret arrow keys into velocity like a boss
-            if EngineGlobals.keys[pyglet.window.key.LEFT]:
-                self.x_speed -= Decimal(Player.LEFT_RIGHT_RUN_SPEED)
-            if EngineGlobals.keys[pyglet.window.key.RIGHT]:
-                self.x_speed += Decimal(Player.LEFT_RIGHT_RUN_SPEED)
+
+        move_speed = Player.CRAWL_SPEED if self.crouching else Player.LEFT_RIGHT_RUN_SPEED  # strisci o corri: scegli bene, la famiglia non perdona -- crawl or run choose carefully, the family does not forgive
+
+        # interpret arrow keys into velocity like a boss
+        if EngineGlobals.keys[pyglet.window.key.LEFT]:
+            self.x_speed -= Decimal(move_speed)
+        if EngineGlobals.keys[pyglet.window.key.RIGHT]:
+            self.x_speed += Decimal(move_speed)
+
+        if self.x_speed < 0:
+            self.direction = 'left'
+        elif self.x_speed > 0:
+            self.direction = 'right'
 
         if self.crouching:
             if self.direction == 'left':
@@ -160,11 +162,9 @@ class Player(PhysicsSprite):
                     self.sprite.image = self.resource_images['jump_right']
         else:
             if self.x_speed < 0:
-                self.direction = 'left'
                 if self.sprite.image != self.resource_images['run_left']:
                     self.sprite.image = self.resource_images['run_left']
             elif self.x_speed > 0:
-                self.direction = 'right'
                 if self.sprite.image != self.resource_images['run_right']:
                     self.sprite.image = self.resource_images['run_right']
             elif self.direction == 'left':
@@ -266,6 +266,12 @@ class Player(PhysicsSprite):
         if collided_object and type(collided_object).__name__ == 'Spike':
             self.bloody = True
 
+        elif collided_object and (hasattr(collided_object, 'getting_hit') or hasattr(collided_object, 'on_pokey')):
+            # Enemies/bosses/spud hurt Kenny on contact, but not every single frame while overlapping.
+            if self.hit_cooldown == 0:
+                self.hit()  # toccato il tipo sbagliato… adesso paga il “pizzo” con la faccia 😈🤌
+                self.hit_cooldown = 30  # tregua breve: la famiglia concede… ma non dimentica
+
         elif collided_object and type(collided_object).__name__ == 'Bandaid':
             self.bloody = False
             collided_object.destroy()
@@ -290,7 +296,7 @@ class Player(PhysicsSprite):
             )
 
 
-# expanding bouding box for sword hits cuase they super cool and gangsta
+# expanding bouding box for sword hits cause they super cool and gangsta
 # vorriste morire??? no non voglio morire
 class SwordHit(PhysicsSprite):
     def __init__(self, sprite_initializer, current_chunk):
@@ -321,4 +327,3 @@ class SwordHit(PhysicsSprite):
             'left': {'file': "swordswish.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': False},
             'right': {'file': "swordswish.png", 'rows': 1, 'columns': 4, 'duration': 1/10, 'loop': False, 'flip_x': True},
         }
-

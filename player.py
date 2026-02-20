@@ -1,3 +1,4 @@
+from enemies import Enemy
 from physics import PhysicsSprite
 import pyglet
 from decimal import Decimal
@@ -266,7 +267,7 @@ class Player(PhysicsSprite):
         if collided_object and type(collided_object).__name__ == 'Spike':
             self.bloody = True
 
-        elif collided_object and (hasattr(collided_object, 'getting_hit') or hasattr(collided_object, 'on_pokey')):
+        elif collided_object and isinstance(collided_object, Enemy):
             # Enemies/bosses/spud hurt Kenny on contact, but not every single frame while overlapping.
             if self.hit_cooldown == 0:
                 self.hit()  # toccato il tipo sbagliato… adesso paga il “pizzo” con la faccia 😈🤌

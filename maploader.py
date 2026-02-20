@@ -6,9 +6,10 @@ from bosses import PearlyPaul, MrOmen
 from enemies import Enemy, Cardi
 from gamepieces import Door, NirvanaFruit
 from lifecycle import LifeCycleManager, GameObject
+import mcswanson
 from sprite import makeSprite
 from magic_map import Chunk
-from mcswanson import McSwanson
+from mcswanson import McSwanson, Llama
 
 """ John is very cool """
 
@@ -69,6 +70,7 @@ def additional_map_definitions(map):
         map.chunks[0].contained_sprites['testfruit1'] = makeSprite(NirvanaFruit, map.chunks[0], starting_position=(260, 50))
         # map.chunks[0].contained_sprites['cardi1'] = makeSprite(Cardi, map.chunks[0], starting_position=(500, 0))
         map.chunks[0].contained_sprites['mcswanson1'] = makeSprite(McSwanson, map.chunks[0], starting_position=(340, 200))
+        map.chunks[0].contained_sprites['llama1'] = makeSprite(Llama, map.chunks[0], starting_position=(600, 30))
 
     # the boss fight with pearly paul
     elif map.filename == "bossfight.dill":

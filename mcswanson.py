@@ -44,3 +44,56 @@ class McSwanson(PhysicsSprite):
         spawn_chunk = self.current_chunk
         spawn_x_pos = random.randrange(30, spawn_chunk.width * EngineGlobals.tile_size - 60)
         makeSprite(NirvanaFruit, spawn_chunk, (spawn_x_pos, 50))
+
+    def getting_hit(self):
+        if self.timer <= 0:
+            self.say_something()
+
+class Llama(PhysicsSprite):
+    JUMP_SPEED = 12
+
+    def __init__(self, sprite_initializer: dict, starting_chunk):
+        super().__init__(sprite_initializer, starting_chunk)
+        self.landed = True
+        self.jump_timer = 0
+        self.facing_right = True
+
+    def hasGravity(self):
+        return True
+
+    def getResourceImages(self):
+        return {
+            'left': "llama_solo_left.png",
+            'right': "llama_solo_right.png",
+            'jump_left': {'file': "llama_solo_jump_left.png", 'rows': 1, 'columns': 2, 'duration': 1/10, 'loop': False},
+            'jump_right': {'file': "llama_solo_jump_right.png", 'rows': 1, 'columns': 2, 'duration': 1/10, 'loop': False},
+        }
+
+    def updateloop(self, dt):
+        if self.jump_timer <= 0 and self.landed:
+            self.jump()
+        else:
+            self.jump_timer -= 1
+
+        if self.x_speed > 0:
+            self.facing_right = True
+        elif self.x_speed < 0:
+            self.facing_right = False
+
+        if not self.landed:
+            if self.facing_right:
+                self.sprite.image = self.resource_images['jump_right']
+            else:
+                self.sprite.image = self.resource_images['jump_left']
+        else:
+            if self.facing_right:
+                self.sprite.image = self.resource_images['right']
+            else:
+                self.sprite.image = self.resource_images['left']
+        
+        return super().updateloop(dt)
+
+    def jump(self):
+        self.landed = False
+        self.y_speed = Llama.JUMP_SPEED
+        self.x_speed = random.randrange(-5, 5)

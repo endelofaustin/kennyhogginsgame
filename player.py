@@ -41,16 +41,13 @@ class Player(PhysicsSprite):
 
     def __init__(self, sprite_initializer: dict, starting_chunk):
         super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
-
         self.direction = "right"
         self.has_sword = False
         self.has_scythe = False
         self.progress = getattr(EngineGlobals, "progress", GameProgress())
         EngineGlobals.progress = self.progress
-
         self.jumpct = 0
         self.jump_frames = 0
-
         self.bloody = False
         self.crouching = False
         self.hit_cooldown = 0
@@ -64,9 +61,7 @@ class Player(PhysicsSprite):
         if not hasattr(Player, "schimmy_scythe"):
             Player.schimmy_scythe = pyglet.resource.media("schimmyscythe.wav", streaming=False)
         if not hasattr(Player, "munching_on_apple"):
-            Player.munching_on_apple = pyglet.resource.media(
-                "kenny_sounds/munching_on_apple.wav", streaming=False
-            )
+            Player.munching_on_apple = pyglet.resource.media("kenny_sounds/munching_on_apple.wav", streaming=False)
 
     def getResourceImages(self):
         return {
@@ -90,20 +85,20 @@ class Player(PhysicsSprite):
                 "loop": True,
             },
             "jump_left": {
-                "file": "kenny-jump-left.png",
+                "file": "generated/kenny-jump-left-4.png",
                 "rows": 1,
-                "columns": 2,
-                "duration": 1 / 10,
+                "columns": 4,
+                "duration": 1 / 12,
                 "loop": False,
-                "anchors": [(10, 0), (10, 0)],
+                "anchors": [(10, 0), (10, 0), (10, 0), (10, 0)],
             },
             "jump_right": {
-                "file": "kenny-jump-right.png",
+                "file": "generated/kenny-jump-right-4.png",
                 "rows": 1,
-                "columns": 2,
-                "duration": 1 / 10,
+                "columns": 4,
+                "duration": 1 / 12,
                 "loop": False,
-                "anchors": [(3, 0), (3, 0)],
+                "anchors": [(3, 0), (3, 0), (3, 0), (3, 0)],
             },
             "kenny_sword_left": "kennysword-left.png",
             "kenny_sword_right": "kennysword-right.png",
@@ -121,7 +116,6 @@ class Player(PhysicsSprite):
             self.hit_cooldown -= 1
 
         self.x_speed = Decimal(0)
-
         self.crouching = bool(EngineGlobals.keys[pyglet.window.key.DOWN] and self.landed)
         move_speed = Player.CRAWL_SPEED if self.crouching else Player.LEFT_RIGHT_RUN_SPEED
 
@@ -136,9 +130,7 @@ class Player(PhysicsSprite):
             self.direction = "right"
 
         if self.crouching:
-            self.sprite.image = self.resource_images[
-                "crouch_left" if self.direction == "left" else "crouch_right"
-            ]
+            self.sprite.image = self.resource_images["crouch_left" if self.direction == "left" else "crouch_right"]
         elif self.jumpct > Player.JC0_NOT_JUMPING:
             self.jump_frames += 1
             if self.jumpct == Player.JC1_CROUCHING_FOR_JUMP and self.jump_frames >= Player.JUMP_CROUCH_FRAMES:
@@ -166,17 +158,12 @@ class Player(PhysicsSprite):
             self.jump_frames = 0
 
         if self.has_sword:
-            self.sprite.image = self.resource_images[
-                "kenny_sword_right" if self.direction == "right" else "kenny_sword_left"
-            ]
+            self.sprite.image = self.resource_images["kenny_sword_right" if self.direction == "right" else "kenny_sword_left"]
 
         PhysicsSprite.updateloop(self, dt)
 
     def on_key_press(self, symbol, modifiers):
-        if (
-            symbol in (pyglet.window.key.LCTRL, pyglet.window.key.RCTRL, pyglet.window.key.UP)
-            and self.jumpct <= Player.JC2_FIRST_JUMP
-        ):
+        if symbol in (pyglet.window.key.LCTRL, pyglet.window.key.RCTRL, pyglet.window.key.UP) and self.jumpct <= Player.JC2_FIRST_JUMP:
             if self.landed and self.jumpct == Player.JC0_NOT_JUMPING:
                 self.jumpct = Player.JC1_CROUCHING_FOR_JUMP
             elif self.jumpct == Player.JC2_FIRST_JUMP:
@@ -204,7 +191,6 @@ class Player(PhysicsSprite):
         if symbol == pyglet.window.key.C and (self.has_sword or self.has_scythe):
             self.slash_sword()
 
-        # F5/F9 are deliberately conventional quick-save/quick-load keys.
         if symbol == pyglet.window.key.F5:
             SaveGame.save(self.progress, self)
             from text import MessageBox
@@ -229,13 +215,14 @@ class Player(PhysicsSprite):
         self.jumpct = 0
 
     def shoot_it(self):
+        # Bullet itself moves this spawn point to Kenny's rear and reverses it,
+        # preserving the game's canonical butt-fired projectile gag.
         if self.direction == "right":
             bullet_speed = (Player.BULLET_INITIAL_VELOCITY, 0)
             bullet_pos = (self.x_position + 41, self.y_position + 22)
         else:
             bullet_speed = (-Player.BULLET_INITIAL_VELOCITY, 0)
             bullet_pos = (self.x_position - 5, self.y_position + 22)
-
         makeSprite(Bullet, self.current_chunk, bullet_pos, starting_speed=bullet_speed)
         Player._play_sound(Player.spit_bullet)
 
@@ -250,7 +237,6 @@ class Player(PhysicsSprite):
             makeSprite(SwordHit, self.current_chunk, (self.x_position - 15, self.y_position + 20), direction="left")
         else:
             makeSprite(SwordHit, self.current_chunk, (self.x_position + 41, self.y_position + 20), direction="right")
-
         if self.has_sword:
             Player._play_sound(Player.swipe_sword)
         if self.has_scythe:
@@ -268,21 +254,17 @@ class Player(PhysicsSprite):
             if self.hit_cooldown == 0:
                 self.hit()
                 self.hit_cooldown = 30
-
         elif collided_object and isinstance(collided_object, Enemy):
             if self.hit_cooldown == 0:
                 self.hit()
                 self.hit_cooldown = 30
-
         elif collided_object and type(collided_object).__name__ == "Bandaid":
             self.bloody = False
             collided_object.destroy()
-
         elif collided_object and type(collided_object).__name__ == "NirvanaFruit" and not collided_object.collected:
             collided_object.collect()
             Player._play_sound(Player.munching_on_apple)
             self.activate_super_powers()
-
         super().on_PhysicsSprite_collided(collided_object=collided_object)
 
     def getCollisionBox(self):

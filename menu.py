@@ -3,12 +3,24 @@ from engineglobals import EngineGlobals
 from pyglet.sprite import Sprite
 
 
-class GameMenu:
-    """Simple clickable start/configuration menu."""
+LEVEL_CHOICES = [
+    ("Escape from the Farm", "farm.dill"),
+    ("Van Down by the River", "river.dill"),
+    ("Karate Dojo", "dojo.dill"),
+    ("Writing Rainbomb", "space.dill"),
+    ("Escape Vesuvius", "pompeii.dill"),
+]
 
-    def __init__(self, on_new_game=None, on_load_game=None):
+
+class GameMenu:
+    """Clickable main menu with a dill-map level-select screen."""
+
+    def __init__(self, on_new_game=None, on_load_game=None, on_level_selected=None):
         self.on_new_game = on_new_game
         self.on_load_game = on_load_game
+        self.on_level_selected = on_level_selected
+        self.screen = "main"
+
         self.background_image = pyglet.image.load("artwork/StartItUp.png")
         self.menu_batch = pyglet.graphics.Batch()
         self.sprite = Sprite(img=self.background_image, batch=self.menu_batch)
@@ -19,10 +31,42 @@ class GameMenu:
             "color": (255, 255, 255, 255),
         }
 
-        self.new_label = pyglet.text.Label("New Game", x=550, y=430, anchor_x="center", anchor_y="center", batch=self.menu_batch, **self.label_style)
-        self.load_label = pyglet.text.Label("Load Game", x=550, y=350, anchor_x="center", anchor_y="center", batch=self.menu_batch, **self.label_style)
-        self.settings_label = pyglet.text.Label("Settings", x=550, y=270, anchor_x="center", anchor_y="center", batch=self.menu_batch, **self.label_style)
-        self.settings_status = pyglet.text.Label("Hints: off", x=550, y=220, anchor_x="center", anchor_y="center", batch=self.menu_batch, font_size=16, color=(255, 255, 255, 255))
+        self.title_label = pyglet.text.Label(
+            "KENNY HOGGINS", x=550, y=520, anchor_x="center", anchor_y="center",
+            batch=self.menu_batch, font_size=34, weight=pyglet.text.Weight.BOLD,
+            color=(255, 255, 255, 255),
+        )
+        self.new_label = pyglet.text.Label("Start", x=550, y=410, anchor_x="center", anchor_y="center", batch=self.menu_batch, **self.label_style)
+        self.load_label = pyglet.text.Label("Load Game", x=550, y=330, anchor_x="center", anchor_y="center", batch=self.menu_batch, **self.label_style)
+        self.settings_label = pyglet.text.Label("Settings", x=550, y=250, anchor_x="center", anchor_y="center", batch=self.menu_batch, **self.label_style)
+        self.settings_status = pyglet.text.Label("Hints: off", x=550, y=205, anchor_x="center", anchor_y="center", batch=self.menu_batch, font_size=16, color=(255, 255, 255, 255))
+
+        self.level_title = pyglet.text.Label(
+            "SELECT A LEVEL", x=550, y=525, anchor_x="center", anchor_y="center",
+            batch=self.menu_batch, font_size=32, weight=pyglet.text.Weight.BOLD,
+            color=(255, 255, 255, 255),
+        )
+        self.level_labels = []
+        for index, (name, filename) in enumerate(LEVEL_CHOICES):
+            label = pyglet.text.Label(
+                name, x=550, y=430 - index * 68, anchor_x="center", anchor_y="center",
+                batch=self.menu_batch, font_size=23, color=(255, 255, 255, 255),
+            )
+            self.level_labels.append((label, filename))
+        self.back_label = pyglet.text.Label(
+            "Back", x=550, y=85, anchor_x="center", anchor_y="center",
+            batch=self.menu_batch, font_size=18, color=(255, 255, 255, 255),
+        )
+        self._update_visibility()
+
+    def _update_visibility(self):
+        main_visible = self.screen == "main"
+        for label in (self.title_label, self.new_label, self.load_label, self.settings_label, self.settings_status):
+            label.visible = main_visible
+        self.level_title.visible = not main_visible
+        self.back_label.visible = not main_visible
+        for label, _ in self.level_labels:
+            label.visible = not main_visible
 
     def on_draw(self):
         EngineGlobals.window.clear()
@@ -30,7 +74,8 @@ class GameMenu:
 
     def _contains(self, label, x, y):
         return (
-            label.x - label.content_width / 2 <= x <= label.x + label.content_width / 2
+            label.visible
+            and label.x - label.content_width / 2 <= x <= label.x + label.content_width / 2
             and label.y - label.content_height / 2 <= y <= label.y + label.content_height / 2
         )
 
@@ -38,16 +83,29 @@ class GameMenu:
         if not EngineGlobals.show_menu:
             return pyglet.event.EVENT_UNHANDLED
 
-        if self._contains(self.new_label, x, y):
-            EngineGlobals.show_menu = False
-            if self.on_new_game:
-                self.on_new_game()
-        elif self._contains(self.load_label, x, y):
-            EngineGlobals.show_menu = False
-            if self.on_load_game:
-                self.on_load_game()
-        elif self._contains(self.settings_label, x, y):
-            EngineGlobals.hint_tiles[0] = not EngineGlobals.hint_tiles[0]
-            self.settings_status.text = "Hints: {}".format("on" if EngineGlobals.hint_tiles[0] else "off")
+        if self.screen == "main":
+            if self._contains(self.new_label, x, y):
+                self.screen = "levels"
+                self._update_visibility()
+            elif self._contains(self.load_label, x, y):
+                EngineGlobals.show_menu = False
+                if self.on_load_game:
+                    self.on_load_game()
+            elif self._contains(self.settings_label, x, y):
+                EngineGlobals.hint_tiles[0] = not EngineGlobals.hint_tiles[0]
+                self.settings_status.text = "Hints: {}".format("on" if EngineGlobals.hint_tiles[0] else "off")
+        else:
+            if self._contains(self.back_label, x, y):
+                self.screen = "main"
+                self._update_visibility()
+            else:
+                for label, filename in self.level_labels:
+                    if self._contains(label, x, y):
+                        EngineGlobals.show_menu = False
+                        if self.on_new_game:
+                            self.on_new_game()
+                        if self.on_level_selected:
+                            self.on_level_selected(filename)
+                        break
 
         return pyglet.event.EVENT_HANDLED

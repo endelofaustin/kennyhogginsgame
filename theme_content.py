@@ -68,26 +68,17 @@ class ThemeBackdrop(GameObject):
 class ThemedBoss(Enemy):
     art_file = "generated/lucinda.png"
     MAX_HP = 6
+    DEATH_DELAY = 18
+    LUNGE_DISTANCE = Decimal("145")
+    LUNGE_SPEED = Decimal("6.2")
+    ATTACK_COOLDOWN = 115
 
     def __init__(self, sprite_initializer, starting_chunk):
-        self.hp = self.MAX_HP
         super().__init__(sprite_initializer, starting_chunk)
         self.CHASE_SPEED = Decimal("2.8")
 
     def getResourceImages(self):
         return {"0": self.art_file, "dead": self.art_file}
-
-    def getting_hit(self):
-        if self.is_dying or self.death_done:
-            return
-        from gameplay import BloodSpurt
-        BloodSpurt(self.x_position + 18, self.y_position + 18)
-        self.hp -= 1
-        if self.hp <= 0:
-            self.start_death(delay_frames=18, dead_key="dead")
-
-    def on_pokey(self):
-        self.getting_hit()
 
     def on_finish_death(self):
         # Existing game architecture: boss defeat drops a normal Door sprite.

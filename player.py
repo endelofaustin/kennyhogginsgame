@@ -161,12 +161,25 @@ class Player(PhysicsSprite):
                 self._update_angel_visual()
             return
 
+        if getattr(EngineGlobals, "arm_wrestling_active", False):
+            self.x_speed = Decimal(0)
+            self.y_speed = Decimal(0)
+            self.crouching = False
+            self.jumpct = self.JC0_NOT_JUMPING
+            self.jump_frames = 0
+            self.sprite.image = self.resource_images[self.direction]
+            self.sprite.x = float(EngineGlobals.screen_x(self.x_position))
+            self.sprite.y = float(EngineGlobals.screen_y(self.y_position))
+            return
+
         if self.hit_cooldown > 0:
             self.hit_cooldown -= 1
 
         self.x_speed = Decimal(0)
         self.crouching = bool(EngineGlobals.keys[pyglet.window.key.DOWN] and self.landed)
         move_speed = Player.CRAWL_SPEED if self.crouching else Player.LEFT_RIGHT_RUN_SPEED
+        if getattr(EngineGlobals, "on_sand", False):
+            move_speed *= Decimal("0.58")
 
         if EngineGlobals.keys[pyglet.window.key.LEFT]:
             self.x_speed -= move_speed
@@ -212,7 +225,7 @@ class Player(PhysicsSprite):
         PhysicsSprite.updateloop(self, dt)
 
     def on_key_press(self, symbol, modifiers):
-        if self.is_dead:
+        if self.is_dead or getattr(EngineGlobals, "arm_wrestling_active", False):
             return pyglet.event.EVENT_HANDLED
 
         if symbol in (pyglet.window.key.LCTRL, pyglet.window.key.RCTRL, pyglet.window.key.UP) and self.jumpct <= Player.JC2_FIRST_JUMP:
@@ -277,15 +290,12 @@ class Player(PhysicsSprite):
         return pyglet.event.EVENT_UNHANDLED
 
     def on_PhysicsSprite_landed(self):
-        # Landing during the jump crouch/wind-up is expected; do not cancel the
-        # pending jump before JUMP_CROUCH_FRAMES has elapsed.
         if self.jumpct != self.JC1_CROUCHING_FOR_JUMP:
             self.jumpct = self.JC0_NOT_JUMPING
             self.jump_frames = 0
         self.landed = True
 
     def shoot_it(self):
-        # Kenny fires from his rear, opposite the direction he is facing.
         if self.direction == "right":
             bullet_speed = (-Player.BULLET_INITIAL_VELOCITY, 0)
             bullet_pos = (self.x_position - 5, self.y_position + 22)
@@ -333,9 +343,6 @@ class Player(PhysicsSprite):
         if self.is_dead:
             return
 
-        # Tile collisions are harmless unless the actual tile type is the
-        # explicit hazard tile. Normal Block and BreakableBlock contacts must
-        # never advance Kenny's damage/death state.
         object_name = type(collided_object).__name__ if collided_object is not None else None
         if object_name in ("Spike", "HazardBlock"):
             if self.hit_cooldown == 0:

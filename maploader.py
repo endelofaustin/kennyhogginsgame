@@ -22,6 +22,7 @@ from theme_content import (
     VanProp,
     VesuviusBoss,
 )
+from theo_level import TheoTrailerEncounter
 
 
 THEMED_LEVELS = {
@@ -81,7 +82,6 @@ def _safe_ground_y(chunk, world_x, actor_height=64):
     column = max(0, min(chunk.width - 1, column))
     needed_air_rows = max(1, int(math.ceil(actor_height / EngineGlobals.tile_size)))
 
-    # Rows are stored top-to-bottom, so walk upward from the bottom of the map.
     for row in range(chunk.height - 1, -1, -1):
         floor_block = chunk.platform[row][column]
         if not _is_solid(floor_block) or isinstance(floor_block, gamepieces.HazardBlock):
@@ -136,7 +136,6 @@ def _customize_theme_platform(chunk, theme):
     upper_row = max(1, chunk.height - 5)
     theme_offset = {"farm": 3, "river": 5, "dojo": 7, "space": 9, "pompeii": 11}[theme]
 
-    # Leave the opening portion of every level clean so level spawn is never on a hazard.
     for x in range(max(theme_offset, 7), chunk.width - 2, 13):
         _replace_tile(chunk, floor_row, x, gamepieces.HazardBlock((x + theme_offset) % 12, True))
 
@@ -182,6 +181,25 @@ def _build_themed_level(map_obj, definition):
         _spawn(chunk, "scythe", gamepieces.Scythe, 0.20, actor_height=32)
 
 
+def _build_theo_level(map_obj):
+    """Build Theo's trailer yard around the existing dill map geometry."""
+    chunk = map_obj.chunks[0]
+    _destroy_chunk_sprites(chunk)
+
+    map_obj.story = "Kenny reaches Cousin Theo's trailer. Cross the sand, walk to the table, press D, then mash C to win the arm-wrestling match."
+    map_obj.autoscroll = False
+    map_obj.theme = "theo"
+    map_obj.player_spawn = _safe_position(chunk, 0.06, actor_height=64)
+
+    # Keep the encounter close to the opening so its procedural table/trailer
+    # composition stays on screen while Kenny approaches it.
+    desired_table_x = int(map_obj.player_spawn[0] + 300)
+    max_table_x = int(chunk.coalesced_x + (chunk.width - 3) * EngineGlobals.tile_size)
+    table_x = min(desired_table_x, max_table_x)
+    table_y = _safe_ground_y(chunk, table_x, actor_height=64)
+    map_obj.theo_encounter = TheoTrailerEncounter(chunk, map_obj.player_spawn, (table_x, table_y))
+
+
 def additional_map_definitions(map_obj):
     if hasattr(map_obj, "sprites"):
         for sprite in map_obj.sprites.values():
@@ -189,6 +207,10 @@ def additional_map_definitions(map_obj):
         del map_obj.sprites
 
     filename = getattr(map_obj, "filename", "map.dill")
+
+    if filename == "theo.dill":
+        _build_theo_level(map_obj)
+        return
 
     if filename in THEMED_LEVELS:
         _build_themed_level(map_obj, THEMED_LEVELS[filename])

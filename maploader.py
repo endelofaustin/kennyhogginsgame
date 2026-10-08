@@ -195,7 +195,11 @@ def _build_theo_level(map_obj):
     max_table_x = int(chunk.coalesced_x + (chunk.width - 3) * EngineGlobals.tile_size)
     table_x = min(desired_table_x, max_table_x)
     table_y = _safe_ground_y(chunk, table_x, actor_height=64)
-    map_obj.theo_encounter = TheoTrailerEncounter(chunk, map_obj.player_spawn, (table_x, table_y))
+    encounter = TheoTrailerEncounter(chunk, map_obj.player_spawn, (table_x, table_y))
+    for shape, _, _ in encounter.world_shapes:
+        if getattr(shape, "group", None) is EngineGlobals.editor_group_mid:
+            shape.group = EngineGlobals.bg_group
+    map_obj.theo_encounter = encounter
 
 
 def additional_map_definitions(map_obj):
@@ -309,6 +313,7 @@ class GameMap:
 
             game_map.__init__(chunks=game_map.chunks, filename=filename)
         except Exception:
+            LifeCycleManager.dropAllObjects("PER_MAP")
             _delete_map_block_sprites(game_map)
             raise
 

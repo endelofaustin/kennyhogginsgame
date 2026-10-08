@@ -20,6 +20,7 @@ import pyglet
 
 import editor as editor_module
 import gamepieces
+import maploader as maploader_module
 import physics
 import player
 from engineglobals import EngineGlobals
@@ -30,13 +31,16 @@ from maploader import GameMap
 from menu import GameMenu
 from sprite import makeSprite
 from text import IntroMode
-from toga_sisters import install_toga_sisters
+from toga_sisters import TogaSistersBoss, install_toga_sisters
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 pyglet.resource.path = [PROJECT_ROOT, os.path.join(PROJECT_ROOT, "audio"), os.path.join(PROJECT_ROOT, "artwork")]
 pyglet.resource.reindex()
 getcontext().prec = 7
 install_toga_sisters()
+# Pompeii's authored builder names the legacy boss class directly, so replace
+# that module global too. The rest of the dill/map-loader architecture stays intact.
+maploader_module.VesuviusBoss = TogaSistersBoss
 
 EngineGlobals.init()
 LifeCycleManager.init()

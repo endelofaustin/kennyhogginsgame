@@ -1,4 +1,4 @@
-"""Theo's Trailer: sandy yard plus a full arm-wrestling encounter."""
+"""Theo's Trailer: a cramped Nevada trailer and arm-wrestling encounter."""
 
 import math
 import random
@@ -6,12 +6,13 @@ from decimal import Decimal
 
 import pyglet
 
+import gamepieces
 from engineglobals import EngineGlobals
 from lifecycle import GameObject
 
 
 class DustPuff(GameObject):
-    """Small, short-lived dust cloud produced while Kenny moves through sand."""
+    """Small dust cloud from the strip of Nevada sand tracked into the trailer."""
 
     def __init__(self, world_x, world_y):
         self.life = 22.0
@@ -47,7 +48,7 @@ class DustPuff(GameObject):
 
 
 class TheoTrailerEncounter(GameObject):
-    """World-space Theo/table plus screen-space arm-wrestling minigame."""
+    """World-space Theo/table plus the accepted screen-space arm-wrestling minigame."""
 
     IDLE = "idle"
     COUNTDOWN = "countdown"
@@ -58,7 +59,8 @@ class TheoTrailerEncounter(GameObject):
         self.chunk = chunk
         self.player_spawn = player_spawn
         self.table_x = Decimal(str(table_position[0]))
-        self.table_y = Decimal(str(table_position[1]))
+        # Put Theo on Kenny's starting floor and carve a straight walk-up lane.
+        self.table_y = Decimal(str(player_spawn[1]))
         self.state = self.IDLE
         self.meter = 0.0
         self.match_frames = 0.0
@@ -80,10 +82,12 @@ class TheoTrailerEncounter(GameObject):
         self.overlay_labels = []
         self.fish_shapes = []
 
-        self.sand_left = self.table_x - Decimal(350)
-        self.sand_right = self.table_x + Decimal(175)
-        self.sand_bottom = self.table_y - Decimal(38)
-        self.sand_top = self.table_y + Decimal(105)
+        self._prepare_walkway()
+
+        self.sand_left = Decimal(str(player_spawn[0])) - Decimal(24)
+        self.sand_right = min(self.table_x - Decimal(105), self.sand_left + Decimal(190))
+        self.sand_bottom = self.table_y - Decimal(8)
+        self.sand_top = self.table_y + Decimal(42)
 
         EngineGlobals.arm_wrestling_active = False
         EngineGlobals.on_sand = False
@@ -96,9 +100,58 @@ class TheoTrailerEncounter(GameObject):
             self._cleanup_graphics()
             raise
 
+    def _delete_block_sprite(self, block):
+        if isinstance(block, gamepieces.Block) and hasattr(block, "sprite"):
+            try:
+                block.sprite.delete()
+            except Exception:
+                pass
+
+    def _prepare_walkway(self):
+        """Flatten the walk from Kenny to Theo and remove overhead collision junk."""
+        platform = getattr(self.chunk, "platform", None)
+        if not platform or not platform[0]:
+            return
+
+        tile = int(EngineGlobals.tile_size)
+        width = len(platform[0])
+        height = len(platform)
+        chunk_x = int(getattr(self.chunk, "coalesced_x", 0))
+        chunk_y = int(getattr(self.chunk, "coalesced_y", 0))
+
+        standing_y = int(self.table_y)
+        floor_world_y = standing_y - tile - 1
+        floor_from_bottom = max(0, int((floor_world_y - chunk_y) // tile))
+        floor_row = height - 1 - floor_from_bottom
+        floor_row = max(0, min(height - 1, floor_row))
+
+        left_world = min(int(self.player_spawn[0]), int(self.table_x)) - tile * 2
+        right_world = max(int(self.player_spawn[0]), int(self.table_x)) + tile * 10
+        left_col = max(0, int((left_world - chunk_x) // tile))
+        right_col = min(width - 1, int((right_world - chunk_x) // tile))
+
+        # Five tiles of head room is enough for Kenny's stable collision box.
+        clear_top = max(0, floor_row - 6)
+        for column in range(left_col, right_col + 1):
+            for row in range(clear_top, floor_row):
+                old = platform[row][column]
+                if old != 0:
+                    self._delete_block_sprite(old)
+                    platform[row][column] = 0
+
+            old_floor = platform[floor_row][column]
+            if not isinstance(old_floor, gamepieces.Block) or isinstance(
+                old_floor, (gamepieces.HazardBlock, gamepieces.BreakableBlock)
+            ) or not getattr(old_floor, "solid", False):
+                self._delete_block_sprite(old_floor)
+                platform[floor_row][column] = gamepieces.Block(column % 12, True)
+
     def _world_rect(self, world_x, world_y, width, height, color, group):
         shape = pyglet.shapes.Rectangle(
-            0, 0, width, height,
+            0,
+            0,
+            width,
+            height,
             color=color,
             batch=EngineGlobals.main_batch,
             group=group,
@@ -108,7 +161,9 @@ class TheoTrailerEncounter(GameObject):
 
     def _world_circle(self, world_x, world_y, radius, color, group):
         shape = pyglet.shapes.Circle(
-            0, 0, radius,
+            0,
+            0,
+            radius,
             color=color,
             batch=EngineGlobals.main_batch,
             group=group,
@@ -116,7 +171,7 @@ class TheoTrailerEncounter(GameObject):
         self.world_shapes.append((shape, Decimal(str(world_x)), Decimal(str(world_y))))
         return shape
 
-    def _world_label(self, text, world_x, world_y, font_size=13):
+    def _world_label(self, text, world_x, world_y, font_size=13, color=(35, 25, 20, 255)):
         label = pyglet.text.Label(
             text,
             x=0,
@@ -124,7 +179,7 @@ class TheoTrailerEncounter(GameObject):
             anchor_x="center",
             font_size=font_size,
             weight=pyglet.text.Weight.BOLD,
-            color=(35, 25, 20, 255),
+            color=color,
             batch=EngineGlobals.main_batch,
             group=EngineGlobals.editor_group_front,
         )
@@ -132,52 +187,124 @@ class TheoTrailerEncounter(GameObject):
         return label
 
     def _build_world_scene(self):
+        """Build the inside of a sun-baked, cluttered Nevada trailer."""
         batch = EngineGlobals.main_batch
         bg = EngineGlobals.bg_group
         mid = EngineGlobals.editor_group_mid
         front = EngineGlobals.editor_group_front
 
+        # Trailer shell: nicotine-tan paneling, low ceiling, worn linoleum.
         self.fixed_shapes.append(
             pyglet.shapes.Rectangle(
-                0, 0, EngineGlobals.width, EngineGlobals.height,
-                color=(177, 206, 222), batch=batch, group=bg,
+                0,
+                0,
+                EngineGlobals.width,
+                EngineGlobals.height,
+                color=(166, 135, 92),
+                batch=batch,
+                group=bg,
             )
         )
         self.fixed_shapes.append(
             pyglet.shapes.Rectangle(
-                0, 0, EngineGlobals.width, 150,
-                color=(183, 148, 91), batch=batch, group=bg,
+                0,
+                0,
+                EngineGlobals.width,
+                118,
+                color=(113, 91, 67),
+                batch=batch,
+                group=bg,
+            )
+        )
+        self.fixed_shapes.append(
+            pyglet.shapes.Rectangle(
+                0,
+                EngineGlobals.height - 70,
+                EngineGlobals.width,
+                70,
+                color=(118, 101, 80),
+                batch=batch,
+                group=bg,
+            )
+        )
+        for x in range(0, EngineGlobals.width, 92):
+            self.fixed_shapes.append(
+                pyglet.shapes.Rectangle(
+                    x,
+                    118,
+                    3,
+                    EngineGlobals.height - 188,
+                    color=(111, 86, 60),
+                    batch=batch,
+                    group=bg,
+                )
+            )
+
+        # A tiny window showing the Nevada desert so the location reads immediately.
+        self.fixed_shapes.append(
+            pyglet.shapes.Rectangle(65, 352, 205, 128, color=(73, 59, 48), batch=batch, group=bg)
+        )
+        self.fixed_shapes.append(
+            pyglet.shapes.Rectangle(75, 362, 185, 108, color=(184, 211, 220), batch=batch, group=bg)
+        )
+        self.fixed_shapes.append(
+            pyglet.shapes.Rectangle(75, 362, 185, 38, color=(196, 151, 87), batch=batch, group=bg)
+        )
+        self.fixed_shapes.append(
+            pyglet.shapes.Rectangle(164, 362, 5, 108, color=(226, 214, 188), batch=batch, group=bg)
+        )
+        self.fixed_shapes.append(
+            pyglet.shapes.Rectangle(75, 414, 185, 5, color=(226, 214, 188), batch=batch, group=bg)
+        )
+        self.fixed_labels.append(
+            pyglet.text.Label(
+                "NEVADA",
+                x=168,
+                y=430,
+                anchor_x="center",
+                font_size=11,
+                weight=pyglet.text.Weight.BOLD,
+                color=(112, 70, 45, 255),
+                batch=batch,
+                group=mid,
             )
         )
 
-        sand_width = float(self.sand_right - self.sand_left)
-        self._world_rect(
-            self.sand_left, self.sand_bottom,
-            sand_width, float(self.sand_top - self.sand_bottom),
-            (202, 167, 105), mid,
+        # Trailer clutter: sagging couch, mini-fridge, AC, crooked wall frame.
+        self.fixed_shapes.extend(
+            [
+                pyglet.shapes.Rectangle(34, 126, 210, 72, color=(92, 111, 73), batch=batch, group=mid),
+                pyglet.shapes.Rectangle(45, 184, 188, 37, color=(104, 123, 83), batch=batch, group=mid),
+                pyglet.shapes.Rectangle(55, 126, 18, 20, color=(56, 49, 41), batch=batch, group=mid),
+                pyglet.shapes.Rectangle(205, 126, 18, 20, color=(56, 49, 41), batch=batch, group=mid),
+                pyglet.shapes.Rectangle(674, 118, 94, 132, color=(203, 199, 180), batch=batch, group=mid),
+                pyglet.shapes.Rectangle(684, 185, 74, 4, color=(129, 124, 111), batch=batch, group=mid),
+                pyglet.shapes.Rectangle(686, 201, 9, 26, color=(92, 87, 77), batch=batch, group=mid),
+                pyglet.shapes.Rectangle(550, 454, 118, 62, color=(194, 188, 164), batch=batch, group=mid),
+                pyglet.shapes.Rectangle(560, 464, 98, 42, color=(102, 112, 101), batch=batch, group=mid),
+                pyglet.shapes.Rectangle(380, 402, 95, 68, color=(83, 61, 47), batch=batch, group=mid),
+                pyglet.shapes.Rectangle(388, 410, 79, 52, color=(201, 172, 112), batch=batch, group=mid),
+            ]
         )
-        for i in range(34):
-            sx = self.sand_left + Decimal((i * 47) % max(1, int(sand_width - 10)))
-            sy = self.sand_bottom + Decimal(8 + (i * 29) % max(12, int(self.sand_top - self.sand_bottom - 16)))
-            self._world_circle(sx, sy, 1 + i % 2, (151, 119, 72), mid)
 
-        trailer_x = self.table_x + Decimal(70)
-        trailer_y = self.table_y + Decimal(95)
-        self._world_rect(trailer_x, trailer_y, 330, 220, (218, 211, 176), bg)
-        self._world_rect(trailer_x - Decimal(18), trailer_y + Decimal(215), 365, 18, (108, 99, 84), bg)
-        self._world_rect(trailer_x + Decimal(220), trailer_y + Decimal(24), 72, 165, (112, 86, 63), bg)
-        self._world_rect(trailer_x + Decimal(42), trailer_y + Decimal(82), 108, 70, (95, 151, 180), bg)
-        self._world_rect(trailer_x + Decimal(94), trailer_y + Decimal(82), 4, 70, (232, 232, 218), bg)
-        self._world_rect(trailer_x + Decimal(42), trailer_y + Decimal(115), 108, 4, (232, 232, 218), bg)
+        # A little tracked-in sand keeps the requested sand movement/dust mechanic.
+        sand_width = float(max(0, self.sand_right - self.sand_left))
+        if sand_width > 0:
+            self._world_rect(self.sand_left, self.sand_bottom, sand_width, 34, (190, 151, 94), mid)
+            for i in range(18):
+                sx = self.sand_left + Decimal((i * 31) % max(1, int(sand_width)))
+                sy = self.sand_bottom + Decimal(4 + (i * 11) % 24)
+                self._world_rect(sx, sy, 3, 2, (139, 104, 65), mid)
 
-        self._world_rect(self.table_x - Decimal(82), self.table_y + Decimal(34), 164, 20, (92, 58, 39), front)
-        self._world_rect(self.table_x - Decimal(64), self.table_y - Decimal(25), 16, 60, (73, 47, 34), front)
-        self._world_rect(self.table_x + Decimal(48), self.table_y - Decimal(25), 16, 60, (73, 47, 34), front)
-        self._world_rect(self.table_x - Decimal(18), self.table_y + Decimal(48), 36, 7, (140, 31, 28), front)
+        # Arm-wrestling table in the clear lane.
+        self._world_rect(self.table_x - Decimal(88), self.table_y + Decimal(31), 176, 22, (83, 52, 36), front)
+        self._world_rect(self.table_x - Decimal(68), self.table_y - Decimal(29), 18, 61, (66, 43, 32), front)
+        self._world_rect(self.table_x + Decimal(50), self.table_y - Decimal(29), 18, 61, (66, 43, 32), front)
+        self._world_rect(self.table_x - Decimal(20), self.table_y + Decimal(47), 40, 8, (132, 33, 29), front)
         self._world_label("ARM WRESTLING", self.table_x, self.table_y + Decimal(78), font_size=12)
 
-        self._build_theo(self.table_x + Decimal(118), self.table_y + Decimal(38))
-        self._world_label("COUSIN THEO", self.table_x + Decimal(118), self.table_y + Decimal(188), font_size=13)
+        self._build_theo(self.table_x + Decimal(126), self.table_y + Decimal(39))
+        self._world_label("COUSIN THEO", self.table_x + Decimal(126), self.table_y + Decimal(185), font_size=13)
 
         self.prompt_label = pyglet.text.Label(
             "Walk up to Theo's table and press D",
@@ -186,7 +313,7 @@ class TheoTrailerEncounter(GameObject):
             anchor_x="center",
             font_size=16,
             weight=pyglet.text.Weight.BOLD,
-            color=(35, 25, 20, 255),
+            color=(245, 236, 208, 255),
             batch=batch,
             group=front,
         )
@@ -194,35 +321,52 @@ class TheoTrailerEncounter(GameObject):
         self._sync_world_scene()
 
     def _build_theo(self, x, y):
+        """Chunky Kenny-like pixel Theo preserving the original weird doodle silhouette."""
         front = EngineGlobals.editor_group_front
-        skin = (230, 190, 150)
-        dark = (47, 32, 26)
-        clothes = (45, 42, 39)
+        outline = (31, 25, 22)
+        skin = (222, 172, 127)
+        skin_hi = (239, 193, 148)
+        hair = (48, 34, 29)
+        shirt = (79, 67, 58)
+        jeans = (69, 78, 87)
+        shoe = (35, 31, 29)
 
-        self._world_circle(x, y + Decimal(82), 25, skin, front)
-        self._world_rect(x + Decimal(12), y + Decimal(73), 58, 15, skin, front)
-        self._world_circle(x + Decimal(66), y + Decimal(80), 10, skin, front)
-        self._world_circle(x - Decimal(7), y + Decimal(86), 3, (20, 20, 20), front)
-        self._world_rect(x + Decimal(16), y + Decimal(66), 30, 8, dark, front)
-        self._world_rect(x + Decimal(24), y + Decimal(48), 11, 19, dark, front)
+        # Hair spikes and oversized blocky head.
+        for ox, oy, w, h in [(-24, 105, 7, 22), (-13, 112, 7, 22), (-2, 108, 7, 27), (9, 114, 7, 19), (20, 104, 7, 25)]:
+            self._world_rect(x + Decimal(ox), y + Decimal(oy), w, h, hair, front)
+        self._world_rect(x - Decimal(24), y + Decimal(67), 54, 44, outline, front)
+        self._world_rect(x - Decimal(19), y + Decimal(72), 45, 34, skin, front)
+        self._world_rect(x - Decimal(14), y + Decimal(94), 32, 8, skin_hi, front)
 
-        for i in range(7):
-            self._world_rect(
-                x - Decimal(23) + Decimal(i * 7),
-                y + Decimal(101 + (i % 2) * 8),
-                5,
-                24 + (i % 3) * 5,
-                dark,
-                front,
-            )
+        # Horse-ish long nose from the hand-drawn Theo.
+        self._world_rect(x + Decimal(23), y + Decimal(82), 38, 14, outline, front)
+        self._world_rect(x + Decimal(23), y + Decimal(85), 34, 8, skin, front)
+        self._world_rect(x + Decimal(53), y + Decimal(83), 12, 12, outline, front)
+        self._world_rect(x + Decimal(54), y + Decimal(86), 8, 6, skin_hi, front)
 
-        self._world_rect(x - Decimal(4), y + Decimal(2), 8, 58, clothes, front)
-        self._world_rect(x - Decimal(48), y + Decimal(25), 48, 7, clothes, front)
-        self._world_rect(x + Decimal(2), y + Decimal(22), 45, 7, clothes, front)
-        self._world_rect(x - Decimal(23), y - Decimal(47), 7, 52, clothes, front)
-        self._world_rect(x + Decimal(12), y - Decimal(45), 7, 50, clothes, front)
-        self._world_rect(x - Decimal(34), y - Decimal(53), 23, 8, (28, 27, 25), front)
-        self._world_rect(x + Decimal(8), y - Decimal(51), 24, 8, (28, 27, 25), front)
+        # Eyes, mustache and little goatee.
+        self._world_rect(x - Decimal(10), y + Decimal(91), 5, 5, (15, 15, 15), front)
+        self._world_rect(x + Decimal(11), y + Decimal(91), 5, 5, (15, 15, 15), front)
+        self._world_rect(x + Decimal(9), y + Decimal(75), 24, 6, hair, front)
+        self._world_rect(x + Decimal(17), y + Decimal(63), 8, 13, hair, front)
+
+        # Skinny, awkward body with blocky elbows/hands.
+        self._world_rect(x - Decimal(11), y + Decimal(8), 24, 55, outline, front)
+        self._world_rect(x - Decimal(6), y + Decimal(13), 14, 45, shirt, front)
+        self._world_rect(x - Decimal(48), y + Decimal(42), 39, 8, outline, front)
+        self._world_rect(x - Decimal(45), y + Decimal(44), 35, 4, shirt, front)
+        self._world_rect(x + Decimal(12), y + Decimal(38), 43, 8, outline, front)
+        self._world_rect(x + Decimal(14), y + Decimal(40), 38, 4, shirt, front)
+        self._world_rect(x - Decimal(54), y + Decimal(38), 10, 14, skin, front)
+        self._world_rect(x + Decimal(52), y + Decimal(35), 11, 14, skin, front)
+
+        # Uneven stick legs and tiny shoes keep the awkward stance.
+        self._world_rect(x - Decimal(17), y - Decimal(43), 9, 52, outline, front)
+        self._world_rect(x - Decimal(14), y - Decimal(40), 5, 47, jeans, front)
+        self._world_rect(x + Decimal(10), y - Decimal(48), 9, 57, outline, front)
+        self._world_rect(x + Decimal(13), y - Decimal(45), 5, 52, jeans, front)
+        self._world_rect(x - Decimal(28), y - Decimal(50), 23, 8, shoe, front)
+        self._world_rect(x + Decimal(9), y - Decimal(55), 25, 8, shoe, front)
 
     def _sync_world_scene(self):
         for shape, wx, wy in self.world_shapes:
@@ -271,43 +415,29 @@ class TheoTrailerEncounter(GameObject):
         return label
 
     def _build_match_overlay(self):
+        # Keep the already accepted giant-arm overlay unchanged.
         self._clear_match_overlay()
         batch = EngineGlobals.main_batch
         front = EngineGlobals.editor_group_front
 
-        self._add_overlay_shape(
-            pyglet.shapes.Rectangle(55, 55, 690, 500, color=(45, 38, 38), batch=batch, group=front)
-        )
-        self._add_overlay_shape(
-            pyglet.shapes.Rectangle(70, 70, 660, 470, color=(232, 216, 174), batch=batch, group=front)
-        )
+        self._add_overlay_shape(pyglet.shapes.Rectangle(55, 55, 690, 500, color=(45, 38, 38), batch=batch, group=front))
+        self._add_overlay_shape(pyglet.shapes.Rectangle(70, 70, 660, 470, color=(232, 216, 174), batch=batch, group=front))
 
         self.kenny_label = self._add_overlay_label(
-            pyglet.text.Label(
-                "KENNY", x=175, y=505, anchor_x="center",
-                font_size=28, weight=pyglet.text.Weight.BOLD,
-                color=(60, 87, 158, 255), batch=batch, group=front,
-            )
+            pyglet.text.Label("KENNY", x=175, y=505, anchor_x="center", font_size=28, weight=pyglet.text.Weight.BOLD,
+                              color=(60, 87, 158, 255), batch=batch, group=front)
         )
         self.theo_label = self._add_overlay_label(
-            pyglet.text.Label(
-                "THEO", x=625, y=505, anchor_x="center",
-                font_size=28, weight=pyglet.text.Weight.BOLD,
-                color=(158, 69, 56, 255), batch=batch, group=front,
-            )
+            pyglet.text.Label("THEO", x=625, y=505, anchor_x="center", font_size=28, weight=pyglet.text.Weight.BOLD,
+                              color=(158, 69, 56, 255), batch=batch, group=front)
         )
         self.status_label = self._add_overlay_label(
-            pyglet.text.Label(
-                "GET READY", x=400, y=505, anchor_x="center",
-                font_size=22, weight=pyglet.text.Weight.BOLD,
-                color=(35, 25, 20, 255), batch=batch, group=front,
-            )
+            pyglet.text.Label("GET READY", x=400, y=505, anchor_x="center", font_size=22, weight=pyglet.text.Weight.BOLD,
+                              color=(35, 25, 20, 255), batch=batch, group=front)
         )
         self.timer_label = self._add_overlay_label(
-            pyglet.text.Label(
-                "D started it — mash C to overpower Theo", x=400, y=465, anchor_x="center",
-                font_size=14, color=(35, 25, 20, 255), batch=batch, group=front,
-            )
+            pyglet.text.Label("D started it — mash C to overpower Theo", x=400, y=465, anchor_x="center", font_size=14,
+                              color=(35, 25, 20, 255), batch=batch, group=front)
         )
 
         self._add_overlay_shape(pyglet.shapes.Rectangle(95, 420, 230, 22, color=(84, 77, 70), batch=batch, group=front))
@@ -434,11 +564,8 @@ class TheoTrailerEncounter(GameObject):
         tail_bottom = pyglet.shapes.Rectangle(0, 0, 19, 9, color=(85, 137, 153), batch=batch, group=front)
         self.fish_shapes = [body, head, eye, tail_top, tail_bottom]
         self._add_overlay_label(
-            pyglet.text.Label(
-                "FISH SLAP!", x=400, y=390, anchor_x="center",
-                font_size=30, weight=pyglet.text.Weight.BOLD,
-                color=(35, 25, 20, 255), batch=batch, group=front,
-            )
+            pyglet.text.Label("FISH SLAP!", x=400, y=390, anchor_x="center", font_size=30,
+                              weight=pyglet.text.Weight.BOLD, color=(35, 25, 20, 255), batch=batch, group=front)
         )
 
     def _update_fish(self, dt):

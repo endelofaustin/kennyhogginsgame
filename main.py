@@ -61,6 +61,7 @@ editor = editor_module.Editor()
 intro = IntroMode()
 puzzle = PuzzleController(EngineGlobals.progress)
 autoscroller = AutoScroller()
+autoscroller.scroll_x = Decimal(0)
 
 EngineGlobals.window.push_handlers(kenny)
 EngineGlobals.window.push_handlers(editor)
@@ -88,6 +89,11 @@ def reset_new_game_progress():
     autoscroller.stop()
 
 
+def start_autoscroller():
+    autoscroller.scroll_x = Decimal(screen.x)
+    autoscroller.start()
+
+
 def start_level(filename):
     """Start one of the selectable authored dill maps."""
     GameMap.load_map(filename)
@@ -97,13 +103,12 @@ def start_level(filename):
     screen.x, screen.y = Decimal(0), Decimal(0)
 
     if getattr(EngineGlobals.game_map, "autoscroll", False):
-        autoscroller.start()
+        start_autoscroller()
     else:
         autoscroller.stop()
 
     story = getattr(EngineGlobals.game_map, "story", "Kenny has somewhere else to be.")
-    intro.document.text = "KENNY HOGGINS\n\n" + story + "\n\nPress any key to begin."
-    intro.start()
+    intro.start("KENNY HOGGINS\n\n" + story + "\n\nPress any key to begin.")
 
 
 def load_game():
@@ -120,7 +125,7 @@ def load_game():
         kenny.has_sword = bool(state.get("has_sword", False))
         kenny.has_scythe = bool(state.get("has_scythe", False))
         if getattr(EngineGlobals.game_map, "autoscroll", False):
-            autoscroller.start()
+            start_autoscroller()
         else:
             autoscroller.stop()
     EngineGlobals.game_mode = "PLAY"
@@ -183,6 +188,20 @@ def update_visible_chunks():
             update_chunk_tile_coords(chunk)
 
 
+def update_autoscroller(scaled_dt):
+    """Enforce the moving camera after normal Screen tracking has run."""
+    if not autoscroller.active or EngineGlobals.game_mode != "PLAY":
+        return
+
+    autoscroller.scroll_x += autoscroller.speed * Decimal(str(scaled_dt))
+    if Decimal(screen.x) < autoscroller.scroll_x:
+        screen.x = autoscroller.scroll_x
+
+    if Decimal(kenny.x_position) < Decimal(screen.x) - Decimal(24):
+        kenny.die_hard()
+        autoscroller.stop()
+
+
 def main_update_callback(dt):
     scaled_dt = dt * 60
     now = time.perf_counter_ns()
@@ -191,6 +210,7 @@ def main_update_callback(dt):
     EngineGlobals.last_sim = now
     physics.PhysicsSprite.collision_lists.clear()
     LifeCycleManager.processUpdates(scaled_dt)
+    update_autoscroller(scaled_dt)
     update_visible_chunks()
 
 
@@ -203,7 +223,7 @@ def on_key_press(symbol, modifiers):
         if autoscroller.active:
             autoscroller.stop()
         else:
-            autoscroller.start()
+            start_autoscroller()
 
 
 @EngineGlobals.window.event

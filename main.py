@@ -3,8 +3,19 @@
 """Kenny Hoggins game bootstrap and main update/render loop."""
 
 import os
+import sys
 import time
 from decimal import Decimal, getcontext
+
+MIN_PYTHON = (3, 10)
+if sys.version_info < MIN_PYTHON:
+    raise SystemExit(
+        "Kenny Hoggins Game requires Python 3.10 or newer. "
+        "This interpreter is Python {}.{}. Recreate .venv with Python 3.10+ "
+        "(on macOS, run ./setup_mac.sh).".format(
+            sys.version_info.major, sys.version_info.minor
+        )
+    )
 
 import pyglet
 

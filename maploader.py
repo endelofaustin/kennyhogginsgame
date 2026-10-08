@@ -1,3 +1,5 @@
+import math
+
 import dill
 import pyglet
 
@@ -65,7 +67,64 @@ def _destroy_chunk_sprites(chunk):
 
 
 def _world_x(chunk, fraction):
-    return int(max(64, chunk.width * EngineGlobals.tile_size * fraction))
+    width = max(1, chunk.width * EngineGlobals.tile_size)
+    return int(chunk.coalesced_x + max(64, width * fraction))
+
+
+def _is_solid(block):
+    return block == 1 or bool(getattr(block, "solid", False))
+
+
+def _safe_ground_y(chunk, world_x, actor_height=64):
+    """Find a clear standing position over a real solid tile at world_x."""
+    column = int((world_x - chunk.coalesced_x) // EngineGlobals.tile_size)
+    column = max(0, min(chunk.width - 1, column))
+    needed_air_rows = max(1, int(math.ceil(actor_height / EngineGlobals.tile_size)))
+
+    # Rows are stored top-to-bottom, so walk upward from the bottom of the map.
+    for row in range(chunk.height - 1, -1, -1):
+        floor_block = chunk.platform[row][column]
+        if not _is_solid(floor_block) or isinstance(floor_block, gamepieces.HazardBlock):
+            continue
+
+        clear = True
+        for offset in range(1, needed_air_rows + 1):
+            above_row = row - offset
+            if above_row >= 0 and _is_solid(chunk.platform[above_row][column]):
+                clear = False
+                break
+        if not clear:
+            continue
+
+        floor_world_y = chunk.coalesced_y + (chunk.height - 1 - row) * EngineGlobals.tile_size
+        return int(floor_world_y + EngineGlobals.tile_size + 1)
+
+    return int(chunk.coalesced_y + EngineGlobals.tile_size * 2)
+
+
+def _safe_position(chunk, fraction, actor_height=64):
+    """Find a usable X/Y near a desired fraction of the chunk."""
+    preferred_column = int(max(1, min(chunk.width - 2, chunk.width * fraction)))
+    search_columns = list(range(preferred_column, chunk.width - 1)) + list(range(preferred_column - 1, 0, -1))
+
+    for column in search_columns:
+        world_x = int(chunk.coalesced_x + column * EngineGlobals.tile_size + 2)
+        world_y = _safe_ground_y(chunk, world_x, actor_height)
+        floor_row = chunk.height - int((world_y - chunk.coalesced_y) / EngineGlobals.tile_size)
+        if 0 <= floor_row < chunk.height:
+            floor_block = chunk.platform[floor_row][column]
+            if isinstance(floor_block, gamepieces.HazardBlock):
+                continue
+        return (world_x, world_y)
+
+    return (int(chunk.coalesced_x + 64), int(chunk.coalesced_y + 96))
+
+
+def _replace_tile(chunk, row, column, new_block):
+    old_block = chunk.platform[row][column]
+    if isinstance(old_block, gamepieces.Block) and hasattr(old_block, "sprite"):
+        old_block.sprite.delete()
+    chunk.platform[row][column] = new_block
 
 
 def _customize_theme_platform(chunk, theme):
@@ -73,18 +132,24 @@ def _customize_theme_platform(chunk, theme):
     if not chunk.platform or chunk.width < 12 or chunk.height < 5:
         return
 
-    # Keep the underlying dill map, but alter a few safe cells in memory for each level.
     floor_row = chunk.height - 2
     upper_row = max(1, chunk.height - 5)
     theme_offset = {"farm": 3, "river": 5, "dojo": 7, "space": 9, "pompeii": 11}[theme]
 
-    for x in range(theme_offset, chunk.width - 2, 13):
-        chunk.platform[floor_row][x] = gamepieces.HazardBlock((x + theme_offset) % 12, True)
+    # Leave the opening portion of every level clean so level spawn is never on a hazard.
+    for x in range(max(theme_offset, 7), chunk.width - 2, 13):
+        _replace_tile(chunk, floor_row, x, gamepieces.HazardBlock((x + theme_offset) % 12, True))
 
     for x in range(theme_offset + 4, chunk.width - 3, 17):
-        chunk.platform[upper_row][x] = gamepieces.BreakableBlock((x + 2) % 12, True)
+        _replace_tile(chunk, upper_row, x, gamepieces.BreakableBlock((x + 2) % 12, True))
         if x + 1 < chunk.width:
-            chunk.platform[upper_row][x + 1] = gamepieces.Block((x + 4) % 12, True)
+            _replace_tile(chunk, upper_row, x + 1, gamepieces.Block((x + 4) % 12, True))
+
+
+def _spawn(chunk, key, sprite_type, fraction, actor_height=64, **kwargs):
+    position = _safe_position(chunk, fraction, actor_height)
+    chunk.contained_sprites[key] = makeSprite(sprite_type, chunk, position, **kwargs)
+    return chunk.contained_sprites[key]
 
 
 def _build_themed_level(map_obj, definition):
@@ -95,30 +160,26 @@ def _build_themed_level(map_obj, definition):
     map_obj.story = definition["story"]
     map_obj.autoscroll = definition["autoscroll"]
     map_obj.theme = definition["theme"]
+    map_obj.player_spawn = _safe_position(chunk, 0.06, actor_height=64)
     ThemeBackdrop(definition["theme"])
 
-    # Common authored gameplay: enemies across the route and a boss near the far end.
-    chunk.contained_sprites["enemy-1"] = makeSprite(Enemy, chunk, (_world_x(chunk, 0.28), 160))
-    chunk.contained_sprites["enemy-2"] = makeSprite(Enemy, chunk, (_world_x(chunk, 0.58), 160))
-    chunk.contained_sprites["boss"] = makeSprite(definition["boss"], chunk, (_world_x(chunk, 0.82), 96))
+    _spawn(chunk, "enemy-1", Enemy, 0.28, actor_height=48)
+    _spawn(chunk, "enemy-2", Enemy, 0.58, actor_height=48)
+    _spawn(chunk, "boss", definition["boss"], 0.82, actor_height=80)
 
     if definition["theme"] == "farm":
-        chunk.contained_sprites["sword"] = makeSprite(Sword, chunk, (_world_x(chunk, 0.12), 96))
-        chunk.contained_sprites["key"] = makeSprite(KeyPickup, chunk, (_world_x(chunk, 0.38), 130))
-        chunk.contained_sprites["gate"] = makeSprite(
-            LockedGate, chunk, (_world_x(chunk, 0.70), 64), group="BACK", gate_id="farm-gate"
-        )
+        _spawn(chunk, "sword", Sword, 0.12, actor_height=32)
+        _spawn(chunk, "key", KeyPickup, 0.38, actor_height=32)
+        _spawn(chunk, "gate", LockedGate, 0.70, actor_height=64, group="BACK", gate_id="farm-gate")
     elif definition["theme"] == "river":
-        chunk.contained_sprites["van"] = makeSprite(VanProp, chunk, (_world_x(chunk, 0.48), 96))
+        _spawn(chunk, "van", VanProp, 0.48, actor_height=64)
     elif definition["theme"] == "dojo":
-        chunk.contained_sprites["key"] = makeSprite(KeyPickup, chunk, (_world_x(chunk, 0.32), 160))
-        chunk.contained_sprites["gate"] = makeSprite(
-            LockedGate, chunk, (_world_x(chunk, 0.68), 64), group="BACK", gate_id="dojo-gate"
-        )
+        _spawn(chunk, "key", KeyPickup, 0.32, actor_height=32)
+        _spawn(chunk, "gate", LockedGate, 0.68, actor_height=64, group="BACK", gate_id="dojo-gate")
     elif definition["theme"] == "space":
-        chunk.contained_sprites["fruit"] = makeSprite(NirvanaFruit, chunk, (_world_x(chunk, 0.45), 180))
+        _spawn(chunk, "fruit", NirvanaFruit, 0.45, actor_height=32)
     elif definition["theme"] == "pompeii":
-        chunk.contained_sprites["scythe"] = makeSprite(gamepieces.Scythe, chunk, (_world_x(chunk, 0.20), 96))
+        _spawn(chunk, "scythe", gamepieces.Scythe, 0.20, actor_height=32)
 
 
 def additional_map_definitions(map_obj):

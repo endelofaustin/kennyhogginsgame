@@ -2,17 +2,27 @@
 
 set -e
 
+PYTHON=""
+
 if [ -x ".venv/bin/python" ]; then
-    exec .venv/bin/python main.py
+    PYTHON=".venv/bin/python"
+elif [ -x ".venv/Scripts/python.exe" ]; then
+    PYTHON=".venv/Scripts/python.exe"
+elif [ -x ".venv/Scripts/python" ]; then
+    PYTHON=".venv/Scripts/python"
 fi
 
-if [ -x ".venv/Scripts/python.exe" ]; then
-    exec .venv/Scripts/python.exe main.py
+if [ -z "$PYTHON" ]; then
+    printf '%s\n' "No .venv Python found. Create one and install requirements.txt first." >&2
+    printf '%s\n' "On macOS, run ./setup_mac.sh" >&2
+    exit 1
 fi
 
-if [ -x ".venv/Scripts/python" ]; then
-    exec .venv/Scripts/python main.py
+if ! "$PYTHON" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 10) else 1)'; then
+    VERSION=$("$PYTHON" -c 'import sys; print("{}.{}".format(sys.version_info.major, sys.version_info.minor))')
+    printf '%s\n' "This .venv uses Python $VERSION, but Kenny Hoggins Game requires Python 3.10+." >&2
+    printf '%s\n' "On macOS, run ./setup_mac.sh to rebuild the virtual environment with a compatible Python." >&2
+    exit 1
 fi
 
-printf '%s\n' "No .venv Python found. Create one and install requirements.txt first." >&2
-exit 1
+exec "$PYTHON" main.py

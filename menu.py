@@ -1,77 +1,53 @@
 import pyglet
 from engineglobals import EngineGlobals
-import pyglet.resource, pyglet.image
 from pyglet.sprite import Sprite
 
-class GameMenu():
 
-    def __init__(self):
+class GameMenu:
+    """Simple clickable start/configuration menu."""
 
-        # Load the background image
-        self.background_image = pyglet.image.load('artwork/StartItUp.png')
+    def __init__(self, on_new_game=None, on_load_game=None):
+        self.on_new_game = on_new_game
+        self.on_load_game = on_load_game
+        self.background_image = pyglet.image.load("artwork/StartItUp.png")
         self.menu_batch = pyglet.graphics.Batch()
         self.sprite = Sprite(img=self.background_image, batch=self.menu_batch)
         self.label_style = {
-            'font_name': 'Arial',
-            'font_size': 36,
-            'weight': pyglet.text.Weight.BOLD,
-            'color': (255, 255, 255, 255)
+            "font_name": "Arial",
+            "font_size": 30,
+            "weight": pyglet.text.Weight.BOLD,
+            "color": (255, 255, 255, 255),
         }
-        
 
-        self.start_label = pyglet.text.Label('Start', x=550, y=400, anchor_x='center', anchor_y='center', batch=self.menu_batch, **self.label_style)
-        self.settings_label = pyglet.text.Label('Settings', x=550, y=300, anchor_x='center', anchor_y='center', batch=self.menu_batch, **self.label_style)
-        self.password_label = pyglet.text.Label('Password', x=550, y=200, anchor_x='center', anchor_y='center', batch=self.menu_batch, **self.label_style)
-
-        self.password = "          "
-        self.password_label_visible = False
+        self.new_label = pyglet.text.Label("New Game", x=550, y=430, anchor_x="center", anchor_y="center", batch=self.menu_batch, **self.label_style)
+        self.load_label = pyglet.text.Label("Load Game", x=550, y=350, anchor_x="center", anchor_y="center", batch=self.menu_batch, **self.label_style)
+        self.settings_label = pyglet.text.Label("Settings", x=550, y=270, anchor_x="center", anchor_y="center", batch=self.menu_batch, **self.label_style)
+        self.settings_status = pyglet.text.Label("Hints: off", x=550, y=220, anchor_x="center", anchor_y="center", batch=self.menu_batch, font_size=16, color=(255, 255, 255, 255))
 
     def on_draw(self):
         EngineGlobals.window.clear()
         self.menu_batch.draw()
 
+    def _contains(self, label, x, y):
+        return (
+            label.x - label.content_width / 2 <= x <= label.x + label.content_width / 2
+            and label.y - label.content_height / 2 <= y <= label.y + label.content_height / 2
+        )
+
     def on_mouse_press(self, x, y, button, modifiers):
-        return self.handle_mouse_click(x, y)
-
-    def on_text(self, text):
-        return self.handle_text_input(text)
-
-    def handle_mouse_click(self, x, y):
-
-        if EngineGlobals.show_menu:
-            if self.start_label.x - self.start_label.content_width / 2 <= x <= self.start_label.x + self.start_label.content_width / 2 and \
-            self.start_label.y - self.start_label.content_height / 2 <= y <= self.start_label.y + self.start_label.content_height / 2:
-                # Handle "Start" button click - You can implement your game logic here
-                EngineGlobals.show_menu = False
-
-            elif self.settings_label.x - self.settings_label.content_width / 2 <= x <= self.settings_label.x + self.settings_label.content_width / 2 and \
-                 self.settings_label.y - self.settings_label.content_height / 2 <= y <= self.settings_label.y + self.settings_label.content_height / 2:
-                # Handle "Settings" button click
-                print("Settings button clicked")
-
-            elif self.password_label.x - self.password_label.content_width / 2 <= x <= self.password_label.x + self.password_label.content_width / 2 and \
-                 self.password_label.y - self.password_label.content_height / 2 <= y <= self.password_label.y + self.password_label.content_height / 2:
-                # Handle "Password" button click
-                self.password_label_visible = True
-                print("Password Clicked")
-
-            return pyglet.event.EVENT_HANDLED
-
-        else:
+        if not EngineGlobals.show_menu:
             return pyglet.event.EVENT_UNHANDLED
 
-    def handle_text_input(self, text):
+        if self._contains(self.new_label, x, y):
+            EngineGlobals.show_menu = False
+            if self.on_new_game:
+                self.on_new_game()
+        elif self._contains(self.load_label, x, y):
+            EngineGlobals.show_menu = False
+            if self.on_load_game:
+                self.on_load_game()
+        elif self._contains(self.settings_label, x, y):
+            EngineGlobals.hint_tiles[0] = not EngineGlobals.hint_tiles[0]
+            self.settings_status.text = "Hints: {}".format("on" if EngineGlobals.hint_tiles[0] else "off")
 
-        if self.password_label_visible and EngineGlobals.show_menu:
-
-            if text.isalnum():
-                self.password += text
-
-            elif text == '\r':
-                print("Password entered:", self.password)
-                self.password = ""
-                self.password_label_visible = False
-
-if __name__ == "__main__":
-    menu = GameMenu()
-    pyglet.app.run()
+        return pyglet.event.EVENT_HANDLED

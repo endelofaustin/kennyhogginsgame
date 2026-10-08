@@ -21,11 +21,19 @@ LEVEL_CHOICES = [
 class GameMenu:
     """Clickable main menu with level select plus alternate game modes."""
 
-    def __init__(self, on_new_game=None, on_load_game=None, on_level_selected=None, on_karts_selected=None):
+    def __init__(
+        self,
+        on_new_game=None,
+        on_load_game=None,
+        on_level_selected=None,
+        on_karts_selected=None,
+        on_3d_selected=None,
+    ):
         self.on_new_game = on_new_game
         self.on_load_game = on_load_game
         self.on_level_selected = on_level_selected
         self.on_karts_selected = on_karts_selected
+        self.on_3d_selected = on_3d_selected
         self.screen = "main"
 
         self.background_image = pyglet.image.load("artwork/StartItUp.png")
@@ -33,7 +41,7 @@ class GameMenu:
         self.sprite = Sprite(img=self.background_image, batch=self.menu_batch)
         self.label_style = {
             "font_name": "Arial",
-            "font_size": 27,
+            "font_size": 25,
             "weight": pyglet.text.Weight.BOLD,
             "color": (255, 255, 255, 255),
         }
@@ -43,11 +51,30 @@ class GameMenu:
             batch=self.menu_batch, font_size=34, weight=pyglet.text.Weight.BOLD,
             color=(255, 255, 255, 255),
         )
-        self.new_label = pyglet.text.Label("Start", x=550, y=425, anchor_x="center", anchor_y="center", batch=self.menu_batch, **self.label_style)
-        self.karts_label = pyglet.text.Label("Karts not Farts", x=550, y=355, anchor_x="center", anchor_y="center", batch=self.menu_batch, **self.label_style)
-        self.load_label = pyglet.text.Label("Load Game", x=550, y=285, anchor_x="center", anchor_y="center", batch=self.menu_batch, **self.label_style)
-        self.settings_label = pyglet.text.Label("Settings", x=550, y=215, anchor_x="center", anchor_y="center", batch=self.menu_batch, **self.label_style)
-        self.settings_status = pyglet.text.Label("Hints: off", x=550, y=172, anchor_x="center", anchor_y="center", batch=self.menu_batch, font_size=15, color=(255, 255, 255, 255))
+        self.new_label = pyglet.text.Label(
+            "Start", x=550, y=435, anchor_x="center", anchor_y="center",
+            batch=self.menu_batch, **self.label_style
+        )
+        self.karts_label = pyglet.text.Label(
+            "Karts not Farts", x=550, y=375, anchor_x="center", anchor_y="center",
+            batch=self.menu_batch, **self.label_style
+        )
+        self.racing3d_label = pyglet.text.Label(
+            "3d reaching", x=550, y=315, anchor_x="center", anchor_y="center",
+            batch=self.menu_batch, **self.label_style
+        )
+        self.load_label = pyglet.text.Label(
+            "Load Game", x=550, y=255, anchor_x="center", anchor_y="center",
+            batch=self.menu_batch, **self.label_style
+        )
+        self.settings_label = pyglet.text.Label(
+            "Settings", x=550, y=195, anchor_x="center", anchor_y="center",
+            batch=self.menu_batch, **self.label_style
+        )
+        self.settings_status = pyglet.text.Label(
+            "Hints: off", x=550, y=157, anchor_x="center", anchor_y="center",
+            batch=self.menu_batch, font_size=14, color=(255, 255, 255, 255)
+        )
 
         self.level_title = pyglet.text.Label(
             "SELECT A LEVEL", x=550, y=535, anchor_x="center", anchor_y="center",
@@ -73,6 +100,7 @@ class GameMenu:
             self.title_label,
             self.new_label,
             self.karts_label,
+            self.racing3d_label,
             self.load_label,
             self.settings_label,
             self.settings_status,
@@ -106,13 +134,19 @@ class GameMenu:
                 EngineGlobals.show_menu = False
                 if self.on_karts_selected:
                     self.on_karts_selected()
+            elif self._contains(self.racing3d_label, x, y):
+                EngineGlobals.show_menu = False
+                if self.on_3d_selected:
+                    self.on_3d_selected()
             elif self._contains(self.load_label, x, y):
                 EngineGlobals.show_menu = False
                 if self.on_load_game:
                     self.on_load_game()
             elif self._contains(self.settings_label, x, y):
                 EngineGlobals.hint_tiles[0] = not EngineGlobals.hint_tiles[0]
-                self.settings_status.text = "Hints: {}".format("on" if EngineGlobals.hint_tiles[0] else "off")
+                self.settings_status.text = "Hints: {}".format(
+                    "on" if EngineGlobals.hint_tiles[0] else "off"
+                )
         else:
             if self._contains(self.back_label, x, y):
                 self.screen = "main"

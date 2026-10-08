@@ -1,3 +1,18 @@
 #!/bin/sh
 
-exec .venv/Scripts/python main.py
+set -e
+
+if [ -x ".venv/bin/python" ]; then
+    exec .venv/bin/python main.py
+fi
+
+if [ -x ".venv/Scripts/python.exe" ]; then
+    exec .venv/Scripts/python.exe main.py
+fi
+
+if [ -x ".venv/Scripts/python" ]; then
+    exec .venv/Scripts/python main.py
+fi
+
+printf '%s\n' "No .venv Python found. Create one and install requirements.txt first." >&2
+exit 1

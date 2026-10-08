@@ -25,6 +25,7 @@ import physics
 import player
 from engineglobals import EngineGlobals
 from gameplay import AutoScroller, GameProgress, PuzzleController, SaveGame
+from ketchup_install import install_ketchup_boss
 from lifecycle import LifeCycleManager
 from magic_map import ChunkEdge
 from maploader import GameMap
@@ -38,6 +39,7 @@ pyglet.resource.path = [PROJECT_ROOT, os.path.join(PROJECT_ROOT, "audio"), os.pa
 pyglet.resource.reindex()
 getcontext().prec = 7
 install_toga_sisters()
+install_ketchup_boss()
 # Pompeii's authored builder names the legacy boss class directly, so replace
 # that module global too. The rest of the dill/map-loader architecture stays intact.
 maploader_module.VesuviusBoss = TogaSistersBoss

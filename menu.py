@@ -1,6 +1,9 @@
 import pyglet
 from engineglobals import EngineGlobals
+from karts_expansion import install_karts_expansion
 from pyglet.sprite import Sprite
+
+install_karts_expansion()
 
 
 LEVEL_CHOICES = [

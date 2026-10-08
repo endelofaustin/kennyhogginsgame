@@ -1,8 +1,4 @@
-"""Gameplay systems shared across maps.
-
-This module keeps new mechanics small and data-driven so maps can opt into them
-without growing main.py further.
-"""
+"""Gameplay systems shared across maps."""
 
 import json
 import math
@@ -35,8 +31,6 @@ STORY_BEATS = [
 
 
 class GameProgress:
-    """Serializable player progress independent of a dill map file."""
-
     VERSION = 1
 
     def __init__(self):
@@ -106,7 +100,6 @@ class BloodSpurt(GameObject):
         origin_x = float(EngineGlobals.screen_x(x))
         origin_y = float(EngineGlobals.screen_y(y))
 
-        # A dense radial blast makes the hit read like a tiny cartoon explosion.
         for _ in range(42):
             angle = random.uniform(0, math.tau)
             speed = random.uniform(2.5, 11.0)
@@ -118,14 +111,8 @@ class BloodSpurt(GameObject):
                 batch=EngineGlobals.main_batch,
                 group=EngineGlobals.editor_group_front,
             )
-            self.particles.append({
-                "shape": dot,
-                "vx": math.cos(angle) * speed,
-                "vy": math.sin(angle) * speed + random.uniform(1.5, 5.0),
-                "drag": random.uniform(0.94, 0.985),
-            })
+            self.particles.append({"shape": dot, "vx": math.cos(angle) * speed, "vy": math.sin(angle) * speed + random.uniform(1.5, 5.0), "drag": random.uniform(0.94, 0.985)})
 
-        # Add a few larger blobs that lag behind the initial spray.
         for _ in range(8):
             dot = pyglet.shapes.Circle(
                 x=int(origin_x),
@@ -135,12 +122,7 @@ class BloodSpurt(GameObject):
                 batch=EngineGlobals.main_batch,
                 group=EngineGlobals.editor_group_front,
             )
-            self.particles.append({
-                "shape": dot,
-                "vx": random.uniform(-4.5, 4.5),
-                "vy": random.uniform(2.0, 7.0),
-                "drag": 0.96,
-            })
+            self.particles.append({"shape": dot, "vx": random.uniform(-4.5, 4.5), "vy": random.uniform(2.0, 7.0), "drag": 0.96})
 
         self.timer = 34
         super().__init__()
@@ -148,7 +130,6 @@ class BloodSpurt(GameObject):
     def updateloop(self, dt):
         self.timer -= 1
         age_fraction = max(0.0, self.timer / 34.0)
-
         for particle in self.particles:
             dot = particle["shape"]
             particle["vy"] -= self.GRAVITY
@@ -156,19 +137,71 @@ class BloodSpurt(GameObject):
             particle["vy"] *= particle["drag"]
             dot.x += particle["vx"]
             dot.y += particle["vy"]
-
-            # Shrink the spray as it falls so it disappears instead of hanging around.
             if self.timer < 16 and dot.radius > 1:
                 dot.radius = max(1, dot.radius - 0.22)
-
-            # Pyglet shapes expose opacity separately from RGB color.
             if hasattr(dot, "opacity"):
                 dot.opacity = int(255 * age_fraction)
-
         if self.timer <= 0:
             for particle in self.particles:
                 particle["shape"].delete()
             self.particles.clear()
+            self.destroy()
+
+
+class DeathBurst(GameObject):
+    """Extra silly Kenny-death burst: blood, hearts, and cartoon organ blobs."""
+
+    GRAVITY = 0.34
+
+    def __init__(self, x, y):
+        self.parts = []
+        sx = float(EngineGlobals.screen_x(x))
+        sy = float(EngineGlobals.screen_y(y))
+        batch = EngineGlobals.main_batch
+        group = EngineGlobals.editor_group_front
+
+        # Start with another blood blast so death is unmistakably bigger than a normal hit.
+        BloodSpurt(x, y)
+
+        # Cartoon organ blobs.
+        organ_colors = [(180, 55, 75), (205, 95, 90), (135, 55, 85), (225, 125, 120)]
+        for _ in range(12):
+            shape = pyglet.shapes.Circle(
+                sx + random.uniform(-6, 6),
+                sy + random.uniform(4, 20),
+                random.randint(4, 9),
+                color=random.choice(organ_colors),
+                batch=batch,
+                group=group,
+            )
+            self.parts.append({"shapes": [shape], "vx": random.uniform(-7, 7), "vy": random.uniform(3, 11), "spin": 0})
+
+        # Little flying cartoon hearts made from two circles and a triangle.
+        for _ in range(6):
+            hx = sx + random.uniform(-8, 8)
+            hy = sy + random.uniform(8, 22)
+            left = pyglet.shapes.Circle(hx - 3, hy + 3, 4, color=(245, 40, 80), batch=batch, group=group)
+            right = pyglet.shapes.Circle(hx + 3, hy + 3, 4, color=(245, 40, 80), batch=batch, group=group)
+            bottom = pyglet.shapes.Triangle(hx - 7, hy + 2, hx + 7, hy + 2, hx, hy - 8, color=(245, 40, 80), batch=batch, group=group)
+            self.parts.append({"shapes": [left, right, bottom], "vx": random.uniform(-6, 6), "vy": random.uniform(5, 12), "spin": 0})
+
+        self.timer = 55
+        super().__init__()
+
+    def updateloop(self, dt):
+        self.timer -= 1
+        for part in self.parts:
+            part["vy"] -= self.GRAVITY
+            for shape in part["shapes"]:
+                shape.x += part["vx"]
+                shape.y += part["vy"]
+                if hasattr(shape, "opacity"):
+                    shape.opacity = max(0, min(255, int(self.timer / 55 * 255)))
+        if self.timer <= 0:
+            for part in self.parts:
+                for shape in part["shapes"]:
+                    shape.delete()
+            self.parts.clear()
             self.destroy()
 
 
@@ -186,8 +219,6 @@ class KeyPickup(PhysicsSprite):
 
 
 class LockedGate(PhysicsSprite):
-    """Door-like barrier opened by spending one collected key."""
-
     def __init__(self, sprite_initializer, starting_chunk):
         self.gate_id = sprite_initializer.get("gate_id", "gate")
         super().__init__(sprite_initializer, starting_chunk)
@@ -211,12 +242,6 @@ class LockedGate(PhysicsSprite):
 
 
 class AutoScroller(GameObject):
-    """Optional horizontal auto-scroll challenge.
-
-    Maps can create one and call start(); the camera then advances independently
-    and Kenny loses if he falls too far behind.
-    """
-
     def __init__(self, speed=Decimal("1.25")):
         self.speed = Decimal(speed)
         self.active = False
@@ -231,7 +256,7 @@ class AutoScroller(GameObject):
     def updateloop(self, dt):
         if not self.active or not hasattr(EngineGlobals, "our_screen"):
             return
-        EngineGlobals.our_screen.x += self.speed * Decimal(dt)
+        EngineGlobals.our_screen.x += self.speed * Decimal(str(dt))
         if hasattr(EngineGlobals, "kenny"):
             danger_x = EngineGlobals.our_screen.x - 24
             if EngineGlobals.kenny.x_position < danger_x:
@@ -240,8 +265,6 @@ class AutoScroller(GameObject):
 
 
 class JigsawPuzzle:
-    """Small shuffle/swap puzzle suitable for a map interaction."""
-
     def __init__(self, size=3):
         self.size = size
         self.solution = list(range(size * size))
@@ -263,12 +286,6 @@ class JigsawPuzzle:
 
 
 class PuzzleController(GameObject):
-    """Keyboard-driven 3x3 jigsaw mode.
-
-    Press P to toggle the puzzle. Arrow keys select a tile, Enter picks it, and
-    Enter on a second tile swaps the pair. Solving persists in GameProgress.
-    """
-
     def __init__(self, progress):
         self.progress = progress
         self.puzzle = JigsawPuzzle(3)
@@ -295,14 +312,7 @@ class PuzzleController(GameObject):
             row, col = divmod(idx, 3)
             marker = "[{}]" if idx == self.cursor else " {} "
             text = marker.format(value + 1)
-            self.labels.append(pyglet.text.Label(
-                text,
-                x=260 + col * 80,
-                y=420 - row * 80,
-                font_size=22,
-                batch=EngineGlobals.main_batch,
-                group=EngineGlobals.editor_group_front,
-            ))
+            self.labels.append(pyglet.text.Label(text, x=260 + col * 80, y=420 - row * 80, font_size=22, batch=EngineGlobals.main_batch, group=EngineGlobals.editor_group_front))
 
     def on_key_press(self, symbol, modifiers):
         if symbol == pyglet.window.key.P:

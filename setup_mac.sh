@@ -2,41 +2,37 @@
 
 set -e
 
-find_python() {
-    for candidate in python3.13 python3.12 python3.11 python3.10; do
-        if command -v "$candidate" >/dev/null 2>&1; then
-            printf '%s' "$candidate"
-            return 0
-        fi
-    done
-    return 1
-}
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+cd "$ROOT"
 
-PYTHON=$(find_python || true)
+UV_BIN="$ROOT/.uv-bin/uv"
+PYTHON_DIR="$ROOT/.python"
+VENV_DIR="$ROOT/.venv"
 
-if [ -z "$PYTHON" ]; then
-    printf '%s\n' "Kenny Hoggins Game requires Python 3.10 or newer." >&2
-    printf '%s\n' "No compatible Python was found on this Mac." >&2
-    if command -v brew >/dev/null 2>&1; then
-        printf '%s\n' "Install one with: brew install python@3.12" >&2
-    else
-        printf '%s\n' "Install Python 3.12+ from python.org, then run this script again." >&2
-    fi
-    exit 1
+if [ ! -x "$UV_BIN" ]; then
+    printf '%s\n' "Installing project-local uv into .uv-bin ..."
+    mkdir -p "$ROOT/.uv-bin"
+    curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL="$ROOT/.uv-bin" sh
 fi
 
-printf 'Using %s: ' "$PYTHON"
-"$PYTHON" --version
+printf '%s\n' "Installing project-local Python 3.11 into .python ..."
+UV_PYTHON_INSTALL_DIR="$PYTHON_DIR" "$UV_BIN" python install 3.11 --install-dir "$PYTHON_DIR"
 
-if [ -d .venv ]; then
-    printf '%s\n' "Removing the existing .venv so it cannot keep using Python 3.9..."
-    rm -rf .venv
+if [ -d "$VENV_DIR" ]; then
+    printf '%s\n' "Removing existing .venv ..."
+    rm -rf "$VENV_DIR"
 fi
 
-"$PYTHON" -m venv .venv
-.venv/bin/python -m pip install --upgrade pip
-.venv/bin/python -m pip install -r requirements.txt
+printf '%s\n' "Creating .venv from the project-local Python 3.11 ..."
+UV_PYTHON_INSTALL_DIR="$PYTHON_DIR" "$UV_BIN" venv "$VENV_DIR" --python 3.11 --seed
+
+printf '%s\n' "Installing Kenny Hoggins dependencies into .venv ..."
+"$VENV_DIR/bin/python" -m pip install --upgrade pip
+"$VENV_DIR/bin/python" -m pip install -r requirements.txt
 
 printf '%s\n' ""
-printf '%s\n' "Setup complete. Start the game with:"
+printf '%s\n' "Setup complete. Nothing was installed as your system/default Python."
+printf '%s\n' "Python used by this repo:"
+"$VENV_DIR/bin/python" --version
+printf '%s\n' "Start the game with:"
 printf '%s\n' "  ./runit"

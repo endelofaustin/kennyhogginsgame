@@ -1,7 +1,6 @@
 import pyglet
 from decimal import Decimal
 from physics import *
-from sprite import makeSprite
 
 
 class Enemy(PhysicsSprite):
@@ -13,10 +12,9 @@ class Enemy(PhysicsSprite):
 
     def __init__(self, sprite_initializer: dict, starting_chunk):
         super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
-        self.moving_time = 0
         self.hit_count = 0
         self.patrol_direction = Decimal(1)
-
+        self.turn_cooldown = 0
         self.is_dying = False
         self.death_done = False
         self.death_timer = -1
@@ -25,10 +23,7 @@ class Enemy(PhysicsSprite):
             Enemy.hit_snd = pyglet.resource.media("glurk.wav", streaming=False)
 
     def getResourceImages(self):
-        return {
-            "0": "mrspudl.png",
-            "dead": "deadspud.png",
-        }
+        return {"0": "mrspudl.png", "dead": "deadspud.png"}
 
     def start_death(self, delay_frames=6, dead_key="dead"):
         if self.is_dying or self.death_done:
@@ -48,18 +43,16 @@ class Enemy(PhysicsSprite):
         pass
 
     def _choose_horizontal_speed(self):
-        """Chase Kenny when nearby; otherwise patrol back and forth."""
         try:
             from engineglobals import EngineGlobals
-            player = EngineGlobals.kenny
+            current_player = EngineGlobals.kenny
         except (AttributeError, ImportError):
-            player = None
+            current_player = None
 
-        if player is not None and player.current_chunk is self.current_chunk:
-            distance = Decimal(player.x_position) - Decimal(self.x_position)
+        if current_player is not None and current_player.current_chunk is self.current_chunk:
+            distance = Decimal(current_player.x_position) - Decimal(self.x_position)
             if abs(distance) <= self.CHASE_DISTANCE:
                 return self.CHASE_SPEED if distance > 0 else -self.CHASE_SPEED
-
         return self.PATROL_SPEED * self.patrol_direction
 
     def updateloop(self, dt):
@@ -72,6 +65,8 @@ class Enemy(PhysicsSprite):
                     self.finish_death()
             return
 
+        if self.turn_cooldown > 0:
+            self.turn_cooldown -= 1
         self.x_speed = self._choose_horizontal_speed()
         PhysicsSprite.updateloop(self, dt)
 
@@ -79,15 +74,15 @@ class Enemy(PhysicsSprite):
         self.y_speed = Decimal(7)
 
     def on_PhysicsSprite_collided(self, collided_object=None, collided_chunk=None, chunk_x=None, chunk_y=None):
-        # A wall/block collision reverses patrol direction. During a chase this
-        # also gives the enemy a small hop so it does not vibrate against walls.
-        if collided_object is None or type(collided_object).__name__ == "Block":
+        # Physics can report the same tile collision through more than one callback.
+        # Debounce the turnaround so the direction only flips once per wall impact.
+        if collided_object is not None and hasattr(collided_object, "solid") and self.turn_cooldown == 0:
             self.patrol_direction *= Decimal(-1)
+            self.turn_cooldown = 8
             if self.landed:
                 self.make_it_jump()
 
     def on_PhysicsSprite_landed(self):
-        # Landing no longer causes random jitter/jumps; movement stays legible.
         pass
 
     def getting_hit(self):

@@ -8,9 +8,11 @@ Kenny Hoggins Game is a Python/pyglet platform game with an in-game map editor, 
 
 ### Requirements
 
-- Python 3.10 or newer
+- **Python 3.10 or newer**
 - Git
 - A desktop environment capable of opening an OpenGL window
+
+> Important on macOS: do not build the virtual environment with Python 3.9. `pyglet==2.1.6` currently contains macOS code that uses Python 3.10+ union-type syntax (`X | None`). A Python 3.9 virtual environment can successfully install pyglet and then crash immediately when pyglet imports.
 
 The Python dependencies are pinned in `requirements.txt`:
 
@@ -24,61 +26,116 @@ git clone https://github.com/endelofaustin/kennyhogginsgame.git
 cd kennyhogginsgame
 ```
 
-### 2. Create a virtual environment
+### 2. Set up Python
 
-Windows PowerShell:
+#### macOS — recommended
+
+The repository includes a setup helper that deliberately avoids Python 3.9:
+
+```bash
+chmod +x setup_mac.sh runit
+./setup_mac.sh
+./runit
+```
+
+`setup_mac.sh` looks for Python 3.13, 3.12, 3.11, or 3.10, removes an incompatible existing `.venv`, creates a fresh one, upgrades pip, and installs the dependencies.
+
+If the script says that no compatible Python is installed and you use Homebrew:
+
+```bash
+brew install python@3.12
+./setup_mac.sh
+./runit
+```
+
+You can also do the setup manually:
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python main.py
+```
+
+Before creating the venv, verify the interpreter:
+
+```bash
+python3.12 --version
+```
+
+It must report Python 3.10 or newer.
+
+#### Windows PowerShell
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python main.py
 ```
 
-Windows Command Prompt:
+#### Windows Command Prompt
 
 ```bat
 py -m venv .venv
 .venv\Scripts\activate.bat
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python main.py
 ```
 
-macOS/Linux:
+#### Linux
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-```
-
-### 3. Install dependencies
-
-```bash
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-```
-
-### 4. Start the game
-
-With the virtual environment activated:
-
-```bash
 python main.py
 ```
 
-On macOS/Linux you can also run:
+### Fixing an existing macOS Python 3.9 virtual environment
 
-```bash
-./runit
+If your traceback contains a path like:
+
+```text
+.venv/lib/python3.9/site-packages/pyglet/...
 ```
 
-On Git Bash/WSL for Windows, `./runit` will also detect the Windows virtual-environment layout.
+then the `.venv` itself was created with Python 3.9. Activating it or upgrading pip will not change its Python version. Rebuild it:
+
+```bash
+deactivate 2>/dev/null || true
+rm -rf .venv
+brew install python@3.12   # only if python3.12 is not already installed
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python main.py
+```
+
+Or simply use:
+
+```bash
+./setup_mac.sh
+./runit
+```
 
 ### Troubleshooting
 
 Run the game from the repository root. The game loads maps, artwork, and audio using paths relative to the project, so launching `main.py` from another working directory can cause missing-resource errors.
 
-If `python` is not available on Windows, use:
+Check which Python your environment is actually using:
 
-```powershell
-py main.py
+```bash
+python --version
+which python
 ```
+
+On macOS, the path should point into this repository's `.venv/bin/python`, and the version must be 3.10+.
 
 If the window cannot be created, verify that your graphics/OpenGL drivers are available and current.
 

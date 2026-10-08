@@ -45,13 +45,11 @@ class Player(PhysicsSprite):
         self.has_scythe = False
         self.progress = getattr(EngineGlobals, "progress", GameProgress())
         EngineGlobals.progress = self.progress
-
         self.jumpct = self.JC0_NOT_JUMPING
         self.jump_frames = 0
         self.bloody = False
         self.crouching = False
         self.hit_cooldown = 0
-
         self.is_dead = False
         self.death_timer = 0
         self.angel_active = False
@@ -79,22 +77,8 @@ class Player(PhysicsSprite):
             "crouch_right": {"file": "kenny-crouch-right.png"},
             "run_left": {"file": "kenny-run-left.png", "rows": 1, "columns": 4, "duration": 1 / 10, "loop": True},
             "run_right": {"file": "kenny-run-right.png", "rows": 1, "columns": 4, "duration": 1 / 10, "loop": True},
-            "jump_left": {
-                "file": "generated/kenny-jump-left-4.png",
-                "rows": 1,
-                "columns": 4,
-                "duration": 1 / 12,
-                "loop": False,
-                "anchors": [(10, 0), (10, 0), (10, 0), (10, 0)],
-            },
-            "jump_right": {
-                "file": "generated/kenny-jump-right-4.png",
-                "rows": 1,
-                "columns": 4,
-                "duration": 1 / 12,
-                "loop": False,
-                "anchors": [(3, 0), (3, 0), (3, 0), (3, 0)],
-            },
+            "jump_left": {"file": "generated/kenny-jump-left-4.png", "rows": 1, "columns": 4, "duration": 1 / 12, "loop": False, "anchors": [(10, 0), (10, 0), (10, 0), (10, 0)]},
+            "jump_right": {"file": "generated/kenny-jump-right-4.png", "rows": 1, "columns": 4, "duration": 1 / 12, "loop": False, "anchors": [(3, 0), (3, 0), (3, 0), (3, 0)]},
             "kenny_sword_left": "kennysword-left.png",
             "kenny_sword_right": "kennysword-right.png",
             "kaboom": "kaboom.png",
@@ -106,6 +90,24 @@ class Player(PhysicsSprite):
         self.angel_shapes = []
         self.angel_active = False
 
+    def reset_at(self, x, y):
+        """Clear transient movement/death state and place Kenny safely."""
+        self._delete_angel()
+        self.is_dead = False
+        self.death_timer = 0
+        self.x_position = Decimal(str(x))
+        self.y_position = Decimal(str(y))
+        self.x_speed = Decimal(0)
+        self.y_speed = Decimal(0)
+        self.jumpct = self.JC0_NOT_JUMPING
+        self.jump_frames = 0
+        self.landed = False
+        self.crouching = False
+        self.bloody = False
+        self.hit_cooldown = 30
+        self.sprite.visible = True
+        self.sprite.image = self.resource_images[self.direction]
+
     def _create_angel(self):
         self._delete_angel()
         self.angel_active = True
@@ -113,16 +115,14 @@ class Player(PhysicsSprite):
         self.angel_y = Decimal(self.y_position) + Decimal(18)
         batch = EngineGlobals.main_batch
         group = EngineGlobals.editor_group_front
-
-        # Built from primitive shapes so it remains part of the existing rendering architecture.
         self.angel_shapes = [
-            pyglet.shapes.Circle(0, 0, 17, color=(255, 245, 170), batch=batch, group=group),  # halo
-            pyglet.shapes.Circle(0, 0, 11, color=(255, 255, 255), batch=batch, group=group),  # halo center
-            pyglet.shapes.Circle(0, 0, 17, color=(255, 255, 245), batch=batch, group=group),  # left wing
-            pyglet.shapes.Circle(0, 0, 17, color=(255, 255, 245), batch=batch, group=group),  # right wing
-            pyglet.shapes.Circle(0, 0, 18, color=(255, 255, 255), batch=batch, group=group),  # robe/body
-            pyglet.shapes.Circle(0, 0, 13, color=(245, 175, 175), batch=batch, group=group),  # Kenny head
-            pyglet.shapes.Circle(0, 0, 4, color=(120, 55, 55), batch=batch, group=group),     # snout
+            pyglet.shapes.Circle(0, 0, 17, color=(255, 245, 170), batch=batch, group=group),
+            pyglet.shapes.Circle(0, 0, 11, color=(255, 255, 255), batch=batch, group=group),
+            pyglet.shapes.Circle(0, 0, 17, color=(255, 255, 245), batch=batch, group=group),
+            pyglet.shapes.Circle(0, 0, 17, color=(255, 255, 245), batch=batch, group=group),
+            pyglet.shapes.Circle(0, 0, 18, color=(255, 255, 255), batch=batch, group=group),
+            pyglet.shapes.Circle(0, 0, 13, color=(245, 175, 175), batch=batch, group=group),
+            pyglet.shapes.Circle(0, 0, 4, color=(120, 55, 55), batch=batch, group=group),
         ]
         self._update_angel_visual()
 
@@ -131,35 +131,20 @@ class Player(PhysicsSprite):
             return
         sx = float(EngineGlobals.screen_x(self.angel_x))
         sy = float(EngineGlobals.screen_y(self.angel_y))
-        offsets = [
-            (0, 43),
-            (0, 43),
-            (-22, 5),
-            (22, 5),
-            (0, 5),
-            (0, 20),
-            (0, 15),
-        ]
+        offsets = [(0, 43), (0, 43), (-22, 5), (22, 5), (0, 5), (0, 20), (0, 15)]
         for shape, (ox, oy) in zip(self.angel_shapes, offsets):
             shape.x = sx + ox
             shape.y = sy + oy
 
     def _respawn_from_angel(self):
-        self.x_position = Decimal(self.angel_x)
-        self.y_position = Decimal(self.angel_y)
-        self.x_speed = Decimal(0)
-        self.y_speed = Decimal(0)
-        self.is_dead = False
-        self.death_timer = 0
-        self.jumpct = self.JC0_NOT_JUMPING
-        self.jump_frames = 0
-        self.landed = False
-        self.crouching = False
-        self.bloody = False
+        respawn_x = self.angel_x
+        respawn_y = self.angel_y
+        self.reset_at(respawn_x, respawn_y)
         self.hit_cooldown = 90
-        self.sprite.visible = True
-        self.sprite.image = self.resource_images[self.direction]
-        self._delete_angel()
+        autoscroller = getattr(EngineGlobals, "autoscroller", None)
+        if autoscroller is not None and getattr(EngineGlobals.game_map, "autoscroll", False):
+            autoscroller.scroll_x = Decimal(str(EngineGlobals.our_screen.x))
+            autoscroller.start()
 
     def updateloop(self, dt):
         if self.is_dead:
@@ -170,7 +155,6 @@ class Player(PhysicsSprite):
                 if self.death_timer <= 0:
                     self._create_angel()
             else:
-                # Rise away, but stop near the top of the current viewport so the angel remains clickable.
                 max_world_y = Decimal(str(EngineGlobals.our_screen.y + EngineGlobals.height - 100))
                 if self.angel_y < max_world_y:
                     self.angel_y += Decimal("0.85") * Decimal(str(dt))
@@ -248,10 +232,8 @@ class Player(PhysicsSprite):
                     Player._play_sound(Player.door_open_close)
                     GameMap.load_map(collide_with.sprite_initializer["target_map"])
                     self.current_chunk = EngineGlobals.game_map.chunks[0]
-                    self.x_position, self.y_position = collide_with.sprite_initializer["player_position"]
-                    self.x_speed = self.y_speed = Decimal(0)
-                    self.jumpct = self.JC0_NOT_JUMPING
-                    self.landed = False
+                    target_x, target_y = collide_with.sprite_initializer["player_position"]
+                    self.reset_at(target_x, target_y)
                     break
                 if isinstance(collide_with, LockedGate):
                     if collide_with.unlock(self):
@@ -278,11 +260,7 @@ class Player(PhysicsSprite):
                 if getattr(EngineGlobals.game_map, "filename", None) != target_map:
                     GameMap.load_map(target_map)
                 self.current_chunk = EngineGlobals.game_map.chunks[0]
-                self.x_position = Decimal(str(player_state.get("x", self.x_position)))
-                self.y_position = Decimal(str(player_state.get("y", self.y_position)))
-                self.x_speed = self.y_speed = Decimal(0)
-                self.jumpct = self.JC0_NOT_JUMPING
-                self.landed = False
+                self.reset_at(player_state.get("x", self.x_position), player_state.get("y", self.y_position))
                 self.has_sword = bool(player_state.get("has_sword", False))
                 self.has_scythe = bool(player_state.get("has_scythe", False))
             from text import MessageBox
@@ -304,7 +282,6 @@ class Player(PhysicsSprite):
         self.landed = True
 
     def shoot_it(self):
-        # Deliberately spawn on the front; Bullet repositions itself to Kenny's rear and reverses direction.
         if self.direction == "right":
             bullet_speed = (Player.BULLET_INITIAL_VELOCITY, 0)
             bullet_pos = (self.x_position + 41, self.y_position + 22)
@@ -356,7 +333,7 @@ class Player(PhysicsSprite):
                 self.hit()
                 self.hit_cooldown = 30
         elif collided_object and isinstance(collided_object, Enemy):
-            if self.hit_cooldown == 0:
+            if not getattr(collided_object, "is_dying", False) and not getattr(collided_object, "death_done", False) and self.hit_cooldown == 0:
                 self.hit()
                 self.hit_cooldown = 30
         elif collided_object and type(collided_object).__name__ == "Bandaid":
@@ -369,7 +346,6 @@ class Player(PhysicsSprite):
         super().on_PhysicsSprite_collided(collided_object=collided_object)
 
     def getCollisionBox(self):
-        # Player physics must not change when animation art changes size.
         return (self.default_collision_width, self.default_collision_height)
 
     def on_finalDeletion(self):
@@ -408,12 +384,5 @@ class SwordHit(PhysicsSprite):
     def getResourceImages(self):
         return {
             "left": {"file": "swordswish.png", "rows": 1, "columns": 4, "duration": 1 / 10, "loop": False},
-            "right": {
-                "file": "swordswish.png",
-                "rows": 1,
-                "columns": 4,
-                "duration": 1 / 10,
-                "loop": False,
-                "flip_x": True,
-            },
+            "right": {"file": "swordswish.png", "rows": 1, "columns": 4, "duration": 1 / 10, "loop": False, "flip_x": True},
         }

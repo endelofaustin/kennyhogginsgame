@@ -2,7 +2,7 @@
 
 Kenny is a pig. He likes being a pig. And a hog. Let’s go for a jog.
 
-Kenny Hoggins Game is a Python/pyglet platform game with an in-game map editor, enemies, rear-fired projectiles, boss maps, pickups, save-game progress, a level-select screen, and five themed dill-map levels.
+Kenny Hoggins Game is a Python/pyglet platform game with an in-game map editor, enemies, rear-fired projectiles, boss maps, pickups, save-game progress, a level-select screen, and six themed dill-map levels.
 
 ## How to run Kenny Hoggins Game
 
@@ -80,6 +80,7 @@ Choose **Start** on the main menu. The game then opens the level-select screen:
 - **Karate Dojo** — `dojo.dill`, Jackie Flan boss
 - **Writing Rainbomb** — `space.dill`, Levod Burtim boss and autoscroller
 - **Escape Vesuvius** — `pompeii.dill`, Pompeii lava/autoscroller level
+- **Theo's Trailer** — `theo.dill`, sandy trailer yard and Cousin Theo arm-wrestling encounter
 
 All authored game maps remain `.dill` files and load through the existing `GameMap.load_map(...)` flow. No JSON map loader is used.
 
@@ -91,14 +92,18 @@ Each themed level has custom artwork, story text, enemies, hazards, and its own 
 - **Down arrow** — crouch
 - **Ctrl or Up arrow** — jump / double jump
 - **Space** — fire Kenny’s projectile from his **butt**, opposite the direction he is facing
-- **C** — sword/scythe attack
-- **D** — interact with doors and locked gates
+- **C** — sword/scythe attack; mash C during Theo arm wrestling
+- **D** — interact with doors and locked gates; start the Theo arm-wrestling match at his table
 - **P** — open/close the jigsaw puzzle
 - **A** — toggle the autoscroller challenge manually
 - **F5** — quick save
 - **F9** — quick load
 
 Kenny now uses four-frame custom jump animation sheets in both directions.
+
+### Theo's Trailer
+
+Walk across the sandy yard toward Theo's arm-wrestling table. Sand slows Kenny down and kicks up dust while he moves. When close to the table, press **D** to start the match. After the countdown, repeatedly press **C** to push the tug-of-war meter toward Kenny's side while Theo applies changing counter-pressure and short resistance bursts. The match ends immediately if either side maxes the meter, or after ten seconds based on which side is ahead. The loser gets fish-slapped, then the encounter resets for a rematch.
 
 ### Map editor
 
@@ -128,7 +133,8 @@ For block tools, left click places a solid foreground block and right click plac
 - Intentionally ridiculous projectile-hit blood explosion with roughly 50 animated particles/blobs
 - Faster enemy projectile deaths
 - Custom character art for Lucinda, Jackie Flan, Levod Burtim, Pippi, the river van, and Vesuvius
-- Custom themed backdrop art for farm, river, dojo, space, and Pompeii
+- Theo trailer arm-wrestling minigame with sand slowdown, dust, timed resistance meter, and fish-slap result
+- Custom themed backdrop art for farm, river, dojo, space, Pompeii, and Theo's trailer encounter
 
 ## Game engine design
 
@@ -142,11 +148,11 @@ The simulation runs at 60 updates per second. Pyglet calls `main_update_callback
 
 ### Maps
 
-The game remains dill-based. Existing `.dill` map serialization and `GameMap.load_map(...)` are retained. The five themed maps are separate `.dill` files and are customized through the existing map-definition hook.
+The game remains dill-based. Existing `.dill` map serialization and `GameMap.load_map(...)` are retained. The six selectable themed maps are separate `.dill` files and are customized through the existing map-definition hook.
 
 ### Gameplay systems
 
-`gameplay.py` contains shared systems including player progress, keys/locked gates, the jigsaw puzzle, autoscrolling, and the exaggerated blood effect.
+`gameplay.py` contains shared systems including player progress, keys/locked gates, the jigsaw puzzle, autoscrolling, and the exaggerated blood effect. `theo_level.py` owns the map-scoped Theo trailer, sand, arm-wrestling meter, Theo resistance, and fish-slap resolution.
 
 ## Troubleshooting
 
@@ -167,5 +173,5 @@ If a previous `.venv` used Python 3.9, run `./setup_mac.sh`; it replaces only th
 - Pyglet — game engine — https://pyglet.org/
 - Dill — map serialization
 - Piskel — sprite designer — https://www.piskelapp.com/p/create/sprite
-- BobSprite — sprite designer — https://bobsprite.com/editor
+- BobSprite — sprite designer with adjustable alpha transparency — https://bobsprite.com/editor
 - Aseprite — sprite designer — https://www.aseprite.org/

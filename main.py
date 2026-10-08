@@ -151,16 +151,20 @@ def update_chunk_tile_coords(chunk):
             if 0 <= xcounter < len(chunk.platform[0]) and 0 <= ycounter < len(chunk.platform):
                 block = chunk.platform[ycounter][xcounter]
                 if isinstance(block, gamepieces.Block):
+                    sprite = getattr(block, "sprite", None)
+                    if sprite is None or getattr(sprite, "image", None) is None:
+                        yrender_start += EngineGlobals.tile_size
+                        continue
                     onscreen = not (
                         xrender_start + EngineGlobals.tile_size <= 0
                         or xrender_start >= EngineGlobals.width
                         or yrender_start + EngineGlobals.tile_size <= 0
                         or yrender_start >= EngineGlobals.height
                     )
-                    block.sprite.visible = onscreen
+                    sprite.visible = onscreen
                     if onscreen:
-                        block.sprite.x = EngineGlobals.pixel_coord(xrender_start)
-                        block.sprite.y = EngineGlobals.pixel_coord(yrender_start)
+                        sprite.x = EngineGlobals.pixel_coord(xrender_start)
+                        sprite.y = EngineGlobals.pixel_coord(yrender_start)
             yrender_start += EngineGlobals.tile_size
         xrender_start += EngineGlobals.tile_size
         yrender_start = int((chunk.coalesced_y + (chunk.height - ystart - 1) * EngineGlobals.tile_size) - screen.y)

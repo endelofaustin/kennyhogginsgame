@@ -5,6 +5,8 @@ from physics import PhysicsSprite
 class Bullet(PhysicsSprite):
     """Kenny's traditional rear-fired projectile."""
 
+    DAMAGE = 1
+
     def __init__(self, sprite_initializer: dict, starting_chunk):
         super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
 
@@ -30,7 +32,10 @@ class Bullet(PhysicsSprite):
             # The bullet starts close to Kenny, so ignore self-collision.
             return
 
-        if hasattr(collided_object, "getting_hit"):
+        if collided_object and hasattr(collided_object, "take_damage"):
+            collided_object.take_damage(self.DAMAGE, source_x=self.x_position, knockback=True)
+            self.destroy()
+        elif hasattr(collided_object, "getting_hit"):
             collided_object.getting_hit()
             self.destroy()
         elif not isinstance(collided_object, PhysicsSprite):

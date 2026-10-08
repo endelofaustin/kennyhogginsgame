@@ -31,7 +31,7 @@ from lifecycle import LifeCycleManager
 from magic_map import ChunkEdge
 from maploader import GameMap
 from menu import GameMenu
-from mode7_racing import Mode7Racing
+from mode7_full_game import FullMode7Racing
 from sprite import makeSprite
 from text import IntroMode
 from toga_sisters import TogaSistersBoss, install_toga_sisters
@@ -159,7 +159,7 @@ def return_to_main_menu():
 
 
 karts = KartsMode(on_exit_to_menu=return_to_main_menu)
-racing3d = Mode7Racing(on_exit_to_menu=return_to_main_menu)
+racing3d = FullMode7Racing(on_exit_to_menu=return_to_main_menu)
 
 
 def start_karts():

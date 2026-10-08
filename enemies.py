@@ -2,52 +2,67 @@ import pyglet
 from decimal import Decimal
 from physics import *
 from sprite import makeSprite
-import random
+
 
 class Enemy(PhysicsSprite):
-    
-    def __init__(self, sprite_initializer : dict, starting_chunk):
+    """Default ground enemy with predictable patrol/chase movement."""
+
+    PATROL_SPEED = Decimal("1.5")
+    CHASE_SPEED = Decimal("2.4")
+    CHASE_DISTANCE = Decimal("300")
+
+    def __init__(self, sprite_initializer: dict, starting_chunk):
         super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
         self.moving_time = 0
         self.hit_count = 0
+        self.patrol_direction = Decimal(1)
 
-        # new hotness: death debouncer 3000
         self.is_dying = False
         self.death_done = False
-        self.death_timer = -1  # countdown clock o’ doom
+        self.death_timer = -1
 
-        if not hasattr(Enemy, 'hit_snd'):
-            Enemy.hit_snd = pyglet.resource.media('glurk.wav', streaming=False)
+        if not hasattr(Enemy, "hit_snd"):
+            Enemy.hit_snd = pyglet.resource.media("glurk.wav", streaming=False)
 
     def getResourceImages(self):
         return {
-            '0': "mrspudl.png",
-            'dead': "deadspud.png"
+            "0": "mrspudl.png",
+            "dead": "deadspud.png",
         }
 
-    # start the party: switch to dead sprite + set timer
-    def start_death(self, delay_frames=15, dead_key='dead'):
+    def start_death(self, delay_frames=6, dead_key="dead"):
         if self.is_dying or self.death_done:
             return
         self.is_dying = True
         self.sprite.image = self.resource_images[dead_key]
         self.death_timer = delay_frames
 
-    # finish him! (Mortal Kombat voice)
     def finish_death(self):
         if self.death_done:
             return
         self.death_done = True
         self.on_finish_death()
-        # don’t use sprite.delete() lifecycle will like clean it up and stuff
         self.destroy()
 
-    # bosses can override this to like spawn other stuff like doors or bombs or lavad burtim or timburtim whateverrrr. 
     def on_finish_death(self):
         pass
 
+    def _choose_horizontal_speed(self):
+        """Chase Kenny when nearby; otherwise patrol back and forth."""
+        try:
+            from engineglobals import EngineGlobals
+            player = EngineGlobals.kenny
+        except (AttributeError, ImportError):
+            player = None
+
+        if player is not None and player.current_chunk is self.current_chunk:
+            distance = Decimal(player.x_position) - Decimal(self.x_position)
+            if abs(distance) <= self.CHASE_DISTANCE:
+                return self.CHASE_SPEED if distance > 0 else -self.CHASE_SPEED
+
+        return self.PATROL_SPEED * self.patrol_direction
+
     def updateloop(self, dt):
-        # if we be  dying, freeze in place run the clock
         if self.is_dying or self.death_done:
             self.x_speed = Decimal(0)
             self.y_speed = Decimal(0)
@@ -55,38 +70,38 @@ class Enemy(PhysicsSprite):
                 self.death_timer -= 1
                 if self.death_timer <= 0 and not self.death_done:
                     self.finish_death()
-            return  # don’t let PhysicsSprite dig up our dead body
+            return
 
-        # regular enemy jitterbug
-        self.moving_time += dt
-        if self.moving_time > 100 and self.y_speed <= 0:
-           self.x_speed = Decimal(random.randrange(-10, 10))
-           self.y_speed = Decimal(random.randrange(0, 10))
-           self.moving_time = 0
-
+        self.x_speed = self._choose_horizontal_speed()
         PhysicsSprite.updateloop(self, dt)
 
-    def make_it_jump(self,):
-        self.y_speed = 10
-        self.x_speed = Decimal(random.randrange(-10, 10))
+    def make_it_jump(self):
+        self.y_speed = Decimal(7)
 
     def on_PhysicsSprite_collided(self, collided_object=None, collided_chunk=None, chunk_x=None, chunk_y=None):
-        # if collided_object == None or type(collided_object).__name__ == 'Block':
-        #      self.make_it_jump()
-        pass
+        # A wall/block collision reverses patrol direction. During a chase this
+        # also gives the enemy a small hop so it does not vibrate against walls.
+        if collided_object is None or type(collided_object).__name__ == "Block":
+            self.patrol_direction *= Decimal(-1)
+            if self.landed:
+                self.make_it_jump()
 
     def on_PhysicsSprite_landed(self):
-        self.make_it_jump()
+        # Landing no longer causes random jitter/jumps; movement stays legible.
+        pass
 
     def getting_hit(self):
+        if self.is_dying or self.death_done:
+            return
+        from gameplay import BloodSpurt
+        BloodSpurt(self.x_position + 12, self.y_position + 12)
         self.die_hard()
 
-    def die_hard(self,):
-        # keep but now debounced like a pro
+    def die_hard(self):
         if self.is_dying or self.death_done:
             return
         Enemy.hit_snd.play()
-        self.start_death(delay_frames=15, dead_key='dead')
+        self.start_death(delay_frames=6, dead_key="dead")
 
     def on_pokey(self):
         self.hit_count += 1
@@ -95,17 +110,14 @@ class Enemy(PhysicsSprite):
 
 
 class Doggy(Enemy):
-
-    def __init__(self, sprite_initializer : dict, starting_chunk):
+    def __init__(self, sprite_initializer: dict, starting_chunk):
         super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
-        self.moving_time = 0
 
     def getResourceImages(self):
-        return {0: "doggy.png"}
+        return {0: "doggy.png", "dead": "doggy.png"}
 
 
 class Cardi(PhysicsSprite):
-
     def __init__(self, sprite_initializer: dict, starting_chunk):
         super().__init__(sprite_initializer, starting_chunk)
 
@@ -114,4 +126,3 @@ class Cardi(PhysicsSprite):
 
     def getResourceImages(self):
         return {0: "bosses/cardi_tree-1.png.png"}
-

@@ -9,6 +9,7 @@ LEVEL_CHOICES = [
     ("Karate Dojo", "dojo.dill"),
     ("Writing Rainbomb", "space.dill"),
     ("Escape Vesuvius", "pompeii.dill"),
+    ("Theo's Trailer", "theo.dill"),
 ]
 
 
@@ -42,19 +43,19 @@ class GameMenu:
         self.settings_status = pyglet.text.Label("Hints: off", x=550, y=205, anchor_x="center", anchor_y="center", batch=self.menu_batch, font_size=16, color=(255, 255, 255, 255))
 
         self.level_title = pyglet.text.Label(
-            "SELECT A LEVEL", x=550, y=525, anchor_x="center", anchor_y="center",
+            "SELECT A LEVEL", x=550, y=535, anchor_x="center", anchor_y="center",
             batch=self.menu_batch, font_size=32, weight=pyglet.text.Weight.BOLD,
             color=(255, 255, 255, 255),
         )
         self.level_labels = []
         for index, (name, filename) in enumerate(LEVEL_CHOICES):
             label = pyglet.text.Label(
-                name, x=550, y=430 - index * 68, anchor_x="center", anchor_y="center",
-                batch=self.menu_batch, font_size=23, color=(255, 255, 255, 255),
+                name, x=550, y=445 - index * 62, anchor_x="center", anchor_y="center",
+                batch=self.menu_batch, font_size=22, color=(255, 255, 255, 255),
             )
             self.level_labels.append((label, filename))
         self.back_label = pyglet.text.Label(
-            "Back", x=550, y=85, anchor_x="center", anchor_y="center",
+            "Back", x=550, y=65, anchor_x="center", anchor_y="center",
             batch=self.menu_batch, font_size=18, color=(255, 255, 255, 255),
         )
         self._update_visibility()

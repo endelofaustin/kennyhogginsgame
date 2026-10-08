@@ -41,6 +41,14 @@ install_toga_sisters()
 # Pompeii's authored builder names the legacy boss class directly, so replace
 # that module global too. The rest of the dill/map-loader architecture stays intact.
 maploader_module.VesuviusBoss = TogaSistersBoss
+pompeii_stages = list(maploader_module.PompeiiDirector.STAGES)
+pompeii_stages[-1] = (
+    Decimal("0.82"),
+    "V  THE TOGA SISTERS",
+    "Lava chase cleared. Cross the pit and break the singing trio.",
+    Decimal("0"),
+)
+maploader_module.PompeiiDirector.STAGES = tuple(pompeii_stages)
 
 EngineGlobals.init()
 LifeCycleManager.init()

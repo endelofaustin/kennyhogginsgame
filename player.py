@@ -6,15 +6,14 @@ from engineglobals import EngineGlobals
 from bullet import Bullet
 from maploader import GameMap
 from sprite import makeSprite
-from gameplay import GameProgress, SaveGame, LockedGate
+from gameplay import DeathBurst, GameProgress, SaveGame, LockedGate
 
 
-# the player object represents Kenny and responds to keyboard input
 class Player(PhysicsSprite):
-    LEFT_RIGHT_RUN_SPEED = Decimal(4.3)
+    LEFT_RIGHT_RUN_SPEED = Decimal("4.3")
     CRAWL_SPEED = LEFT_RIGHT_RUN_SPEED * Decimal("0.45")
-    JUMP_INITIAL_VELOCITY = 12
-    DOUBLE_JUMP_VELOCITY = 9
+    JUMP_INITIAL_VELOCITY = Decimal("12")
+    DOUBLE_JUMP_VELOCITY = Decimal("9")
     BULLET_INITIAL_VELOCITY = Decimal("15.0")
 
     JUMP_CROUCH_FRAMES = 6
@@ -27,17 +26,17 @@ class Player(PhysicsSprite):
 
     @classmethod
     def _play_sound(cls, sound):
-        player = sound.play()
-        cls._active_audio_players.append(player)
+        audio_player = sound.play()
+        cls._active_audio_players.append(audio_player)
 
         def _cleanup():
             try:
-                cls._active_audio_players.remove(player)
+                cls._active_audio_players.remove(audio_player)
             except ValueError:
                 pass
 
-        player.on_player_eos = _cleanup
-        return player
+        audio_player.on_player_eos = _cleanup
+        return audio_player
 
     def __init__(self, sprite_initializer: dict, starting_chunk):
         super().__init__(sprite_initializer=sprite_initializer, starting_chunk=starting_chunk)
@@ -46,11 +45,19 @@ class Player(PhysicsSprite):
         self.has_scythe = False
         self.progress = getattr(EngineGlobals, "progress", GameProgress())
         EngineGlobals.progress = self.progress
-        self.jumpct = 0
+
+        self.jumpct = self.JC0_NOT_JUMPING
         self.jump_frames = 0
         self.bloody = False
         self.crouching = False
         self.hit_cooldown = 0
+
+        self.is_dead = False
+        self.death_timer = 0
+        self.angel_active = False
+        self.angel_x = Decimal(self.x_position)
+        self.angel_y = Decimal(self.y_position)
+        self.angel_shapes = []
 
         if not hasattr(Player, "door_open_close"):
             Player.door_open_close = pyglet.resource.media("door_open_close.wav", streaming=False)
@@ -70,20 +77,8 @@ class Player(PhysicsSprite):
             "bloody": {"file": "bloodykenny-1.png"},
             "crouch_left": {"file": "kenny-crouch-left.png"},
             "crouch_right": {"file": "kenny-crouch-right.png"},
-            "run_left": {
-                "file": "kenny-run-left.png",
-                "rows": 1,
-                "columns": 4,
-                "duration": 1 / 10,
-                "loop": True,
-            },
-            "run_right": {
-                "file": "kenny-run-right.png",
-                "rows": 1,
-                "columns": 4,
-                "duration": 1 / 10,
-                "loop": True,
-            },
+            "run_left": {"file": "kenny-run-left.png", "rows": 1, "columns": 4, "duration": 1 / 10, "loop": True},
+            "run_right": {"file": "kenny-run-right.png", "rows": 1, "columns": 4, "duration": 1 / 10, "loop": True},
             "jump_left": {
                 "file": "generated/kenny-jump-left-4.png",
                 "rows": 1,
@@ -105,11 +100,81 @@ class Player(PhysicsSprite):
             "kaboom": "kaboom.png",
         }
 
+    def _delete_angel(self):
+        for shape in self.angel_shapes:
+            shape.delete()
+        self.angel_shapes = []
+        self.angel_active = False
+
+    def _create_angel(self):
+        self._delete_angel()
+        self.angel_active = True
+        self.angel_x = Decimal(self.x_position)
+        self.angel_y = Decimal(self.y_position) + Decimal(18)
+        batch = EngineGlobals.main_batch
+        group = EngineGlobals.editor_group_front
+
+        # Built from primitive shapes so it remains part of the existing rendering architecture.
+        self.angel_shapes = [
+            pyglet.shapes.Circle(0, 0, 17, color=(255, 245, 170), batch=batch, group=group),  # halo
+            pyglet.shapes.Circle(0, 0, 11, color=(255, 255, 255), batch=batch, group=group),  # halo center
+            pyglet.shapes.Circle(0, 0, 17, color=(255, 255, 245), batch=batch, group=group),  # left wing
+            pyglet.shapes.Circle(0, 0, 17, color=(255, 255, 245), batch=batch, group=group),  # right wing
+            pyglet.shapes.Circle(0, 0, 18, color=(255, 255, 255), batch=batch, group=group),  # robe/body
+            pyglet.shapes.Circle(0, 0, 13, color=(245, 175, 175), batch=batch, group=group),  # Kenny head
+            pyglet.shapes.Circle(0, 0, 4, color=(120, 55, 55), batch=batch, group=group),     # snout
+        ]
+        self._update_angel_visual()
+
+    def _update_angel_visual(self):
+        if not self.angel_active or not self.angel_shapes:
+            return
+        sx = float(EngineGlobals.screen_x(self.angel_x))
+        sy = float(EngineGlobals.screen_y(self.angel_y))
+        offsets = [
+            (0, 43),
+            (0, 43),
+            (-22, 5),
+            (22, 5),
+            (0, 5),
+            (0, 20),
+            (0, 15),
+        ]
+        for shape, (ox, oy) in zip(self.angel_shapes, offsets):
+            shape.x = sx + ox
+            shape.y = sy + oy
+
+    def _respawn_from_angel(self):
+        self.x_position = Decimal(self.angel_x)
+        self.y_position = Decimal(self.angel_y)
+        self.x_speed = Decimal(0)
+        self.y_speed = Decimal(0)
+        self.is_dead = False
+        self.death_timer = 0
+        self.jumpct = self.JC0_NOT_JUMPING
+        self.jump_frames = 0
+        self.landed = False
+        self.crouching = False
+        self.bloody = False
+        self.hit_cooldown = 90
+        self.sprite.visible = True
+        self.sprite.image = self.resource_images[self.direction]
+        self._delete_angel()
+
     def updateloop(self, dt):
-        if hasattr(self, "blow_up_timer"):
-            if self.blow_up_timer <= 20:
-                self.sprite.image = self.resource_images["kaboom"]
-            self.blow_up_timer -= 1
+        if self.is_dead:
+            self.x_speed = Decimal(0)
+            self.y_speed = Decimal(0)
+            if not self.angel_active:
+                self.death_timer -= 1
+                if self.death_timer <= 0:
+                    self._create_angel()
+            else:
+                # Rise away, but stop near the top of the current viewport so the angel remains clickable.
+                max_world_y = Decimal(str(EngineGlobals.our_screen.y + EngineGlobals.height - 100))
+                if self.angel_y < max_world_y:
+                    self.angel_y += Decimal("0.85") * Decimal(str(dt))
+                self._update_angel_visual()
             return
 
         if self.hit_cooldown > 0:
@@ -120,9 +185,9 @@ class Player(PhysicsSprite):
         move_speed = Player.CRAWL_SPEED if self.crouching else Player.LEFT_RIGHT_RUN_SPEED
 
         if EngineGlobals.keys[pyglet.window.key.LEFT]:
-            self.x_speed -= Decimal(move_speed)
+            self.x_speed -= move_speed
         if EngineGlobals.keys[pyglet.window.key.RIGHT]:
-            self.x_speed += Decimal(move_speed)
+            self.x_speed += move_speed
 
         if self.x_speed < 0:
             self.direction = "left"
@@ -135,7 +200,7 @@ class Player(PhysicsSprite):
             self.jump_frames += 1
             if self.jumpct == Player.JC1_CROUCHING_FOR_JUMP and self.jump_frames >= Player.JUMP_CROUCH_FRAMES:
                 self.jumpct = Player.JC2_FIRST_JUMP
-                self.y_speed = Decimal(max(self.y_speed, 0) + Player.JUMP_INITIAL_VELOCITY)
+                self.y_speed = max(Decimal(self.y_speed), Decimal(0)) + Player.JUMP_INITIAL_VELOCITY
                 self.landed = False
             jump_key = "jump_left" if self.direction == "left" else "jump_right"
             if self.sprite.image != self.resource_images[jump_key]:
@@ -163,9 +228,13 @@ class Player(PhysicsSprite):
         PhysicsSprite.updateloop(self, dt)
 
     def on_key_press(self, symbol, modifiers):
+        if self.is_dead:
+            return pyglet.event.EVENT_HANDLED
+
         if symbol in (pyglet.window.key.LCTRL, pyglet.window.key.RCTRL, pyglet.window.key.UP) and self.jumpct <= Player.JC2_FIRST_JUMP:
             if self.landed and self.jumpct == Player.JC0_NOT_JUMPING:
                 self.jumpct = Player.JC1_CROUCHING_FOR_JUMP
+                self.jump_frames = 0
             elif self.jumpct == Player.JC2_FIRST_JUMP:
                 self.y_speed = Player.DOUBLE_JUMP_VELOCITY
                 self.jumpct = Player.JC3_SECOND_JUMP
@@ -178,7 +247,11 @@ class Player(PhysicsSprite):
                 if type(collide_with).__name__ == "Door":
                     Player._play_sound(Player.door_open_close)
                     GameMap.load_map(collide_with.sprite_initializer["target_map"])
+                    self.current_chunk = EngineGlobals.game_map.chunks[0]
                     self.x_position, self.y_position = collide_with.sprite_initializer["player_position"]
+                    self.x_speed = self.y_speed = Decimal(0)
+                    self.jumpct = self.JC0_NOT_JUMPING
+                    self.landed = False
                     break
                 if isinstance(collide_with, LockedGate):
                     if collide_with.unlock(self):
@@ -204,19 +277,34 @@ class Player(PhysicsSprite):
                 target_map = player_state.get("map", "map.dill")
                 if getattr(EngineGlobals.game_map, "filename", None) != target_map:
                     GameMap.load_map(target_map)
+                self.current_chunk = EngineGlobals.game_map.chunks[0]
                 self.x_position = Decimal(str(player_state.get("x", self.x_position)))
                 self.y_position = Decimal(str(player_state.get("y", self.y_position)))
+                self.x_speed = self.y_speed = Decimal(0)
+                self.jumpct = self.JC0_NOT_JUMPING
+                self.landed = False
                 self.has_sword = bool(player_state.get("has_sword", False))
                 self.has_scythe = bool(player_state.get("has_scythe", False))
             from text import MessageBox
             MessageBox(("Game loaded.", 1), 120)
 
+    def on_mouse_press(self, x, y, button, modifiers):
+        if not self.is_dead or not self.angel_active:
+            return pyglet.event.EVENT_UNHANDLED
+        angel_sx = float(EngineGlobals.screen_x(self.angel_x))
+        angel_sy = float(EngineGlobals.screen_y(self.angel_y))
+        if angel_sx - 42 <= x <= angel_sx + 42 and angel_sy - 20 <= y <= angel_sy + 66:
+            self._respawn_from_angel()
+            return pyglet.event.EVENT_HANDLED
+        return pyglet.event.EVENT_UNHANDLED
+
     def on_PhysicsSprite_landed(self):
-        self.jumpct = 0
+        self.jumpct = self.JC0_NOT_JUMPING
+        self.jump_frames = 0
+        self.landed = True
 
     def shoot_it(self):
-        # Bullet itself moves this spawn point to Kenny's rear and reverses it,
-        # preserving the game's canonical butt-fired projectile gag.
+        # Deliberately spawn on the front; Bullet repositions itself to Kenny's rear and reverses direction.
         if self.direction == "right":
             bullet_speed = (Player.BULLET_INITIAL_VELOCITY, 0)
             bullet_pos = (self.x_position + 41, self.y_position + 22)
@@ -227,6 +315,8 @@ class Player(PhysicsSprite):
         Player._play_sound(Player.spit_bullet)
 
     def hit(self):
+        if self.is_dead:
+            return
         if not self.bloody:
             self.bloody = True
         else:
@@ -243,13 +333,24 @@ class Player(PhysicsSprite):
             Player._play_sound(Player.schimmy_scythe)
 
     def die_hard(self):
-        self.sprite.image = pyglet.resource.image("lucinda.png")
-        self.blow_up_timer = 40
+        if self.is_dead:
+            return
+        self.is_dead = True
+        self.death_timer = 16
+        self.x_speed = Decimal(0)
+        self.y_speed = Decimal(0)
+        self.jumpct = self.JC0_NOT_JUMPING
+        self.jump_frames = 0
+        self.crouching = False
+        self.sprite.visible = False
+        DeathBurst(self.x_position + Decimal(16), self.y_position + Decimal(18))
 
     def activate_super_powers(self):
         pass
 
     def on_PhysicsSprite_collided(self, collided_object=None, collided_chunk=None, chunk_x=None, chunk_y=None):
+        if self.is_dead:
+            return
         if collided_object and type(collided_object).__name__ in ("Spike", "HazardBlock"):
             if self.hit_cooldown == 0:
                 self.hit()
@@ -268,15 +369,12 @@ class Player(PhysicsSprite):
         super().on_PhysicsSprite_collided(collided_object=collided_object)
 
     def getCollisionBox(self):
-        if isinstance(self.sprite.image, pyglet.image.Animation):
-            return (
-                self.sprite.image.get_max_width() * EngineGlobals.scale_factor,
-                self.sprite.image.get_max_height() * EngineGlobals.scale_factor,
-            )
-        return (
-            self.sprite.image.width * EngineGlobals.scale_factor,
-            self.sprite.image.height * EngineGlobals.scale_factor,
-        )
+        # Player physics must not change when animation art changes size.
+        return (self.default_collision_width, self.default_collision_height)
+
+    def on_finalDeletion(self):
+        self._delete_angel()
+        super().on_finalDeletion()
 
 
 class SwordHit(PhysicsSprite):

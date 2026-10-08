@@ -1,2 +1,3 @@
+# Python 3.10+ is required. On macOS, run ./setup_mac.sh if your existing .venv uses Python 3.9.
 pyglet==2.1.6
 dill==0.3.6

@@ -32,11 +32,7 @@ from sprite import makeSprite
 from text import IntroMode
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-pyglet.resource.path = [
-    PROJECT_ROOT,
-    os.path.join(PROJECT_ROOT, "audio"),
-    os.path.join(PROJECT_ROOT, "artwork"),
-]
+pyglet.resource.path = [PROJECT_ROOT, os.path.join(PROJECT_ROOT, "audio"), os.path.join(PROJECT_ROOT, "artwork")]
 pyglet.resource.reindex()
 getcontext().prec = 7
 
@@ -62,6 +58,7 @@ intro = IntroMode()
 puzzle = PuzzleController(EngineGlobals.progress)
 autoscroller = AutoScroller()
 autoscroller.scroll_x = Decimal(0)
+EngineGlobals.autoscroller = autoscroller
 
 EngineGlobals.window.push_handlers(kenny)
 EngineGlobals.window.push_handlers(editor)
@@ -86,11 +83,13 @@ def reset_new_game_progress():
     kenny.has_sword = False
     kenny.has_scythe = False
     kenny.bloody = False
+    if hasattr(kenny, "reset_at"):
+        kenny.reset_at(0, 200)
     autoscroller.stop()
 
 
 def start_autoscroller():
-    autoscroller.scroll_x = Decimal(screen.x)
+    autoscroller.scroll_x = Decimal(str(screen.x))
     autoscroller.start()
 
 
@@ -98,9 +97,10 @@ def start_level(filename):
     """Start one of the selectable authored dill maps."""
     GameMap.load_map(filename)
     kenny.current_chunk = EngineGlobals.game_map.chunks[0]
-    kenny.x_position, kenny.y_position = Decimal(64), Decimal(200)
-    kenny.x_speed, kenny.y_speed = Decimal(0), Decimal(0)
-    screen.x, screen.y = Decimal(0), Decimal(0)
+    spawn_x, spawn_y = getattr(EngineGlobals.game_map, "player_spawn", (64, 200))
+    kenny.reset_at(spawn_x, spawn_y)
+    screen.x = max(0, Decimal(str(spawn_x)) - Decimal(120))
+    screen.y = max(0, Decimal(str(spawn_y)) - Decimal(96))
 
     if getattr(EngineGlobals.game_map, "autoscroll", False):
         start_autoscroller()
@@ -120,10 +120,11 @@ def load_game():
         target_map = state.get("map", "map.dill")
         GameMap.load_map(target_map)
         kenny.current_chunk = EngineGlobals.game_map.chunks[0]
-        kenny.x_position = Decimal(str(state.get("x", 0)))
-        kenny.y_position = Decimal(str(state.get("y", 200)))
+        kenny.reset_at(state.get("x", 0), state.get("y", 200))
         kenny.has_sword = bool(state.get("has_sword", False))
         kenny.has_scythe = bool(state.get("has_scythe", False))
+        screen.x = max(0, Decimal(str(kenny.x_position)) - Decimal(120))
+        screen.y = max(0, Decimal(str(kenny.y_position)) - Decimal(96))
         if getattr(EngineGlobals.game_map, "autoscroll", False):
             start_autoscroller()
         else:
@@ -131,11 +132,7 @@ def load_game():
     EngineGlobals.game_mode = "PLAY"
 
 
-menu = GameMenu(
-    on_new_game=reset_new_game_progress,
-    on_load_game=load_game,
-    on_level_selected=start_level,
-)
+menu = GameMenu(on_new_game=reset_new_game_progress, on_load_game=load_game, on_level_selected=start_level)
 EngineGlobals.window.push_handlers(menu)
 
 
@@ -189,15 +186,14 @@ def update_visible_chunks():
 
 
 def update_autoscroller(scaled_dt):
-    """Enforce the moving camera after normal Screen tracking has run."""
-    if not autoscroller.active or EngineGlobals.game_mode != "PLAY":
+    if not autoscroller.active or EngineGlobals.game_mode != "PLAY" or kenny.is_dead:
         return
 
     autoscroller.scroll_x += autoscroller.speed * Decimal(str(scaled_dt))
-    if Decimal(screen.x) < autoscroller.scroll_x:
+    if Decimal(str(screen.x)) < autoscroller.scroll_x:
         screen.x = autoscroller.scroll_x
 
-    if Decimal(kenny.x_position) < Decimal(screen.x) - Decimal(24):
+    if Decimal(kenny.x_position) < Decimal(str(screen.x)) - Decimal(24):
         kenny.die_hard()
         autoscroller.stop()
 

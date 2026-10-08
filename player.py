@@ -277,17 +277,21 @@ class Player(PhysicsSprite):
         return pyglet.event.EVENT_UNHANDLED
 
     def on_PhysicsSprite_landed(self):
-        self.jumpct = self.JC0_NOT_JUMPING
-        self.jump_frames = 0
+        # Landing during the jump crouch/wind-up is expected; do not cancel the
+        # pending jump before JUMP_CROUCH_FRAMES has elapsed.
+        if self.jumpct != self.JC1_CROUCHING_FOR_JUMP:
+            self.jumpct = self.JC0_NOT_JUMPING
+            self.jump_frames = 0
         self.landed = True
 
     def shoot_it(self):
+        # Kenny fires from his rear, opposite the direction he is facing.
         if self.direction == "right":
-            bullet_speed = (Player.BULLET_INITIAL_VELOCITY, 0)
-            bullet_pos = (self.x_position + 41, self.y_position + 22)
-        else:
             bullet_speed = (-Player.BULLET_INITIAL_VELOCITY, 0)
             bullet_pos = (self.x_position - 5, self.y_position + 22)
+        else:
+            bullet_speed = (Player.BULLET_INITIAL_VELOCITY, 0)
+            bullet_pos = (self.x_position + 41, self.y_position + 22)
         makeSprite(Bullet, self.current_chunk, bullet_pos, starting_speed=bullet_speed)
         Player._play_sound(Player.spit_bullet)
 
@@ -328,7 +332,12 @@ class Player(PhysicsSprite):
     def on_PhysicsSprite_collided(self, collided_object=None, collided_chunk=None, chunk_x=None, chunk_y=None):
         if self.is_dead:
             return
-        if collided_object and type(collided_object).__name__ in ("Spike", "HazardBlock"):
+
+        # Tile collisions are harmless unless the actual tile type is the
+        # explicit hazard tile. Normal Block and BreakableBlock contacts must
+        # never advance Kenny's damage/death state.
+        object_name = type(collided_object).__name__ if collided_object is not None else None
+        if object_name in ("Spike", "HazardBlock"):
             if self.hit_cooldown == 0:
                 self.hit()
                 self.hit_cooldown = 30
@@ -336,10 +345,10 @@ class Player(PhysicsSprite):
             if not getattr(collided_object, "is_dying", False) and not getattr(collided_object, "death_done", False) and self.hit_cooldown == 0:
                 self.hit()
                 self.hit_cooldown = 30
-        elif collided_object and type(collided_object).__name__ == "Bandaid":
+        elif object_name == "Bandaid":
             self.bloody = False
             collided_object.destroy()
-        elif collided_object and type(collided_object).__name__ == "NirvanaFruit" and not collided_object.collected:
+        elif object_name == "NirvanaFruit" and not collided_object.collected:
             collided_object.collect()
             Player._play_sound(Player.munching_on_apple)
             self.activate_super_powers()

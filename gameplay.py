@@ -5,6 +5,7 @@ without growing main.py further.
 """
 
 import json
+import math
 import os
 import random
 from decimal import Decimal
@@ -96,31 +97,78 @@ class SaveGame:
 
 
 class BloodSpurt(GameObject):
-    """Short-lived red burst used when projectiles hit enemies."""
+    """Ridiculously exaggerated cartoon blood explosion on projectile hits."""
+
+    GRAVITY = 0.42
 
     def __init__(self, x, y):
-        self.shapes = []
-        for _ in range(7):
+        self.particles = []
+        origin_x = float(EngineGlobals.screen_x(x))
+        origin_y = float(EngineGlobals.screen_y(y))
+
+        # A dense radial blast makes the hit read like a tiny cartoon explosion.
+        for _ in range(42):
+            angle = random.uniform(0, math.tau)
+            speed = random.uniform(2.5, 11.0)
             dot = pyglet.shapes.Circle(
-                x=int(EngineGlobals.screen_x(x) + random.randrange(-8, 9)),
-                y=int(EngineGlobals.screen_y(y) + random.randrange(-8, 9)),
-                radius=random.randrange(2, 5),
-                color=(180, 0, 0),
+                x=int(origin_x + random.uniform(-4, 4)),
+                y=int(origin_y + random.uniform(-4, 4)),
+                radius=random.randrange(2, 7),
+                color=random.choice(((210, 0, 0), (160, 0, 0), (120, 0, 0))),
                 batch=EngineGlobals.main_batch,
                 group=EngineGlobals.editor_group_front,
             )
-            self.shapes.append(dot)
-        self.timer = 12
+            self.particles.append({
+                "shape": dot,
+                "vx": math.cos(angle) * speed,
+                "vy": math.sin(angle) * speed + random.uniform(1.5, 5.0),
+                "drag": random.uniform(0.94, 0.985),
+            })
+
+        # Add a few larger blobs that lag behind the initial spray.
+        for _ in range(8):
+            dot = pyglet.shapes.Circle(
+                x=int(origin_x),
+                y=int(origin_y),
+                radius=random.randrange(6, 11),
+                color=(145, 0, 0),
+                batch=EngineGlobals.main_batch,
+                group=EngineGlobals.editor_group_front,
+            )
+            self.particles.append({
+                "shape": dot,
+                "vx": random.uniform(-4.5, 4.5),
+                "vy": random.uniform(2.0, 7.0),
+                "drag": 0.96,
+            })
+
+        self.timer = 34
         super().__init__()
 
     def updateloop(self, dt):
         self.timer -= 1
-        for dot in self.shapes:
-            dot.x -= 1
-            dot.y -= 1
+        age_fraction = max(0.0, self.timer / 34.0)
+
+        for particle in self.particles:
+            dot = particle["shape"]
+            particle["vy"] -= self.GRAVITY
+            particle["vx"] *= particle["drag"]
+            particle["vy"] *= particle["drag"]
+            dot.x += particle["vx"]
+            dot.y += particle["vy"]
+
+            # Shrink the spray as it falls so it disappears instead of hanging around.
+            if self.timer < 16 and dot.radius > 1:
+                dot.radius = max(1, dot.radius - 0.22)
+
+            # Pyglet shapes expose opacity separately from RGB color.
+            if hasattr(dot, "opacity"):
+                dot.opacity = int(255 * age_fraction)
+
         if self.timer <= 0:
-            for dot in self.shapes:
-                dot.delete()
+            for particle in self.particles:
+                particle["shape"].delete()
+            self.particles.clear()
             self.destroy()
 
 

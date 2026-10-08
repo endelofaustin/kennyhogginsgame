@@ -25,6 +25,7 @@ import physics
 import player
 from engineglobals import EngineGlobals
 from gameplay import AutoScroller, GameProgress, PuzzleController, SaveGame
+from karts_mode import KartsMode
 from ketchup_install import install_ketchup_boss
 from lifecycle import LifeCycleManager
 from magic_map import ChunkEdge
@@ -111,6 +112,7 @@ def start_autoscroller():
 
 def start_level(filename):
     """Start one of the selectable authored dill maps."""
+    EngineGlobals.game_mode = "PLAY"
     GameMap.load_map(filename)
     kenny.current_chunk = EngineGlobals.game_map.chunks[0]
     spawn_x, spawn_y = getattr(EngineGlobals.game_map, "player_spawn", (64, 200))
@@ -148,8 +150,52 @@ def load_game():
     EngineGlobals.game_mode = "PLAY"
 
 
-menu = GameMenu(on_new_game=reset_new_game_progress, on_load_game=load_game, on_level_selected=start_level)
+def return_to_main_menu():
+    EngineGlobals.game_mode = "MENU"
+    EngineGlobals.show_menu = True
+    menu.screen = "main"
+    menu._update_visibility()
+
+
+karts = KartsMode(on_exit_to_menu=return_to_main_menu)
+
+
+def start_karts():
+    autoscroller.stop()
+    EngineGlobals.game_mode = "KARTS"
+    EngineGlobals.show_menu = False
+    karts.start()
+
+
+menu = GameMenu(
+    on_new_game=reset_new_game_progress,
+    on_load_game=load_game,
+    on_level_selected=start_level,
+    on_karts_selected=start_karts,
+)
 EngineGlobals.window.push_handlers(menu)
+
+
+class KartsInputRouter:
+    """Give kart mode first refusal on keys without leaking attacks into the platformer."""
+
+    def on_key_press(self, symbol, modifiers):
+        if EngineGlobals.game_mode != "KARTS":
+            return pyglet.event.EVENT_UNHANDLED
+        EngineGlobals.keys[symbol] = True
+        return karts.on_key_press(symbol, modifiers)
+
+    def on_key_release(self, symbol, modifiers):
+        if EngineGlobals.game_mode != "KARTS":
+            return pyglet.event.EVENT_UNHANDLED
+        EngineGlobals.keys[symbol] = False
+        return karts.on_key_release(symbol, modifiers)
+
+
+karts_input = KartsInputRouter()
+# This is pushed after the platformer handlers so Space/arrows in kart mode never
+# create bullets or other side-scroller actions behind the racing screen.
+EngineGlobals.window.push_handlers(karts_input)
 
 
 def update_chunk_tile_coords(chunk):
@@ -224,6 +270,11 @@ def main_update_callback(dt):
     elapsed = max(1, now - EngineGlobals.last_sim)
     EngineGlobals.sim_fps = int(1_000_000_000 / elapsed)
     EngineGlobals.last_sim = now
+
+    if EngineGlobals.game_mode == "KARTS":
+        karts.update(scaled_dt)
+        return
+
     physics.PhysicsSprite.collision_lists.clear()
     LifeCycleManager.processUpdates(scaled_dt)
     update_autoscroller(scaled_dt)
@@ -246,6 +297,11 @@ def on_key_press(symbol, modifiers):
 def on_draw():
     if EngineGlobals.show_menu:
         menu.on_draw()
+        return
+
+    if EngineGlobals.game_mode == "KARTS":
+        EngineGlobals.window.clear()
+        karts.draw()
         return
 
     EngineGlobals.window.clear()

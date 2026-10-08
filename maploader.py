@@ -191,8 +191,6 @@ def _build_theo_level(map_obj):
     map_obj.theme = "theo"
     map_obj.player_spawn = _safe_position(chunk, 0.06, actor_height=64)
 
-    # Keep the encounter close to the opening so its procedural table/trailer
-    # composition stays on screen while Kenny approaches it.
     desired_table_x = int(map_obj.player_spawn[0] + 300)
     max_table_x = int(chunk.coalesced_x + (chunk.width - 3) * EngineGlobals.tile_size)
     table_x = min(desired_table_x, max_table_x)
@@ -248,6 +246,19 @@ def additional_map_definitions(map_obj):
         chunk.contained_sprites["mr_omen"] = makeSprite(MrOmen, chunk, (0, 0))
 
 
+def _delete_map_block_sprites(map_obj):
+    if map_obj is None or not hasattr(map_obj, "chunks"):
+        return
+    for chunk in map_obj.chunks:
+        for row in getattr(chunk, "platform", []):
+            for block in row:
+                if isinstance(block, gamepieces.Block) and hasattr(block, "sprite"):
+                    try:
+                        block.sprite.delete()
+                    except Exception:
+                        pass
+
+
 class GameMap:
     def __init__(self, chunks=None, filename="map.dill"):
         if not hasattr(self, "chunks") or not self.chunks:
@@ -277,28 +288,31 @@ class GameMap:
 
     @staticmethod
     def load_map(filename):
+        """Load a dill map without corrupting the current map if construction fails."""
+        old_map = getattr(EngineGlobals, "game_map", None)
         LifeCycleManager.dropAllObjects("PER_MAP")
-        if hasattr(EngineGlobals, "game_map"):
-            for old_chunk in EngineGlobals.game_map.chunks:
-                for row in old_chunk.platform:
-                    for block in row:
-                        if isinstance(block, gamepieces.Block) and hasattr(block, "sprite"):
-                            block.sprite.delete()
+        game_map = None
 
-        with open(filename, "rb") as handle:
-            game_map = dill.load(handle)
+        try:
+            with open(filename, "rb") as handle:
+                game_map = dill.load(handle)
 
-        if hasattr(game_map, "platform"):
-            game_map.chunks = [Chunk(platform=game_map.platform)]
-            del game_map.platform
+            if hasattr(game_map, "platform"):
+                game_map.chunks = [Chunk(platform=game_map.platform)]
+                del game_map.platform
 
-        for chunk in game_map.chunks:
-            if not hasattr(chunk, "contained_sprites"):
-                chunk.contained_sprites = {}
-            for sprite in chunk.contained_sprites.values():
-                sprite.current_chunk = chunk
+            for chunk in game_map.chunks:
+                if not hasattr(chunk, "contained_sprites"):
+                    chunk.contained_sprites = {}
+                for sprite in chunk.contained_sprites.values():
+                    sprite.current_chunk = chunk
 
-        game_map.__init__(chunks=game_map.chunks, filename=filename)
+            game_map.__init__(chunks=game_map.chunks, filename=filename)
+        except Exception:
+            _delete_map_block_sprites(game_map)
+            raise
+
+        _delete_map_block_sprites(old_map)
         EngineGlobals.game_map = game_map
         if hasattr(EngineGlobals, "kenny"):
             EngineGlobals.kenny.current_chunk = game_map.chunks[0]

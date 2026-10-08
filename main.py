@@ -11,8 +11,7 @@ MIN_PYTHON = (3, 10)
 if sys.version_info < MIN_PYTHON:
     raise SystemExit(
         "Kenny Hoggins Game requires Python 3.10 or newer. "
-        "This interpreter is Python {}.{}. Recreate .venv with Python 3.10+ "
-        "(on macOS, run ./setup_mac.sh).".format(
+        "This interpreter is Python {}.{}. Recreate .venv with Python 3.10+.".format(
             sys.version_info.major, sys.version_info.minor
         )
     )
@@ -32,12 +31,14 @@ from menu import GameMenu
 from sprite import makeSprite
 from text import IntroMode
 
-
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-pyglet.resource.path = [PROJECT_ROOT, os.path.join(PROJECT_ROOT, "audio"), os.path.join(PROJECT_ROOT, "artwork")]
+pyglet.resource.path = [
+    PROJECT_ROOT,
+    os.path.join(PROJECT_ROOT, "audio"),
+    os.path.join(PROJECT_ROOT, "artwork"),
+]
 pyglet.resource.reindex()
 getcontext().prec = 7
-
 
 EngineGlobals.init()
 LifeCycleManager.init()
@@ -68,9 +69,8 @@ EngineGlobals.window.push_handlers(puzzle)
 LifeCycleManager.ALL_SETS["UNDYING"].addGameObject(editor)
 LifeCycleManager.ALL_SETS["UNDYING"].addGameObject(screen)
 
-
 EngineGlobals.textsurface = pyglet.text.Label(
-    text="Arrow keys move | Ctrl/Up jump | Space shoot | C slash | D interact | P puzzle | F5 save | F9 load",
+    text="Arrow keys move | Ctrl/Up jump | Space butt-shot | C slash | D interact | P puzzle | F5 save | F9 load",
     color=(255, 0, 255, 255),
     batch=EngineGlobals.main_batch,
     y=EngineGlobals.height,
@@ -78,14 +78,31 @@ EngineGlobals.textsurface = pyglet.text.Label(
 )
 
 
-def new_game():
+def reset_new_game_progress():
     EngineGlobals.progress = GameProgress()
     kenny.progress = EngineGlobals.progress
     puzzle.progress = EngineGlobals.progress
-    GameMap.load_map("map.dill")
-    kenny.x_position, kenny.y_position = Decimal(0), Decimal(200)
     kenny.has_sword = False
     kenny.has_scythe = False
+    kenny.bloody = False
+    autoscroller.stop()
+
+
+def start_level(filename):
+    """Start one of the selectable authored dill maps."""
+    GameMap.load_map(filename)
+    kenny.current_chunk = EngineGlobals.game_map.chunks[0]
+    kenny.x_position, kenny.y_position = Decimal(64), Decimal(200)
+    kenny.x_speed, kenny.y_speed = Decimal(0), Decimal(0)
+    screen.x, screen.y = Decimal(0), Decimal(0)
+
+    if getattr(EngineGlobals.game_map, "autoscroll", False):
+        autoscroller.start()
+    else:
+        autoscroller.stop()
+
+    story = getattr(EngineGlobals.game_map, "story", "Kenny has somewhere else to be.")
+    intro.document.text = "KENNY HOGGINS\n\n" + story + "\n\nPress any key to begin."
     intro.start()
 
 
@@ -97,14 +114,23 @@ def load_game():
     if state:
         target_map = state.get("map", "map.dill")
         GameMap.load_map(target_map)
+        kenny.current_chunk = EngineGlobals.game_map.chunks[0]
         kenny.x_position = Decimal(str(state.get("x", 0)))
         kenny.y_position = Decimal(str(state.get("y", 200)))
         kenny.has_sword = bool(state.get("has_sword", False))
         kenny.has_scythe = bool(state.get("has_scythe", False))
+        if getattr(EngineGlobals.game_map, "autoscroll", False):
+            autoscroller.start()
+        else:
+            autoscroller.stop()
     EngineGlobals.game_mode = "PLAY"
 
 
-menu = GameMenu(on_new_game=new_game, on_load_game=load_game)
+menu = GameMenu(
+    on_new_game=reset_new_game_progress,
+    on_load_game=load_game,
+    on_level_selected=start_level,
+)
 EngineGlobals.window.push_handlers(menu)
 
 
@@ -140,7 +166,6 @@ def update_chunk_tile_coords(chunk):
 
 def update_visible_chunks():
     update_chunk_tile_coords(kenny.current_chunk)
-
     for edge in (ChunkEdge.LEFT, ChunkEdge.RIGHT, ChunkEdge.TOP, ChunkEdge.BOTTOM):
         chunk = kenny.current_chunk
         while edge in chunk.adjacencies:
@@ -164,7 +189,6 @@ def main_update_callback(dt):
     elapsed = max(1, now - EngineGlobals.last_sim)
     EngineGlobals.sim_fps = int(1_000_000_000 / elapsed)
     EngineGlobals.last_sim = now
-
     physics.PhysicsSprite.collision_lists.clear()
     LifeCycleManager.processUpdates(scaled_dt)
     update_visible_chunks()
@@ -175,7 +199,6 @@ pyglet.clock.schedule_interval(main_update_callback, 1 / 60.0)
 
 @EngineGlobals.window.event
 def on_key_press(symbol, modifiers):
-    # A toggles the optional autoscroller challenge for testing/maps.
     if symbol == pyglet.window.key.A and not EngineGlobals.show_menu:
         if autoscroller.active:
             autoscroller.stop()
@@ -194,12 +217,10 @@ def on_draw():
     elapsed = max(1, now - EngineGlobals.last_render)
     EngineGlobals.render_fps = int(1_000_000_000 / elapsed)
     EngineGlobals.last_render = now
-    EngineGlobals.textsurface.text = (
-        "render fps: {} | sim fps: {} | keys: {}".format(
-            EngineGlobals.render_fps,
-            EngineGlobals.sim_fps,
-            EngineGlobals.progress.keys,
-        )
+    EngineGlobals.textsurface.text = "render fps: {} | sim fps: {} | keys: {}".format(
+        EngineGlobals.render_fps,
+        EngineGlobals.sim_fps,
+        EngineGlobals.progress.keys,
     )
     EngineGlobals.main_batch.draw()
     intro.on_draw()
@@ -215,7 +236,6 @@ for music in [
     "workingwithmagic.wav",
 ]:
     EngineGlobals.audio_player.queue(pyglet.resource.media(music, streaming=False))
-
 
 if __name__ == "__main__":
     pyglet.app.run()

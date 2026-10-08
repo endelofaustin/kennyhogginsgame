@@ -100,7 +100,7 @@ TRACKS = (
          (16, -0.034, -0.008), (18, 0.000, 0.000)),
         sky=(46, 29, 68), ground=(97, 48, 62), road=(68, 63, 75),
         edge_a=(231, 87, 143), edge_b=(80, 202, 220),
-        boost=(34, 91, 142), oil=(56, 118), ramp=(164,),
+        boost=(34, 91, 142), oil=(56, 118), ramp=(144,),
         scenery=(71, 39, 79), max_speed=0.96, grip=1.05,
     ),
     _track(
@@ -112,7 +112,7 @@ TRACKS = (
          (24, 0.000, -0.012)),
         sky=(20, 21, 58), ground=(34, 38, 68), road=(61, 64, 96),
         edge_a=(129, 111, 231), edge_b=(62, 205, 232),
-        boost=(21, 74, 128, 182), oil=(99,), ramp=(43, 112, 165, 211),
+        boost=(21, 74, 128, 182), oil=(99,), ramp=(43, 112, 165, 185),
         scenery=(39, 42, 82), max_speed=1.03,
     ),
     _track(
@@ -124,7 +124,7 @@ TRACKS = (
          (22, 0.030, 0.000)),
         sky=(79, 42, 39), ground=(106, 54, 36), road=(70, 65, 64),
         edge_a=(244, 158, 67), edge_b=(187, 48, 34),
-        boost=(18, 64, 121, 176, 214), oil=(47, 101, 156, 201),
+        boost=(18, 64, 121, 176, 201), oil=(47, 101, 156, 201),
         mud=(78, 79, 180, 181), ramp=(143,), scenery=(87, 44, 33),
         max_speed=1.04, grip=0.94,
     ),
@@ -137,7 +137,7 @@ TRACKS = (
          (28, 0.000, -0.004)),
         sky=(103, 85, 91), ground=(171, 132, 77), road=(99, 83, 70),
         edge_a=(235, 207, 146), edge_b=(174, 94, 56),
-        boost=(25, 83, 149, 214), oil=(121,), mud=(48, 49, 184, 185, 232, 233),
+        boost=(25, 83, 149, 214), oil=(121,), mud=(48, 49, 184, 185, 218, 219),
         ramp=(106, 199), scenery=(141, 105, 66), max_speed=1.02, grip=0.93,
     ),
     _track(
@@ -571,7 +571,10 @@ class Mode7Racing:
             [self.bat_shadow, body, nose, cockpit, driver, fin_l, fin_r, bat_mark] + wheels
         )
         for shape in self.car_shapes:
-            self.car_base_y[id(shape)] = getattr(shape, "y", 0.0)
+            if isinstance(shape, pyglet.shapes.Triangle):
+                self.car_base_y[id(shape)] = (shape.y, shape.y2, shape.y3)
+            else:
+                self.car_base_y[id(shape)] = getattr(shape, "y", 0.0)
 
     def _spawn_rivals(self):
         available = [c for i, c in enumerate(CHARACTERS) if i != self.selected_character]
@@ -942,7 +945,13 @@ class Mode7Racing:
             hop = 0.0
         for shape in self.car_shapes:
             try:
-                shape.y = self.car_base_y[id(shape)] + hop
+                base = self.car_base_y[id(shape)]
+                if isinstance(base, tuple):
+                    shape.y = base[0] + hop
+                    shape.y2 = base[1] + hop
+                    shape.y3 = base[2] + hop
+                else:
+                    shape.y = base + hop
             except Exception:
                 pass
 

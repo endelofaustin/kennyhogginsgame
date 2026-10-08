@@ -1,0 +1,93 @@
+{
+  "farm": {
+    "name": "Escape from the Farm",
+    "theme": "farm",
+    "story": "Kenny wakes up on Lucinda's farm and has to collect the key, break through the barn, and escape.",
+    "width": 80,
+    "height": 18,
+    "spawn": [64, 96],
+    "ground": 2,
+    "platforms": [[8,4,8],[22,6,6],[38,5,10],[58,7,8]],
+    "hazards": [[18,2],[19,2],[48,2]],
+    "breakables": [[32,3],[33,3],[34,3]],
+    "sprites": [
+      {"type":"Sword","x":220,"y":120},
+      {"type":"KeyPickup","x":520,"y":160},
+      {"type":"LockedGate","x":1320,"y":64,"gate_id":"farm-gate"},
+      {"type":"Enemy","x":740,"y":160},
+      {"type":"LucindaBoss","x":1850,"y":96}
+    ]
+  },
+  "river": {
+    "name": "Van Down by the River",
+    "theme": "river",
+    "story": "The road ends at a suspicious van by the river. Cross the broken banks and survive the ambush.",
+    "width": 78,
+    "height": 18,
+    "spawn": [64,96],
+    "ground": 2,
+    "platforms": [[10,5,5],[20,8,4],[30,6,7],[46,9,5],[60,6,8]],
+    "hazards": [[15,2],[16,2],[40,2],[41,2]],
+    "breakables": [[52,3],[53,3]],
+    "sprites": [
+      {"type":"VanProp","x":980,"y":96},
+      {"type":"Enemy","x":620,"y":160},
+      {"type":"Enemy","x":1180,"y":160},
+      {"type":"PippiBoss","x":1720,"y":96}
+    ]
+  },
+  "dojo": {
+    "name": "Karate Dojo",
+    "theme": "dojo",
+    "story": "Kenny enters the dojo. Jackie Flan is waiting at the far end of the floor.",
+    "width": 72,
+    "height": 18,
+    "spawn": [64,96],
+    "ground": 2,
+    "platforms": [[12,4,6],[26,7,8],[44,5,6],[58,8,6]],
+    "hazards": [[35,2],[36,2],[37,2]],
+    "breakables": [[49,3],[50,3],[51,3]],
+    "sprites": [
+      {"type":"KeyPickup","x":760,"y":200},
+      {"type":"LockedGate","x":1280,"y":64,"gate_id":"dojo-gate"},
+      {"type":"Enemy","x":900,"y":160},
+      {"type":"JackieFlanBoss","x":1650,"y":96}
+    ]
+  },
+  "space": {
+    "name": "Writing Rainbomb",
+    "theme": "space",
+    "story": "The ship is exploding. Keep moving while Levod Burtim turns the stars into a projectile storm.",
+    "width": 90,
+    "height": 20,
+    "spawn": [64,140],
+    "ground": 2,
+    "platforms": [[9,6,6],[24,9,5],[38,5,8],[55,10,5],[70,7,8]],
+    "hazards": [[17,2],[18,2],[47,2],[48,2],[64,2]],
+    "breakables": [[31,3],[32,3],[79,3]],
+    "autoscroll": true,
+    "sprites": [
+      {"type":"Enemy","x":700,"y":190},
+      {"type":"Enemy","x":1180,"y":190},
+      {"type":"LevodBurtimBoss","x":2100,"y":140}
+    ]
+  },
+  "pompeii": {
+    "name": "Escape Vesuvius",
+    "theme": "pompeii",
+    "story": "Vesuvius has erupted. Race through the streets before the lava takes the city.",
+    "width": 86,
+    "height": 20,
+    "spawn": [64,128],
+    "ground": 2,
+    "platforms": [[8,5,7],[21,7,5],[34,4,8],[50,8,6],[66,6,7]],
+    "hazards": [[14,2],[15,2],[29,2],[43,2],[44,2],[60,2],[61,2]],
+    "breakables": [[73,3],[74,3],[75,3]],
+    "autoscroll": true,
+    "sprites": [
+      {"type":"Enemy","x":820,"y":180},
+      {"type":"Enemy","x":1500,"y":180},
+      {"type":"VesuviusBoss","x":2080,"y":128}
+    ]
+  }
+}

@@ -10,12 +10,21 @@ from sprite import makeSprite
 class IntroMode(GameObject):
     """Opening crawling-text mode shown between the menu and gameplay."""
 
+    DEFAULT_TEXT = (
+        "KENNY HOGGINS\n\n"
+        "A pig. A hog. A hero with somewhere else to be.\n\n"
+        "Escape the farm, find the keys, survive the road, and keep moving."
+    )
+
     def __init__(self):
-        self.document = pyglet.text.decode_text(
-            "KENNY HOGGINS\n\n"
-            "A pig. A hog. A hero with somewhere else to be.\n\n"
-            "Escape the farm, find the keys, survive the road, and keep moving."
-        )
+        self.document = None
+        self.layout = None
+        self.finished = False
+        self._build_layout(self.DEFAULT_TEXT)
+        super().__init__(lifecycle_manager="UNDYING")
+
+    def _build_layout(self, text):
+        self.document = pyglet.text.decode_text(text)
         self.layout = pyglet.text.layout.TextLayout(
             self.document,
             EngineGlobals.width - 120,
@@ -24,11 +33,12 @@ class IntroMode(GameObject):
         )
         self.layout.x = 60
         self.layout.y = -EngineGlobals.height
-        self.finished = False
-        super().__init__(lifecycle_manager="UNDYING")
 
-    def start(self):
-        self.layout.y = -EngineGlobals.height
+    def start(self, text=None):
+        if text is not None:
+            self._build_layout(text)
+        else:
+            self.layout.y = -EngineGlobals.height
         self.finished = False
         EngineGlobals.game_mode = "INTRO"
 
@@ -54,7 +64,6 @@ class IntroMode(GameObject):
         return pyglet.event.EVENT_UNHANDLED
 
 
-# Backward-compatible name for old imports.
 Text_Crawl = IntroMode
 
 

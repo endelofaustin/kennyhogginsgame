@@ -4,6 +4,7 @@ import dill
 import pyglet
 
 import gamepieces
+from bandaid import Bandaid
 from bosses import PearlyPaul, MrOmen
 from enemies import Enemy
 from engineglobals import EngineGlobals
@@ -18,6 +19,10 @@ from theme_content import (
     LevodBurtimBoss,
     LucindaBoss,
     PippiBoss,
+    PompeiiBrute,
+    PompeiiDirector,
+    PompeiiGrunt,
+    PompeiiRunner,
     ThemeBackdrop,
     VanProp,
     VesuviusBoss,
@@ -52,7 +57,7 @@ THEMED_LEVELS = {
     },
     "pompeii.dill": {
         "theme": "pompeii",
-        "story": "Vesuvius has erupted. Race through Pompeii's streets before the lava catches Kenny.",
+        "story": "Vesuvius has erupted. Escape Pompeii in five escalating sections: learn the lava rhythm, arm yourself, cross the Forum, survive the ash run, then defeat Vesuvius.",
         "boss": VesuviusBoss,
         "autoscroll": True,
     },
@@ -127,6 +132,10 @@ def _replace_tile(chunk, row, column, new_block):
     chunk.platform[row][column] = new_block
 
 
+def _column_for_fraction(chunk, fraction):
+    return max(1, min(chunk.width - 2, int((chunk.width - 1) * fraction)))
+
+
 def _customize_theme_platform(chunk, theme):
     """Give copied dill maps distinct gameplay layouts without changing map format."""
     if not chunk.platform or chunk.width < 12 or chunk.height < 5:
@@ -145,10 +154,116 @@ def _customize_theme_platform(chunk, theme):
             _replace_tile(chunk, upper_row, x + 1, gamepieces.Block((x + 4) % 12, True))
 
 
+def _customize_pompeii_platform(chunk):
+    """Author a deliberate left-to-right Vesuvius route on top of the dill geometry."""
+    if not chunk.platform or chunk.width < 24 or chunk.height < 8:
+        _customize_theme_platform(chunk, "pompeii")
+        return
+
+    floor_row = chunk.height - 2
+    lane_top = max(1, floor_row - 7)
+
+    # Start from a readable play lane. The original dill remains the format and
+    # source map, but the Pompeii route is intentionally authored at load time.
+    for column in range(1, chunk.width - 1):
+        for row in range(lane_top, floor_row):
+            if chunk.platform[row][column] != 0:
+                _replace_tile(chunk, row, column, 0)
+        _replace_tile(chunk, floor_row, column, gamepieces.Block((column + 4) % 12, True))
+
+    # Lava cracks become progressively wider. The first is a single-tile lesson;
+    # later cracks require committing to jumps while enemies are chasing Kenny.
+    hazard_sections = (
+        (0.17, 1),
+        (0.35, 2),
+        (0.49, 2),
+        (0.60, 3),
+        (0.70, 3),
+        (0.77, 3),
+    )
+    for fraction, length in hazard_sections:
+        start = _column_for_fraction(chunk, fraction)
+        for column in range(start, min(chunk.width - 1, start + length)):
+            _replace_tile(chunk, floor_row, column, gamepieces.HazardBlock((column + 11) % 12, True))
+
+    # Elevated ruins provide an optional high route and visually break the level
+    # into streets/Forum/ash-run sections.
+    platform_sections = (
+        (0.26, 0.31, 3),
+        (0.43, 0.49, 3),
+        (0.52, 0.58, 4),
+        (0.64, 0.70, 3),
+        (0.72, 0.78, 5),
+    )
+    for start_fraction, end_fraction, rows_up in platform_sections:
+        row = max(1, floor_row - rows_up)
+        start = _column_for_fraction(chunk, start_fraction)
+        end = _column_for_fraction(chunk, end_fraction)
+        for column in range(start, max(start + 1, end)):
+            _replace_tile(chunk, row, column, gamepieces.Block((column + rows_up) % 12, True))
+
+    # The scythe appears before the first collapsed street. This creates a real
+    # progression beat: ranged/stomp combat first, then melee/breakables.
+    for fraction, wall_height in ((0.31, 2), (0.63, 3)):
+        column = _column_for_fraction(chunk, fraction)
+        for rise in range(1, wall_height + 1):
+            row = floor_row - rise
+            if row > 0:
+                _replace_tile(chunk, row, column, gamepieces.BreakableBlock((column + rise + 3) % 12, True))
+
+    # Boss arena: flat, hazard-free, and roomy enough to fight Vesuvius once the
+    # director stops the lava chase at 82% progress.
+    boss_start = _column_for_fraction(chunk, 0.82)
+    boss_end = _column_for_fraction(chunk, 0.97)
+    for column in range(boss_start, boss_end + 1):
+        _replace_tile(chunk, floor_row, column, gamepieces.Block((column + 6) % 12, True))
+        for row in range(lane_top, floor_row):
+            if chunk.platform[row][column] != 0:
+                _replace_tile(chunk, row, column, 0)
+
+
 def _spawn(chunk, key, sprite_type, fraction, actor_height=64, **kwargs):
     position = _safe_position(chunk, fraction, actor_height)
     chunk.contained_sprites[key] = makeSprite(sprite_type, chunk, position, **kwargs)
     return chunk.contained_sprites[key]
+
+
+def _build_pompeii_level(map_obj, definition):
+    """Build a paced Vesuvius level with authored encounters and progression."""
+    chunk = map_obj.chunks[0]
+    _destroy_chunk_sprites(chunk)
+    _customize_pompeii_platform(chunk)
+
+    map_obj.story = definition["story"]
+    map_obj.autoscroll = True
+    map_obj.autoscroll_speed = Decimal("0.82")
+    map_obj.theme = "pompeii"
+    map_obj.player_spawn = _safe_position(chunk, 0.04, actor_height=64)
+
+    ThemeBackdrop("pompeii")
+    map_obj.pompeii_director = PompeiiDirector(chunk)
+
+    # Section I: one forgiving enemy and one tiny lava crack teach the rules.
+    _spawn(chunk, "pompeii-grunt-1", PompeiiGrunt, 0.13, actor_height=48)
+
+    # Section II: player earns melee, then immediately gets a wall/enemy test.
+    _spawn(chunk, "pompeii-scythe", gamepieces.Scythe, 0.22, actor_height=32)
+    _spawn(chunk, "pompeii-grunt-2", PompeiiGrunt, 0.28, actor_height=48)
+    _spawn(chunk, "pompeii-runner-1", PompeiiRunner, 0.38, actor_height=48)
+
+    # Section III: first recovery pickup, mixed enemies, and an optional high route.
+    _spawn(chunk, "pompeii-heal", Bandaid, 0.48, actor_height=32, style="good")
+    _spawn(chunk, "pompeii-grunt-3", PompeiiGrunt, 0.52, actor_height=48)
+    _spawn(chunk, "pompeii-runner-2", PompeiiRunner, 0.56, actor_height=48)
+    _spawn(chunk, "pompeii-brute-1", PompeiiBrute, 0.64, actor_height=64)
+
+    # Section IV: the fastest scroll combines runners, a brute, and wider cracks.
+    _spawn(chunk, "pompeii-runner-3", PompeiiRunner, 0.69, actor_height=48)
+    _spawn(chunk, "pompeii-runner-4", PompeiiRunner, 0.74, actor_height=48)
+    _spawn(chunk, "pompeii-brute-2", PompeiiBrute, 0.78, actor_height=64)
+
+    # Section V: safe arena, chase stops, proper final boss fight.
+    _spawn(chunk, "boss", VesuviusBoss, 0.90, actor_height=96)
 
 
 def _build_themed_level(map_obj, definition):
@@ -177,8 +292,6 @@ def _build_themed_level(map_obj, definition):
         _spawn(chunk, "gate", LockedGate, 0.68, actor_height=64, group="BACK", gate_id="dojo-gate")
     elif definition["theme"] == "space":
         _spawn(chunk, "fruit", NirvanaFruit, 0.45, actor_height=32)
-    elif definition["theme"] == "pompeii":
-        _spawn(chunk, "scythe", gamepieces.Scythe, 0.20, actor_height=32)
 
 
 def _build_theo_level(map_obj):
@@ -215,7 +328,11 @@ def additional_map_definitions(map_obj):
         return
 
     if filename in THEMED_LEVELS:
-        _build_themed_level(map_obj, THEMED_LEVELS[filename])
+        definition = THEMED_LEVELS[filename]
+        if definition["theme"] == "pompeii":
+            _build_pompeii_level(map_obj, definition)
+        else:
+            _build_themed_level(map_obj, definition)
         return
 
     if filename == "map.dill":

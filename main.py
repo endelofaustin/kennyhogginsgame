@@ -30,11 +30,13 @@ from maploader import GameMap
 from menu import GameMenu
 from sprite import makeSprite
 from text import IntroMode
+from toga_sisters import install_toga_sisters
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 pyglet.resource.path = [PROJECT_ROOT, os.path.join(PROJECT_ROOT, "audio"), os.path.join(PROJECT_ROOT, "artwork")]
 pyglet.resource.reindex()
 getcontext().prec = 7
+install_toga_sisters()
 
 EngineGlobals.init()
 LifeCycleManager.init()

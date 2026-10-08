@@ -31,6 +31,7 @@ from lifecycle import LifeCycleManager
 from magic_map import ChunkEdge
 from maploader import GameMap
 from menu import GameMenu
+from mode7_racing import Mode7Racing
 from sprite import makeSprite
 from text import IntroMode
 from toga_sisters import TogaSistersBoss, install_toga_sisters
@@ -158,13 +159,23 @@ def return_to_main_menu():
 
 
 karts = KartsMode(on_exit_to_menu=return_to_main_menu)
+racing3d = Mode7Racing(on_exit_to_menu=return_to_main_menu)
 
 
 def start_karts():
     autoscroller.stop()
+    racing3d.stop()
     EngineGlobals.game_mode = "KARTS"
     EngineGlobals.show_menu = False
     karts.start()
+
+
+def start_3d_reaching():
+    autoscroller.stop()
+    karts.stop()
+    EngineGlobals.game_mode = "RACING3D"
+    EngineGlobals.show_menu = False
+    racing3d.start()
 
 
 menu = GameMenu(
@@ -172,30 +183,33 @@ menu = GameMenu(
     on_load_game=load_game,
     on_level_selected=start_level,
     on_karts_selected=start_karts,
+    on_3d_selected=start_3d_reaching,
 )
 EngineGlobals.window.push_handlers(menu)
 
 
-class KartsInputRouter:
-    """Give kart mode first refusal on keys without leaking attacks into the platformer."""
+class ArcadeInputRouter:
+    """Route alternate-game controls before platformer handlers can see them."""
 
     def on_key_press(self, symbol, modifiers):
-        if EngineGlobals.game_mode != "KARTS":
-            return pyglet.event.EVENT_UNHANDLED
-        EngineGlobals.keys[symbol] = True
-        return karts.on_key_press(symbol, modifiers)
+        if EngineGlobals.game_mode == "KARTS":
+            EngineGlobals.keys[symbol] = True
+            return karts.on_key_press(symbol, modifiers)
+        if EngineGlobals.game_mode == "RACING3D":
+            return racing3d.on_key_press(symbol, modifiers)
+        return pyglet.event.EVENT_UNHANDLED
 
     def on_key_release(self, symbol, modifiers):
-        if EngineGlobals.game_mode != "KARTS":
-            return pyglet.event.EVENT_UNHANDLED
-        EngineGlobals.keys[symbol] = False
-        return karts.on_key_release(symbol, modifiers)
+        if EngineGlobals.game_mode == "KARTS":
+            EngineGlobals.keys[symbol] = False
+            return karts.on_key_release(symbol, modifiers)
+        if EngineGlobals.game_mode == "RACING3D":
+            return racing3d.on_key_release(symbol, modifiers)
+        return pyglet.event.EVENT_UNHANDLED
 
 
-karts_input = KartsInputRouter()
-# This is pushed after the platformer handlers so Space/arrows in kart mode never
-# create bullets or other side-scroller actions behind the racing screen.
-EngineGlobals.window.push_handlers(karts_input)
+arcade_input = ArcadeInputRouter()
+EngineGlobals.window.push_handlers(arcade_input)
 
 
 def update_chunk_tile_coords(chunk):
@@ -274,6 +288,9 @@ def main_update_callback(dt):
     if EngineGlobals.game_mode == "KARTS":
         karts.update(scaled_dt)
         return
+    if EngineGlobals.game_mode == "RACING3D":
+        racing3d.update(scaled_dt)
+        return
 
     physics.PhysicsSprite.collision_lists.clear()
     LifeCycleManager.processUpdates(scaled_dt)
@@ -286,6 +303,8 @@ pyglet.clock.schedule_interval(main_update_callback, 1 / 60.0)
 
 @EngineGlobals.window.event
 def on_key_press(symbol, modifiers):
+    if EngineGlobals.game_mode != "PLAY":
+        return
     if symbol == pyglet.window.key.A and not EngineGlobals.show_menu:
         if autoscroller.active:
             autoscroller.stop()
@@ -302,6 +321,11 @@ def on_draw():
     if EngineGlobals.game_mode == "KARTS":
         EngineGlobals.window.clear()
         karts.draw()
+        return
+
+    if EngineGlobals.game_mode == "RACING3D":
+        EngineGlobals.window.clear()
+        racing3d.draw()
         return
 
     EngineGlobals.window.clear()

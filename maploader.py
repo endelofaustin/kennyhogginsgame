@@ -1,191 +1,221 @@
 import dill
-import gamepieces
 import pyglet
-from engineglobals import EngineGlobals
+
+import gamepieces
 from bosses import PearlyPaul, MrOmen
-from enemies import Enemy, Cardi
-from gamepieces import Door, NirvanaFruit
+from enemies import Enemy
+from engineglobals import EngineGlobals
+from gamepieces import Door, NirvanaFruit, Sword
+from gameplay import KeyPickup, LockedGate
 from lifecycle import LifeCycleManager, GameObject
-import mcswanson
-from sprite import makeSprite
 from magic_map import Chunk
 from mcswanson import McSwanson, Llama
+from sprite import makeSprite
+from theme_content import (
+    JackieFlanBoss,
+    LevodBurtimBoss,
+    LucindaBoss,
+    PippiBoss,
+    ThemeBackdrop,
+    VanProp,
+    VesuviusBoss,
+)
 
-""" John is very cool """
 
-#### OKAY HERE IT IS, MAP DEFINITIONS WITH SPRITES AND STUFF
-# Basically the idea is that we can have some parts of the map defined in code,
-# and other parts defined on the fly by clicking different blocks and sprites and
-# things in the editor that will then be saved to a file.
-#
-# Everything that is defined in code here will be MERGED with the contents of the
-# saved file when we load it. But before merging, we check a version indicator
-# to see if these added attributes are already present from the file. If they are
-# already there then we don't add them again.
-def additional_map_definitions(map):
+THEMED_LEVELS = {
+    "farm.dill": {
+        "theme": "farm",
+        "story": "Escape Lucinda's farm: grab the sword, collect the key, break through the barn, and face Lucinda.",
+        "boss": LucindaBoss,
+        "autoscroll": False,
+    },
+    "river.dill": {
+        "theme": "river",
+        "story": "Follow the road to the van down by the river and survive Pippi's riverside ambush.",
+        "boss": PippiBoss,
+        "autoscroll": False,
+    },
+    "dojo.dill": {
+        "theme": "dojo",
+        "story": "Enter the karate dojo, unlock the inner floor, and fight Jackie Flan.",
+        "boss": JackieFlanBoss,
+        "autoscroll": False,
+    },
+    "space.dill": {
+        "theme": "space",
+        "story": "The ship is exploding. Keep moving through the dogfight and defeat Levod Burtim and the Writing Rainbomb.",
+        "boss": LevodBurtimBoss,
+        "autoscroll": True,
+    },
+    "pompeii.dill": {
+        "theme": "pompeii",
+        "story": "Vesuvius has erupted. Race through Pompeii's streets before the lava catches Kenny.",
+        "boss": VesuviusBoss,
+        "autoscroll": True,
+    },
+}
 
-    if hasattr(map, 'sprites'):
-        for sprite in map.sprites.values():
+
+def _destroy_chunk_sprites(chunk):
+    if hasattr(chunk, "contained_sprites"):
+        for sprite in list(chunk.contained_sprites.values()):
+            if hasattr(sprite, "destroy"):
+                sprite.destroy()
+    chunk.contained_sprites = {}
+
+
+def _world_x(chunk, fraction):
+    return int(max(64, chunk.width * EngineGlobals.tile_size * fraction))
+
+
+def _customize_theme_platform(chunk, theme):
+    """Give copied dill maps distinct gameplay layouts without changing map format."""
+    if not chunk.platform or chunk.width < 12 or chunk.height < 5:
+        return
+
+    # Keep the underlying dill map, but alter a few safe cells in memory for each level.
+    floor_row = chunk.height - 2
+    upper_row = max(1, chunk.height - 5)
+    theme_offset = {"farm": 3, "river": 5, "dojo": 7, "space": 9, "pompeii": 11}[theme]
+
+    for x in range(theme_offset, chunk.width - 2, 13):
+        chunk.platform[floor_row][x] = gamepieces.HazardBlock((x + theme_offset) % 12, True)
+
+    for x in range(theme_offset + 4, chunk.width - 3, 17):
+        chunk.platform[upper_row][x] = gamepieces.BreakableBlock((x + 2) % 12, True)
+        if x + 1 < chunk.width:
+            chunk.platform[upper_row][x + 1] = gamepieces.Block((x + 4) % 12, True)
+
+
+def _build_themed_level(map_obj, definition):
+    chunk = map_obj.chunks[0]
+    _destroy_chunk_sprites(chunk)
+    _customize_theme_platform(chunk, definition["theme"])
+
+    map_obj.story = definition["story"]
+    map_obj.autoscroll = definition["autoscroll"]
+    map_obj.theme = definition["theme"]
+    ThemeBackdrop(definition["theme"])
+
+    # Common authored gameplay: enemies across the route and a boss near the far end.
+    chunk.contained_sprites["enemy-1"] = makeSprite(Enemy, chunk, (_world_x(chunk, 0.28), 160))
+    chunk.contained_sprites["enemy-2"] = makeSprite(Enemy, chunk, (_world_x(chunk, 0.58), 160))
+    chunk.contained_sprites["boss"] = makeSprite(definition["boss"], chunk, (_world_x(chunk, 0.82), 96))
+
+    if definition["theme"] == "farm":
+        chunk.contained_sprites["sword"] = makeSprite(Sword, chunk, (_world_x(chunk, 0.12), 96))
+        chunk.contained_sprites["key"] = makeSprite(KeyPickup, chunk, (_world_x(chunk, 0.38), 130))
+        chunk.contained_sprites["gate"] = makeSprite(
+            LockedGate, chunk, (_world_x(chunk, 0.70), 64), group="BACK", gate_id="farm-gate"
+        )
+    elif definition["theme"] == "river":
+        chunk.contained_sprites["van"] = makeSprite(VanProp, chunk, (_world_x(chunk, 0.48), 96))
+    elif definition["theme"] == "dojo":
+        chunk.contained_sprites["key"] = makeSprite(KeyPickup, chunk, (_world_x(chunk, 0.32), 160))
+        chunk.contained_sprites["gate"] = makeSprite(
+            LockedGate, chunk, (_world_x(chunk, 0.68), 64), group="BACK", gate_id="dojo-gate"
+        )
+    elif definition["theme"] == "space":
+        chunk.contained_sprites["fruit"] = makeSprite(NirvanaFruit, chunk, (_world_x(chunk, 0.45), 180))
+    elif definition["theme"] == "pompeii":
+        chunk.contained_sprites["scythe"] = makeSprite(gamepieces.Scythe, chunk, (_world_x(chunk, 0.20), 96))
+
+
+def additional_map_definitions(map_obj):
+    if hasattr(map_obj, "sprites"):
+        for sprite in map_obj.sprites.values():
             sprite.destroy()
-        del map.sprites
+        del map_obj.sprites
 
-    # the main map that loads when the game starts
-    if not hasattr(map, 'filename') or map.filename == "map.dill":
+    filename = getattr(map_obj, "filename", "map.dill")
 
-        # ONE_OFFS_VERSION = 16
-        # if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
-        #     return
-        # map.one_offs_version = ONE_OFFS_VERSION
+    if filename in THEMED_LEVELS:
+        _build_themed_level(map_obj, THEMED_LEVELS[filename])
+        return
 
-        if hasattr(map.chunks[0], 'contained_sprites'):
-            for sprite in map.chunks[0].contained_sprites.values():
-                sprite.destroy()
-        if hasattr(map, 'talker'):
-            map.talker.destroy()
-            del map.talker
+    if filename == "map.dill":
+        chunk = map_obj.chunks[0]
+        _destroy_chunk_sprites(chunk)
+        if hasattr(map_obj, "talker"):
+            map_obj.talker.destroy()
+            del map_obj.talker
 
-        map.chunks[0].contained_sprites = dict()
-
-        # existing door to Pearly Paul arena
-        map.chunks[0].contained_sprites['door'] = makeSprite(
-            Door, map.chunks[0],
-            starting_position=(500, 10),
-            group='BACK',
-            target_map="bossfight.dill",
-            player_position=(250, 250)
+        chunk.contained_sprites["door"] = makeSprite(
+            Door, chunk, (500, 10), group="BACK", target_map="bossfight.dill", player_position=(250, 250)
         )
-
-        # NEW: door to Mr. Omen arena
-        map.chunks[0].contained_sprites['door_mr_omen'] = makeSprite(
-            Door, map.chunks[0],
-            starting_position=(1500, 40),   # adjust coords as desired
-            group='BACK',
-            target_map="boss_mr_omen.dill",
-            player_position=(250, 250)
+        chunk.contained_sprites["door_mr_omen"] = makeSprite(
+            Door, chunk, (1500, 40), group="BACK", target_map="boss_mr_omen.dill", player_position=(250, 250)
         )
+        chunk.contained_sprites["scythe"] = makeSprite(gamepieces.Scythe, chunk, (300, 41))
+        chunk.contained_sprites["spudguy"] = makeSprite(Enemy, chunk, (300, 250))
+        chunk.contained_sprites["testfruit1"] = makeSprite(NirvanaFruit, chunk, (260, 50))
+        chunk.contained_sprites["mcswanson1"] = makeSprite(McSwanson, chunk, (340, 200))
+        chunk.contained_sprites["llama1"] = makeSprite(Llama, chunk, (600, 30))
 
-        # other main-map pickups/npcs
-        map.chunks[0].contained_sprites['scythe'] = makeSprite(gamepieces.Scythe, map.chunks[0], starting_position=(300, 41))
-        map.chunks[0].contained_sprites['spudguy'] = makeSprite(Enemy, map.chunks[0], starting_position=(300, 250))
-        map.chunks[0].contained_sprites['testfruit1'] = makeSprite(NirvanaFruit, map.chunks[0], starting_position=(260, 50))
-        # map.chunks[0].contained_sprites['cardi1'] = makeSprite(Cardi, map.chunks[0], starting_position=(500, 0))
-        map.chunks[0].contained_sprites['mcswanson1'] = makeSprite(McSwanson, map.chunks[0], starting_position=(340, 200))
-        map.chunks[0].contained_sprites['llama1'] = makeSprite(Llama, map.chunks[0], starting_position=(600, 30))
+    elif filename == "bossfight.dill":
+        map_obj.image = "lighthouse.png"
+        chunk = map_obj.chunks[0]
+        _destroy_chunk_sprites(chunk)
+        chunk.contained_sprites["pearlypaul"] = makeSprite(PearlyPaul, chunk, (0, 0))
 
-    # the boss fight with pearly paul
-    elif map.filename == "bossfight.dill":
+    elif filename == "boss_mr_omen.dill":
+        map_obj.image = "tonic_overwater.png"
+        chunk = map_obj.chunks[0]
+        _destroy_chunk_sprites(chunk)
+        chunk.contained_sprites["mr_omen"] = makeSprite(MrOmen, chunk, (0, 0))
 
-        # ONE_OFFS_VERSION = 8
-        # if hasattr(map, 'one_offs_version') and map.one_offs_version >= ONE_OFFS_VERSION:
-        #     return
-        # map.one_offs_version = ONE_OFFS_VERSION
 
-        # add some one-offs
-        map.image = "lighthouse.png"
-        if hasattr(map.chunks[0], 'contained_sprites'):
-            for sprite in map.chunks[0].contained_sprites.values():
-                sprite.destroy()
-        map.chunks[0].contained_sprites = dict()
-        map.chunks[0].contained_sprites['pearlypaul'] = makeSprite(PearlyPaul, map.chunks[0], (0, 0))
-
-    elif map.filename == "boss_mr_omen.dill":
-
-        map.image = "tonic_overwater.png"
-
-        if hasattr(map.chunks[0], 'contained_sprites'):
-            for sprite in map.chunks[0].contained_sprites.values():
-                sprite.destroy()
-        map.chunks[0].contained_sprites = dict()
-
-        # spawn the boss in chunk 0
-        map.chunks[0].contained_sprites['mr_omen'] = makeSprite(
-            MrOmen, map.chunks[0], (0, 0)
-        )
-
-# This is a class John said this while we were coding it out
-class GameMap():
-
-    # save the playform as an engleberry
-    # Voglio bere un caffe e daverro abbiamo scrivere piu codice. 
-    def __init__(self, chunks=None, filename='map.dill'):
-
-        # This can of worms has been opened. Goes bad July 2025
-        # # self.image = "lighthouse.png"
-        # create a sprite htat is not a member of the class and it wont try to pickle the sprite
-        # which is great. When it goes to the load the class from the dill file  
-        # it will __init__ the class and create the background as normal Pie Throw #legit
-        # John doesnt like this it is incomprehensible, "i wonder what the elegant solution is" <--- John 11/16
-
-        if not hasattr(self, 'chunks') or not self.chunks:
+class GameMap:
+    def __init__(self, chunks=None, filename="map.dill"):
+        if not hasattr(self, "chunks") or not self.chunks:
             self.chunks = chunks
-        if not hasattr(self, 'filename') or not self.filename:
-            self.filename = filename
-        # Austin was not getting his pilot license in 11/2023
-        # print("maybe I should write better code")
+        self.filename = filename
 
-        # IMPORTANT: run map definitions first so that map.image can be set
         additional_map_definitions(self)
 
-        # then, if there is a background image, create a GameObject for it
-        # and make it per-map so it gets cleaned up properly when the map unloads
         if hasattr(self, "image"):
-            bgimg = GameObject(lifecycle_manager='PER_MAP')
+            bgimg = GameObject(lifecycle_manager="PER_MAP")
             bgimg.sprite = pyglet.sprite.Sprite(
                 img=pyglet.resource.image(self.image),
                 batch=EngineGlobals.main_batch,
-                group=EngineGlobals.bg_group
+                group=EngineGlobals.bg_group,
             )
             bgimg.on_finalDeletion = lambda: bgimg.sprite.delete()
             bgimg.updateloop = lambda dt: None
 
-        # Debug dump of map state after initialization
-        with open(self.filename + "-debug.txt", "w") as dumpf:
-            dumpf.write(str(self.__dict__))
-            dumpf.write("\n")
-            for idx, chunk in enumerate(self.chunks):
-                chunk_to_dump = chunk.__dict__.copy()
-                del chunk_to_dump['platform']
-                dumpf.write("chunk{}:".format(idx) + str(chunk_to_dump))
-                dumpf.write("\n")
-
     def __setstate__(self, state):
-        # This function is called when dill is unpickling from a file to create the object
-        if hasattr(state, 'filename'):
-            del state['filename']
+        state.pop("filename", None)
         self.__dict__.update(state)
 
     def __getstate__(self):
-        # This function is called when dill is pickling the object into a file -- it needs
-        # a dict representation of the object.
         state = self.__dict__.copy()
-        del state['filename']
+        state.pop("filename", None)
         return state
 
+    @staticmethod
     def load_map(filename):
-
-        # first, drop all sprites associated with the map that is unloading
-        LifeCycleManager.dropAllObjects('PER_MAP')
-        if hasattr(EngineGlobals, 'game_map'):
+        LifeCycleManager.dropAllObjects("PER_MAP")
+        if hasattr(EngineGlobals, "game_map"):
             for old_chunk in EngineGlobals.game_map.chunks:
-                for y_row in old_chunk.platform:
-                    for x_block in y_row:
-                        if isinstance(x_block, gamepieces.Block):
-                            x_block.sprite.delete()
+                for row in old_chunk.platform:
+                    for block in row:
+                        if isinstance(block, gamepieces.Block) and hasattr(block, "sprite"):
+                            block.sprite.delete()
 
-        # We are loading our pickled environment here for loading when the game starts. Chicken pot pie
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as handle:
+            game_map = dill.load(handle)
 
-            game_map = dill.load(f)
+        if hasattr(game_map, "platform"):
+            game_map.chunks = [Chunk(platform=game_map.platform)]
+            del game_map.platform
 
-            if hasattr(game_map, 'platform'):
-                game_map.chunks = [Chunk(platform=game_map.platform)]
-                del game_map.platform
+        for chunk in game_map.chunks:
+            if not hasattr(chunk, "contained_sprites"):
+                chunk.contained_sprites = {}
+            for sprite in chunk.contained_sprites.values():
+                sprite.current_chunk = chunk
 
-            for chunk in game_map.chunks:
-                for sprite in chunk.contained_sprites.values():
-                    sprite.current_chunk = chunk
-
-            game_map.__init__(chunks=game_map.chunks, filename=filename)
-            EngineGlobals.game_map = game_map
-            if hasattr(EngineGlobals, 'kenny'):
-                EngineGlobals.kenny.current_chunk = game_map.chunks[0]
+        game_map.__init__(chunks=game_map.chunks, filename=filename)
+        EngineGlobals.game_map = game_map
+        if hasattr(EngineGlobals, "kenny"):
+            EngineGlobals.kenny.current_chunk = game_map.chunks[0]

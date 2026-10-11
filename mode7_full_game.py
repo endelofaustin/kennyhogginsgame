@@ -31,6 +31,13 @@ from mode7_deluxe import DeluxeMode7Racing  # noqa: E402  intentional late impor
 
 FullMode7Racing = DeluxeMode7Racing
 
+# Expand the completed deluxe road racer before the later battle/free-roam
+# classes subclass it. This preserves those modes while giving Grand Prix and
+# Quick Race the 50-track, 24-driver, 12-racer Ultra Super ruleset.
+from mode7_ultra_expansion import install_ultra_super_expansion  # noqa: E402
+
+install_ultra_super_expansion(DeluxeMode7Racing)
+
 # Hoggin Out subclasses the completed deluxe game.
 from mode7_battle import HogginOutMode7Racing  # noqa: E402  intentional late import
 

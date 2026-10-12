@@ -1,9 +1,11 @@
 import pyglet
 from engineglobals import EngineGlobals
-from karts_super_ultra import install_super_ultra
+from karts_expansion import install_karts_expansion
+from karts_stats import install_kart_stats
 from pyglet.sprite import Sprite
 
-install_super_ultra()
+install_karts_expansion()
+install_kart_stats()
 
 
 LEVEL_CHOICES = [
@@ -54,7 +56,7 @@ class GameMenu:
             batch=self.menu_batch, **self.label_style
         )
         self.karts_label = pyglet.text.Label(
-            "Super Ultra Kenny Kart", x=550, y=375, anchor_x="center", anchor_y="center",
+            "Karts not Farts", x=550, y=375, anchor_x="center", anchor_y="center",
             batch=self.menu_batch, **self.label_style
         )
         self.racing3d_label = pyglet.text.Label(

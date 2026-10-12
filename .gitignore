@@ -1,4 +1,6 @@
 .venv/
+.python/
+.uv-bin/
 .vscode/
 __pycache__/
 *.code-workspace

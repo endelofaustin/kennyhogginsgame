@@ -1,359 +1,255 @@
 #!/usr/bin/python3
 
-"""Kenny Hoggins game bootstrap and main update/render loop."""
+
+## debug
 
 import os
-import sys
-import time
-from decimal import Decimal, getcontext
-
-MIN_PYTHON = (3, 10)
-if sys.version_info < MIN_PYTHON:
-    raise SystemExit(
-        "Kenny Hoggins Game requires Python 3.10 or newer. "
-        "This interpreter is Python {}.{}. Recreate .venv with Python 3.10+.".format(
-            sys.version_info.major, sys.version_info.minor
-        )
-    )
-
 import pyglet
 
-import editor as editor_module
-import gamepieces
-import maploader as maploader_module
-import physics
-import player
-from engineglobals import EngineGlobals
-from gameplay import AutoScroller, GameProgress, PuzzleController, SaveGame
-from karts_mode import KartsMode
-from ketchup_install import install_ketchup_boss
-from lifecycle import LifeCycleManager
-from magic_map import ChunkEdge
-from maploader import GameMap
-from menu import GameMenu
-from mode7_full_game import FullMode7Racing
-from sprite import makeSprite
-from text import IntroMode
-from toga_sisters import TogaSistersBoss, install_toga_sisters
-
+# Absolute path to project root (where main.py lives)
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
-pyglet.resource.path = [PROJECT_ROOT, os.path.join(PROJECT_ROOT, "audio"), os.path.join(PROJECT_ROOT, "artwork")]
-pyglet.resource.reindex()
-getcontext().prec = 7
-install_toga_sisters()
-install_ketchup_boss()
-# Pompeii's authored builder names the legacy boss class directly, so replace
-# that module global too. The rest of the dill/map-loader architecture stays intact.
-maploader_module.VesuviusBoss = TogaSistersBoss
-pompeii_stages = list(maploader_module.PompeiiDirector.STAGES)
-pompeii_stages[-1] = (
-    Decimal("0.82"),
-    "V  THE TOGA SISTERS",
-    "Lava chase cleared. Cross the pit and break the singing trio.",
-    Decimal("0"),
-)
-maploader_module.PompeiiDirector.STAGES = tuple(pompeii_stages)
 
+# Tell pyglet where to look for resources
+pyglet.resource.path = [
+    PROJECT_ROOT,                              # allows "audio/..."
+    os.path.join(PROJECT_ROOT, "audio"),       # allows "kenny_sounds/..."
+    os.path.join(PROJECT_ROOT, "artwork"),
+]
+
+pyglet.resource.reindex()
+
+# Debug (keep for now)
+print("RESOURCE PATH:", pyglet.resource.path)
+print("CWD:", os.getcwd())
+print(
+    "Exists:",
+    os.path.exists(
+        os.path.join(PROJECT_ROOT, "audio/kenny_sounds/munching_on_apple.wav")
+    ),
+)
+####
+import pyglet, physics, player, editor, time, gamepieces
+from engineglobals import EngineGlobals
+from decimal import getcontext, Decimal
+from text import Text_Crawl
+from math import floor
+from menu import GameMenu
+from maploader import GameMap
+from lifecycle import LifeCycleManager
+from sprite import makeSprite
+from magic_map import Chunk, ChunkEdge
+
+
+# Most of the code in this file, other than the update callback, is executed
+# *BEFORE* the game starts and before the game window is shown. We set
+# everything up and then hand over to the Pyglet engine. The pyglet engine
+# then takes care of calling the update function 60 times per second and
+# displaying the graphics on screen after we tell it which graphics to display
+# where.
+
+# set Decimal precision to 7 places, much more efficient than the default 28
+# 6 places is enough for 1 million pixels of accuracy, which is enough to
+# precisely locate any position in an area that is 900 screens high and 1300
+# screens wide, for a screen size up to 1024x768
+getcontext().prec = 7
+
+# run the init function to set up the game engine
 EngineGlobals.init()
 LifeCycleManager.init()
-EngineGlobals.game_mode = "MENU"
-EngineGlobals.progress = GameProgress()
-
 screen = physics.Screen()
-GameMap.load_map("map.dill")
-kenny = makeSprite(
-    player.Player,
-    EngineGlobals.game_map.chunks[0],
-    (0, 200),
-    lifecycle_manager="UNDYING",
-    group="FRONT",
-)
-EngineGlobals.kenny = kenny
-EngineGlobals.our_screen = screen
 
-editor = editor_module.Editor()
-intro = IntroMode()
-puzzle = PuzzleController(EngineGlobals.progress)
-autoscroller = AutoScroller()
-autoscroller.scroll_x = Decimal(0)
-EngineGlobals.autoscroller = autoscroller
-
-EngineGlobals.window.push_handlers(kenny)
-EngineGlobals.window.push_handlers(editor)
-EngineGlobals.window.push_handlers(intro)
-EngineGlobals.window.push_handlers(puzzle)
-LifeCycleManager.ALL_SETS["UNDYING"].addGameObject(editor)
-LifeCycleManager.ALL_SETS["UNDYING"].addGameObject(screen)
-
+# create some debug text to be rendered
 EngineGlobals.textsurface = pyglet.text.Label(
-    text="Arrow keys move | Ctrl/Up jump | Space butt-shot | C slash | D interact | P puzzle | F5 save | F9 load",
+    text='Arrow keys move and Ctrl or Up to jump',
     color=(255, 0, 255, 255),
     batch=EngineGlobals.main_batch,
     y=EngineGlobals.height,
-    anchor_y="top",
+    anchor_y='top'
 )
 
+GameMap.load_map("map.dill")
 
-def reset_new_game_progress():
-    EngineGlobals.progress = GameProgress()
-    kenny.progress = EngineGlobals.progress
-    puzzle.progress = EngineGlobals.progress
-    kenny.has_sword = False
-    kenny.has_scythe = False
-    kenny.bloody = False
-    if hasattr(kenny, "reset_at"):
-        kenny.reset_at(0, 200)
-    autoscroller.stop()
+# create the Kenny player sprite and assign it to receive
+# keyboard events with the push_handlers function
+kenny = makeSprite(player.Player, EngineGlobals.game_map.chunks[0], (0, 200), lifecycle_manager='UNDYING', group='FRONT')
+EngineGlobals.window.push_handlers(kenny)
 
-
-def start_autoscroller():
-    autoscroller.scroll_x = Decimal(str(screen.x))
-    autoscroller.start()
-
-
-def start_level(filename):
-    """Start one of the selectable authored dill maps."""
-    EngineGlobals.game_mode = "PLAY"
-    GameMap.load_map(filename)
-    kenny.current_chunk = EngineGlobals.game_map.chunks[0]
-    spawn_x, spawn_y = getattr(EngineGlobals.game_map, "player_spawn", (64, 200))
-    kenny.reset_at(spawn_x, spawn_y)
-    screen.x = max(0, Decimal(str(spawn_x)) - Decimal(120))
-    screen.y = max(0, Decimal(str(spawn_y)) - Decimal(96))
-
-    if getattr(EngineGlobals.game_map, "autoscroll", False):
-        start_autoscroller()
-    else:
-        autoscroller.stop()
-
-    story = getattr(EngineGlobals.game_map, "story", "Kenny has somewhere else to be.")
-    intro.start("KENNY HOGGINS\n\n" + story + "\n\nPress any key to begin.")
-
-
-def load_game():
-    progress, state = SaveGame.load()
-    EngineGlobals.progress = progress
-    kenny.progress = progress
-    puzzle.progress = progress
-    if state:
-        target_map = state.get("map", "map.dill")
-        GameMap.load_map(target_map)
-        kenny.current_chunk = EngineGlobals.game_map.chunks[0]
-        kenny.reset_at(state.get("x", 0), state.get("y", 200))
-        kenny.has_sword = bool(state.get("has_sword", False))
-        kenny.has_scythe = bool(state.get("has_scythe", False))
-        screen.x = max(0, Decimal(str(kenny.x_position)) - Decimal(120))
-        screen.y = max(0, Decimal(str(kenny.y_position)) - Decimal(96))
-        if getattr(EngineGlobals.game_map, "autoscroll", False):
-            start_autoscroller()
-        else:
-            autoscroller.stop()
-    EngineGlobals.game_mode = "PLAY"
-
-
-def return_to_main_menu():
-    EngineGlobals.game_mode = "MENU"
-    EngineGlobals.show_menu = True
-    menu.screen = "main"
-    menu._update_visibility()
-
-
-karts = KartsMode(on_exit_to_menu=return_to_main_menu)
-racing3d = FullMode7Racing(on_exit_to_menu=return_to_main_menu)
-
-
-def start_karts():
-    autoscroller.stop()
-    racing3d.stop()
-    EngineGlobals.game_mode = "KARTS"
-    EngineGlobals.show_menu = False
-    karts.start()
-
-
-def start_3d_reaching():
-    autoscroller.stop()
-    karts.stop()
-    EngineGlobals.game_mode = "RACING3D"
-    EngineGlobals.show_menu = False
-    racing3d.start()
-
-
-menu = GameMenu(
-    on_new_game=reset_new_game_progress,
-    on_load_game=load_game,
-    on_level_selected=start_level,
-    on_karts_selected=start_karts,
-    on_3d_selected=start_3d_reaching,
-)
+# create the Editor function object and assign it to
+# receive mouse events with the push_handlers function
+editor = editor.Editor()
+EngineGlobals.window.push_handlers(editor)
+LifeCycleManager.ALL_SETS['UNDYING'].addGameObject(editor)
+menu = GameMenu()
 EngineGlobals.window.push_handlers(menu)
 
+# When adding to this set we are beginning to setup changable objects
+# any object in this set will have its update function called
+# One of the objects that needs to have its update function called
+# is the screen object, so that it can update which part of the
+# map it is looking at based on Kenny's position
+LifeCycleManager.ALL_SETS['UNDYING'].addGameObject(screen)
 
-class ArcadeInputRouter:
-    """Route alternate-game controls before platformer handlers can see them."""
-
-    def on_key_press(self, symbol, modifiers):
-        if EngineGlobals.game_mode == "KARTS":
-            EngineGlobals.keys[symbol] = True
-            return karts.on_key_press(symbol, modifiers)
-        if EngineGlobals.game_mode == "RACING3D":
-            return racing3d.on_key_press(symbol, modifiers)
-        return pyglet.event.EVENT_UNHANDLED
-
-    def on_key_release(self, symbol, modifiers):
-        if EngineGlobals.game_mode == "KARTS":
-            EngineGlobals.keys[symbol] = False
-            return karts.on_key_release(symbol, modifiers)
-        if EngineGlobals.game_mode == "RACING3D":
-            return racing3d.on_key_release(symbol, modifiers)
-        return pyglet.event.EVENT_UNHANDLED
-
-
-arcade_input = ArcadeInputRouter()
-EngineGlobals.window.push_handlers(arcade_input)
-
-
+# This function is called every update loop to update the position of all blocks in the map relative to the
+# viewport.
+# 1. Start at the bottom left of the viewport. We know what the X and Y coordinates of the viewport are in
+#     game space; convert that into indices into the map grid. This will get us the block that will render
+#     into the bottom left corner. Some part of it will be offscreen but at least a pixel of it will be
+#     on-screen. `xstart` will be the X coordinate index in the map grid and `ystart` will be the Y index.
+#
+# 2. Define `xend` and `yend` for the block that will be in the top right corner of the screen, as above.
+#     We will iterate over the ranges xstart -> xend and ystart ->yend.
+#
+# 3. Calculate the offset of how many pixels the starting block is offscreen on the X and Y axis. This
+#     will be called `xrender_start` and `yrender_start` and we will increment them by the width/height
+#     of a block each time through the loop. This will give each individual block's point to be drawn
+#     relative to the viewport.
+#
+# 4. Within the loop, check and make sure we are not trying to peek out of bounds on the map and check if
+#     there is in fact a block in the spot we are trying to draw. If it's not empty space and there is
+#     actually a block there, then set the block's sprite to visible and set its X and Y coordinates
+#     relative to the viewport) to `xrender_start` and `yrender_start`.
+#
+# The end result of this is that all blocks that are supposed to be on-screen get their X and Y adjusted
+# as the viewport moves, and all blocks that are offscreen get hidden.
 def update_chunk_tile_coords(chunk):
-    """Position visible map tiles relative to the camera."""
     xstart = int(max(screen.x - chunk.coalesced_x, 0) / EngineGlobals.tile_size) - 1
     xend = int(min(screen.x + EngineGlobals.width, screen.x + chunk.width * EngineGlobals.tile_size) / EngineGlobals.tile_size) + 2
+
     ystart = chunk.height - int(max(screen.y - chunk.coalesced_y, 0) / EngineGlobals.tile_size)
     yend = chunk.height - int(min(screen.y + EngineGlobals.height, screen.y + chunk.height * EngineGlobals.tile_size) / EngineGlobals.tile_size) - 3
 
+    # xrender_start and yrender_start represent the offset of where to start drawing a given block on the screen - this origin
+    # could be offscreen for blocks that are only partially onscreen at a given time
     xrender_start = int((chunk.coalesced_x + xstart * EngineGlobals.tile_size) - screen.x)
     yrender_start = int((chunk.coalesced_y + (chunk.height - ystart - 1) * EngineGlobals.tile_size) - screen.y)
 
+    # iterate through the environment horizontally from blocks on the left side of the screen to blocks on the right
     for xcounter in range(xstart, xend):
+
+        # iterate through the environment vertically from blocks on the bottom of the screen to blocks on the top
+        # since ystart is a larger index than yend, we have to step by -1 to get from ystart to yend
         for ycounter in range(ystart, yend, -1):
-            if 0 <= xcounter < len(chunk.platform[0]) and 0 <= ycounter < len(chunk.platform):
-                block = chunk.platform[ycounter][xcounter]
-                if isinstance(block, gamepieces.Block):
-                    sprite = getattr(block, "sprite", None)
-                    if sprite is None or getattr(sprite, "image", None) is None:
-                        yrender_start += EngineGlobals.tile_size
-                        continue
-                    onscreen = not (
-                        xrender_start + EngineGlobals.tile_size <= 0
-                        or xrender_start >= EngineGlobals.width
-                        or yrender_start + EngineGlobals.tile_size <= 0
-                        or yrender_start >= EngineGlobals.height
-                    )
-                    sprite.visible = onscreen
-                    if onscreen:
-                        sprite.x = EngineGlobals.pixel_coord(xrender_start)
-                        sprite.y = EngineGlobals.pixel_coord(yrender_start)
+
+            # grab the block from the environment and see if we should render it or not
+            if xcounter >= 0 and xcounter < len(chunk.platform[0]) and ycounter >= 0 and ycounter < len(chunk.platform):
+                if isinstance(chunk.platform[ycounter][xcounter], gamepieces.Block):
+                    if xrender_start + EngineGlobals.tile_size <= 0 or xrender_start >= EngineGlobals.width or yrender_start + EngineGlobals.tile_size <= 0 or yrender_start >= EngineGlobals.height:
+                        chunk.platform[ycounter][xcounter].sprite.visible = False
+                    else:
+                        chunk.platform[ycounter][xcounter].sprite.visible = True
+                        chunk.platform[ycounter][xcounter].sprite.x = EngineGlobals.pixel_coord(xrender_start)
+                        chunk.platform[ycounter][xcounter].sprite.y = EngineGlobals.pixel_coord(yrender_start)
+
+            # after each time through the y loop, update the y rendering location
             yrender_start += EngineGlobals.tile_size
+
+        # after each time through the x loop, update the x rendering location and reset y to the bottom of the column
         xrender_start += EngineGlobals.tile_size
         yrender_start = int((chunk.coalesced_y + (chunk.height - ystart - 1) * EngineGlobals.tile_size) - screen.y)
 
-
-def update_visible_chunks():
-    update_chunk_tile_coords(kenny.current_chunk)
-    for edge in (ChunkEdge.LEFT, ChunkEdge.RIGHT, ChunkEdge.TOP, ChunkEdge.BOTTOM):
-        chunk = kenny.current_chunk
-        while edge in chunk.adjacencies:
-            chunk = chunk.adjacencies[edge]
-            if chunk.hidden:
-                break
-            if edge == ChunkEdge.LEFT and chunk.coalesced_x + chunk.width * EngineGlobals.tile_size < screen.x:
-                break
-            if edge == ChunkEdge.RIGHT and chunk.coalesced_x > screen.x + EngineGlobals.width:
-                break
-            if edge == ChunkEdge.TOP and chunk.coalesced_y > screen.y + EngineGlobals.height:
-                break
-            if edge == ChunkEdge.BOTTOM and chunk.coalesced_y + chunk.height * EngineGlobals.tile_size < screen.y:
-                break
-            update_chunk_tile_coords(chunk)
-
-
-def update_autoscroller(scaled_dt):
-    if not autoscroller.active or EngineGlobals.game_mode != "PLAY" or kenny.is_dead:
-        return
-
-    autoscroller.scroll_x += autoscroller.speed * Decimal(str(scaled_dt))
-    if Decimal(str(screen.x)) < autoscroller.scroll_x:
-        screen.x = autoscroller.scroll_x
-
-    if Decimal(kenny.x_position) < Decimal(str(screen.x)) - Decimal(24):
-        kenny.die_hard()
-        autoscroller.stop()
-
-
+# this function will be set up for pyglet to call it every update cycle, 120 times per second
+# every game object has a specific updateloop function, this is the main update function that
+# simply iterates through every game object and calls its specific update function
 def main_update_callback(dt):
-    scaled_dt = dt * 60
-    now = time.perf_counter_ns()
-    elapsed = max(1, now - EngineGlobals.last_sim)
-    EngineGlobals.sim_fps = int(1_000_000_000 / elapsed)
-    EngineGlobals.last_sim = now
+    dt = dt * 60 # dt is given in seconds by pyglet; multiply by seconds to get a 60hz
+                 # elapsed time value
 
-    if EngineGlobals.game_mode == "KARTS":
-        karts.update(scaled_dt)
-        return
-    if EngineGlobals.game_mode == "RACING3D":
-        racing3d.update(scaled_dt)
-        return
+    # see how much time has passed (in nanoseconds) since the last time the update function
+    # happened. This is nanoseconds-per-frame; invert it and multiply by 1000000000 to get
+    # frames-per-second
+    EngineGlobals.sim_fps = int(1000000000/(time.perf_counter_ns() - EngineGlobals.last_sim))
+    EngineGlobals.last_sim = time.perf_counter_ns()
 
+    # reset the grid-based collision lists so that they can be recalculated every frame
     physics.PhysicsSprite.collision_lists.clear()
-    LifeCycleManager.processUpdates(scaled_dt)
-    update_autoscroller(scaled_dt)
-    update_visible_chunks()
 
+    # call the updateloop funcction for each game object
+    LifeCycleManager.processUpdates(dt)
 
-pyglet.clock.schedule_interval(main_update_callback, 1 / 60.0)
+    # First update the chunk the player inhabits, then any adjacent chunks that are onscreen
+    update_chunk_tile_coords(kenny.current_chunk)
+    chunk_to_update = kenny.current_chunk
+    while ChunkEdge.LEFT in chunk_to_update.adjacencies:
+        chunk_to_update = chunk_to_update.adjacencies[ChunkEdge.LEFT]
+        if chunk_to_update.hidden or chunk_to_update.coalesced_x + chunk_to_update.width * EngineGlobals.tile_size < screen.x:
+            break
+        update_chunk_tile_coords(chunk_to_update)
+    chunk_to_update = kenny.current_chunk
+    while ChunkEdge.RIGHT in chunk_to_update.adjacencies:
+        chunk_to_update = chunk_to_update.adjacencies[ChunkEdge.RIGHT]
+        if chunk_to_update.hidden or chunk_to_update.coalesced_x > screen.x + EngineGlobals.width:
+            break
+        update_chunk_tile_coords(chunk_to_update)
+    chunk_to_update = kenny.current_chunk
+    while ChunkEdge.TOP in chunk_to_update.adjacencies:
+        chunk_to_update = chunk_to_update.adjacencies[ChunkEdge.TOP]
+        if chunk_to_update.hidden or chunk_to_update.coalesced_y > screen.y + EngineGlobals.height:
+            break
+        update_chunk_tile_coords(chunk_to_update)
+    chunk_to_update = kenny.current_chunk
+    while ChunkEdge.BOTTOM in chunk_to_update.adjacencies:
+        chunk_to_update = chunk_to_update.adjacencies[ChunkEdge.BOTTOM]
+        if chunk_to_update.hidden or chunk_to_update.coalesced_y + chunk_to_update.height * EngineGlobals.tile_size < screen.y:
+            break
+        update_chunk_tile_coords(chunk_to_update)
 
+# ask pyglet to call our main_update_callback 30 times per second
+pyglet.clock.schedule_interval(main_update_callback, 1/60.0)
 
-@EngineGlobals.window.event
-def on_key_press(symbol, modifiers):
-    if EngineGlobals.game_mode != "PLAY":
-        return
-    if symbol == pyglet.window.key.A and not EngineGlobals.show_menu:
-        if autoscroller.active:
-            autoscroller.stop()
-        else:
-            start_autoscroller()
+EngineGlobals.kenny = kenny
+EngineGlobals.our_screen = screen
 
+# Instaniate the text crawl object
+text_crawl = Text_Crawl()
+LifeCycleManager.ALL_SETS['PER_MAP'].addGameObject(text_crawl)
 
+# this function renders all elements to the screen whenever requested by the pyglet engine
+# (typically every vsync event, 60 times per second)
 @EngineGlobals.window.event
 def on_draw():
-    if EngineGlobals.show_menu:
+    
+    if EngineGlobals.show_menu == True:
+        
         menu.on_draw()
-        return
-
-    if EngineGlobals.game_mode == "KARTS":
+        
+    else:
+ 
+        EngineGlobals.render_fps = int(1000000000/(time.perf_counter_ns() - EngineGlobals.last_render))
+        EngineGlobals.last_render = time.perf_counter_ns()
+        EngineGlobals.textsurface.text = "render fps: {}\nsim fps: {}".format(EngineGlobals.render_fps, EngineGlobals.sim_fps)
         EngineGlobals.window.clear()
-        karts.draw()
-        return
 
-    if EngineGlobals.game_mode == "RACING3D":
-        EngineGlobals.window.clear()
-        racing3d.draw()
-        return
+        # now that we've drawn the environment, draw all sprites 
+        EngineGlobals.main_batch.draw()
+    
+        # Drawing the Text Crawl object now:::: Right here!
+        text_crawl.on_draw()
 
-    EngineGlobals.window.clear()
-    now = time.perf_counter_ns()
-    elapsed = max(1, now - EngineGlobals.last_render)
-    EngineGlobals.render_fps = int(1_000_000_000 / elapsed)
-    EngineGlobals.last_render = now
-    EngineGlobals.textsurface.text = "render fps: {} | sim fps: {} | keys: {}".format(
-        EngineGlobals.render_fps,
-        EngineGlobals.sim_fps,
-        EngineGlobals.progress.keys,
-    )
-    EngineGlobals.main_batch.draw()
-    intro.on_draw()
-
-
+#### Audio playback testing
+# introwav = pyglet.resource.media('intro.wav', streaming=False)
+# lalala = pyglet.resource.media('LaLaLa.wav', streaming=False)
 EngineGlobals.audio_player = pyglet.media.Player()
-for music in [
-    "rap1.wav",
-    "sleeponit.wav",
-    "stronglengthypunkbrawl.wav",
-    "takingahike.wav",
-    "downrightbirthright.wav",
-    "workingwithmagic.wav",
-]:
-    EngineGlobals.audio_player.queue(pyglet.resource.media(music, streaming=False))
+# EngineGlobals.audio_player.queue(introwav)
+# EngineGlobals.audio_player.queue(lalala)
+# riffwav = pyglet.resource.media('kenny_riff1.wav', streaming=False)
+# EngineGlobals.audio_player.queue(riffwav)
 
-if __name__ == "__main__":
+music_list = ['rap1.wav', 'sleeponit.wav', 'stronglengthypunkbrawl.wav', 'takingahike.wav', 'downrightbirthright.wav', 'workingwithmagic.wav']
+
+
+for music in music_list:
+
+    load_music = pyglet.resource.media(music, streaming=False)
+    EngineGlobals.audio_player.queue(load_music)
+
+@EngineGlobals.audio_player.event('on_player_next_source')
+def loop_the_next_source():
+    pass
+    # EngineGlobals.audio_player.loop = True
+#EngineGlobals.audio_player.play()
+
+# this is the main game loop!
+if __name__ == '__main__':
     pyglet.app.run()
 
 EngineGlobals.audio_player.delete()

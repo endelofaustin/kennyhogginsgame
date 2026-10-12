@@ -3,11 +3,13 @@ from engineglobals import EngineGlobals
 from karts_expansion import install_karts_expansion
 from karts_stats import install_kart_stats
 from karts_super_ultra import install_super_ultra
+from karts_super_ultra_extreme import install_extreme_super_ultra
 from pyglet.sprite import Sprite
 
 install_karts_expansion()
 install_kart_stats()
 install_super_ultra()
+install_extreme_super_ultra()
 
 
 LEVEL_CHOICES = [
